@@ -2,8 +2,9 @@
 
 use Bitrix\Catalog;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 global $APPLICATION;
 
@@ -25,15 +26,18 @@ global $APPLICATION;
 *created variables
 *		$arSubElements - array subelements for product with ID = 0
 */
-if ((false == defined('B_ADMIN_SUBCOUPONS')) || (1 != B_ADMIN_SUBCOUPONS))
+if ((false == defined('B_ADMIN_SUBCOUPONS')) || (1 != B_ADMIN_SUBCOUPONS)) {
     return '';
-if (false == defined('B_ADMIN_SUBCOUPONS_LIST'))
+}
+if (false == defined('B_ADMIN_SUBCOUPONS_LIST')) {
     return '';
+}
 
 $strSubElementAjaxPath = trim($strSubElementAjaxPath);
 
-if ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame')
+if ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame') {
     CFile::DisableJSFunction(true);
+}
 
 $intDiscountID = intval($intDiscountID);
 $strSubTMP_ID = intval($strSubTMP_ID);
@@ -58,8 +62,9 @@ $arFilter = array(
     "DISCOUNT_ID" => $intDiscountID,
 );
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount'))) {
     return '';
+}
 
 $boolCouponsReadOnly = (isset($boolCouponsReadOnly) && false === $boolCouponsReadOnly ? false : true);
 
@@ -67,15 +72,17 @@ if ($lAdmin->EditAction() && !$boolCouponsReadOnly) {
     foreach ($_POST['FIELDS'] as $ID => $arFields) {
         $ID = (int)$ID;
 
-        if ($ID <= 0 || !$lAdmin->IsUpdated($ID))
+        if ($ID <= 0 || !$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CCatalogDiscountCoupon::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(str_replace("#ID#", $ID, GetMessage("ERROR_UPDATE_DISCOUNT_CPN")), $ID);
+            }
 
             $DB->Rollback();
         } else {
@@ -95,13 +102,15 @@ if (($arID = $lAdmin->GroupAction()) && !$boolCouponsReadOnly) {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -110,10 +119,11 @@ if (($arID = $lAdmin->GroupAction()) && !$boolCouponsReadOnly) {
                 if (!CCatalogDiscountCoupon::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("ERROR_DELETE_DISCOUNT_CPN")), $ID);
+                    }
                 } else {
                     $DB->Commit();
                 }
@@ -124,10 +134,11 @@ if (($arID = $lAdmin->GroupAction()) && !$boolCouponsReadOnly) {
                     "ACTIVE" => (($_REQUEST['action'] == "activate") ? "Y" : "N")
                 );
                 if (!CCatalogDiscountCoupon::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("ERROR_UPDATE_DISCOUNT_CPN")), $ID);
+                    }
                 }
                 break;
         }
@@ -135,71 +146,74 @@ if (($arID = $lAdmin->GroupAction()) && !$boolCouponsReadOnly) {
 }
 
 $CAdminCalendar_ShowScript = '';
-if (true == B_ADMIN_SUBCOUPONS_LIST)
+if (true == B_ADMIN_SUBCOUPONS_LIST) {
     $CAdminCalendar_ShowScript = CAdminCalendar::ShowScript();
+}
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "ID",
-        "default" => true
-    ),
-    array(
-        "id" => "ACTIVE",
-        "content" => GetMessage("DSC_CPN_ACTIVE"),
-        "sort" => "ACTIVE",
-        "default" => true
-    ),
-    array(
-        "id" => "COUPON",
-        "content" => GetMessage("DSC_CPN_CPN"),
-        "sort" => "COUPON",
-        "default" => true
-    ),
-    array(
-        "id" => "DATE_APPLY",
-        "content" => GetMessage("DSC_CPN_DATE"),
-        "sort" => "DATE_APPLY",
-        "default" => true
-    ),
-    array(
-        "id" => "ONE_TIME",
-        "content" => GetMessage("DSC_CPN_TIME2"),
-        "sort" => "ONE_TIME",
-        "default" => true
-    ),
-    array(
-        "id" => "DESCRIPTION",
-        "content" => GetMessage("DSC_CPN_DESCRIPTION"),
-        "sort" => "",
-        "default" => false
-    ),
-    array(
-        "id" => "MODIFIED_BY",
-        "content" => GetMessage('DSC_MODIFIED_BY'),
-        "sort" => "MODIFIED_BY",
-        "default" => true
-    ),
-    array(
-        "id" => "TIMESTAMP_X",
-        "content" => GetMessage('DSC_TIMESTAMP_X'),
-        "sort" => "TIMESTAMP_X",
-        "default" => true
-    ),
-    array(
-        "id" => "CREATED_BY",
-        "content" => GetMessage('DSC_CREATED_BY'),
-        "sort" => "CREATED_BY",
-        "default" => false
-    ),
-    array(
-        "id" => "DATE_CREATE",
-        "content" => GetMessage('DSC_DATE_CREATE'),
-        "sort" => "DATE_CREATE",
-        "default" => false
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "ID",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage("DSC_CPN_ACTIVE"),
+            "sort" => "ACTIVE",
+            "default" => true
+        ),
+        array(
+            "id" => "COUPON",
+            "content" => GetMessage("DSC_CPN_CPN"),
+            "sort" => "COUPON",
+            "default" => true
+        ),
+        array(
+            "id" => "DATE_APPLY",
+            "content" => GetMessage("DSC_CPN_DATE"),
+            "sort" => "DATE_APPLY",
+            "default" => true
+        ),
+        array(
+            "id" => "ONE_TIME",
+            "content" => GetMessage("DSC_CPN_TIME2"),
+            "sort" => "ONE_TIME",
+            "default" => true
+        ),
+        array(
+            "id" => "DESCRIPTION",
+            "content" => GetMessage("DSC_CPN_DESCRIPTION"),
+            "sort" => "",
+            "default" => false
+        ),
+        array(
+            "id" => "MODIFIED_BY",
+            "content" => GetMessage('DSC_MODIFIED_BY'),
+            "sort" => "MODIFIED_BY",
+            "default" => true
+        ),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage('DSC_TIMESTAMP_X'),
+            "sort" => "TIMESTAMP_X",
+            "default" => true
+        ),
+        array(
+            "id" => "CREATED_BY",
+            "content" => GetMessage('DSC_CREATED_BY'),
+            "sort" => "CREATED_BY",
+            "default" => false
+        ),
+        array(
+            "id" => "DATE_CREATE",
+            "content" => GetMessage('DSC_DATE_CREATE'),
+            "sort" => "DATE_CREATE",
+            "default" => false
+        ),
+    )
+);
 
 $arSelectFieldsMap = array(
     "ID" => false,
@@ -215,8 +229,9 @@ $arSelectFieldsMap = array(
 );
 
 $arSelectFields = $lAdmin->GetVisibleHeaderColumns();
-if (!in_array('ID', $arSelectFields))
+if (!in_array('ID', $arSelectFields)) {
     $arSelectFields[] = 'ID';
+}
 
 $arSelectFields = array_values($arSelectFields);
 $arSelectFieldsMap = array_merge($arSelectFieldsMap, array_fill_keys($arSelectFields, true));
@@ -252,47 +267,67 @@ if (!(false == B_ADMIN_SUBCOUPONS_LIST && $bCopy)) {
         $arCouponDiscount['ID'] = (int)$arCouponDiscount['ID'];
         if ($arSelectFieldsMap['CREATED_BY']) {
             $arCouponDiscount['CREATED_BY'] = (int)$arCouponDiscount['CREATED_BY'];
-            if (0 < $arCouponDiscount['CREATED_BY'])
+            if (0 < $arCouponDiscount['CREATED_BY']) {
                 $arUserID[$arCouponDiscount['CREATED_BY']] = true;
+            }
         }
         if ($arSelectFieldsMap['MODIFIED_BY']) {
             $arCouponDiscount['MODIFIED_BY'] = (int)$arCouponDiscount['MODIFIED_BY'];
-            if (0 < $arCouponDiscount['MODIFIED_BY'])
+            if (0 < $arCouponDiscount['MODIFIED_BY']) {
                 $arUserID[$arCouponDiscount['MODIFIED_BY']] = true;
+            }
         }
 
-        $arRows[$arCouponDiscount['ID']] = $row =& $lAdmin->AddRow($arCouponDiscount['ID'], $arCouponDiscount, $edit_url, '', true);
+        $arRows[$arCouponDiscount['ID']] = $row =& $lAdmin->AddRow(
+            $arCouponDiscount['ID'],
+            $arCouponDiscount,
+            $edit_url,
+            '',
+            true
+        );
 
-        if ($arSelectFieldsMap['DATE_CREATE'])
+        if ($arSelectFieldsMap['DATE_CREATE']) {
             $row->AddCalendarField("DATE_CREATE", false);
-        if ($arSelectFieldsMap['TIMESTAMP_X'])
+        }
+        if ($arSelectFieldsMap['TIMESTAMP_X']) {
             $row->AddCalendarField("TIMESTAMP_X", false);
+        }
 
         $row->AddField("ID", $arCouponDiscount['ID']);
-        if ($arSelectFieldsMap['DISCOUNT_NAME'])
+        if ($arSelectFieldsMap['DISCOUNT_NAME']) {
             $row->AddEditField("DISCOUNT_NAME", false);
+        }
 
-        if ($arSelectFieldsMap['ONE_TIME'])
+        if ($arSelectFieldsMap['ONE_TIME']) {
             $row->AddViewField("ONE_TIME", htmlspecialcharsex($arCouponType[$arCouponDiscount['ONE_TIME']]));
+        }
 
         if ($boolCouponsReadOnly) {
-            if ($arSelectFieldsMap['ACTIVE'])
+            if ($arSelectFieldsMap['ACTIVE']) {
                 $row->AddCheckField("ACTIVE", false);
-            if ($arSelectFieldsMap['COUPON'])
+            }
+            if ($arSelectFieldsMap['COUPON']) {
                 $row->AddEditField("COUPON", false);
-            if ($arSelectFieldsMap['DATE_APPLY'])
+            }
+            if ($arSelectFieldsMap['DATE_APPLY']) {
                 $row->AddCalendarField("DATE_APPLY", false);
-            if ($arSelectFieldsMap['DESCRIPTION'])
+            }
+            if ($arSelectFieldsMap['DESCRIPTION']) {
                 $row->AddEditField("DESCRIPTION", false);
+            }
         } else {
-            if ($arSelectFieldsMap['ACTIVE'])
+            if ($arSelectFieldsMap['ACTIVE']) {
                 $row->AddCheckField("ACTIVE");
-            if ($arSelectFieldsMap['COUPON'])
+            }
+            if ($arSelectFieldsMap['COUPON']) {
                 $row->AddInputField("COUPON", array("size" => 30));
-            if ($arSelectFieldsMap['DATE_APPLY'])
+            }
+            if ($arSelectFieldsMap['DATE_APPLY']) {
                 $row->AddCalendarField("DATE_APPLY");
-            if ($arSelectFieldsMap['DESCRIPTION'])
+            }
+            if ($arSelectFieldsMap['DESCRIPTION']) {
                 $row->AddInputField("DESCRIPTION");
+            }
         }
 
         $arActions = array();
@@ -311,27 +346,36 @@ if (!(false == B_ADMIN_SUBCOUPONS_LIST && $bCopy)) {
 
         if (!$boolCouponsReadOnly) {
             $arActions[] = array("SEPARATOR" => true);
-            $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("DSC_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessageJS('DSC_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($arCouponDiscount['ID'], "delete"));
+            $arActions[] = array(
+                "ICON" => "delete",
+                "TEXT" => GetMessage("DSC_DELETE_ALT"),
+                "ACTION" => "if(confirm('" . GetMessageJS('DSC_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                        $arCouponDiscount['ID'],
+                        "delete"
+                    )
+            );
         }
 
         $row->AddActions($arActions);
     }
-    if (isset($row))
+    if (isset($row)) {
         unset($row);
+    }
 
     if ($arSelectFieldsMap['CREATED_BY'] || $arSelectFieldsMap['MODIFIED_BY']) {
         if (!empty($arUserID)) {
-            $byUser = 'ID';
-            $byOrder = 'ASC';
             $rsUsers = CUser::GetList(
-                $byUser,
-                $byOrder,
+                'ID',
+                'ASC',
                 array('ID' => implode(' | ', array_keys($arUserID))),
                 array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
             );
             while ($arOneUser = $rsUsers->Fetch()) {
                 $arOneUser['ID'] = (int)$arOneUser['ID'];
-                $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arOneUser['ID'] . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+                $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arOneUser['ID'] . '">' . CUser::FormatName(
+                        $strNameFormat,
+                        $arOneUser
+                    ) . '</a>';
             }
         }
 
@@ -351,8 +395,9 @@ if (!(false == B_ADMIN_SUBCOUPONS_LIST && $bCopy)) {
                 $row->AddViewField("MODIFIED_BY", $strModifiedBy);
             }
         }
-        if (isset($row))
+        if (isset($row)) {
             unset($row);
+        }
     }
 
     $lAdmin->AddFooter(

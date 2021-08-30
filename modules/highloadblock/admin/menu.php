@@ -10,10 +10,12 @@ if (!\Bitrix\Main\Loader::includeModule('highloadblock')) {
 
 // items
 $items = array();
-$res = \Bitrix\Highloadblock\HighloadBlockTable::getList(array(
-    'select' => array('*', 'NAME_LANG' => 'LANG.NAME'),
-    'order' => array('NAME_LANG' => 'ASC', 'NAME' => 'ASC')
-));
+$res = \Bitrix\Highloadblock\HighloadBlockTable::getList(
+    array(
+        'select' => array('*', 'NAME_LANG' => 'LANG.NAME'),
+        'order' => array('NAME_LANG' => 'ASC', 'NAME' => 'ASC')
+    )
+);
 while ($row = $res->fetch()) {
     $items[$row['ID']] = array(
         'text' => $row['NAME_LANG'] != '' ? $row['NAME_LANG'] : $row['NAME'],

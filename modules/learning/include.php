@@ -20,8 +20,9 @@ if (COption::GetOptionString(
         $learningLangFile = dirname(__FILE__) . '/lang/' . LANGUAGE_ID . '/lang.php';
 
         // Load english version, if localization not available
-        if (!(file_exists($learningLangFile) && is_readable($learningLangFile)))
+        if (!(file_exists($learningLangFile) && is_readable($learningLangFile))) {
             $learningLangFile = dirname(__FILE__) . '/lang/en/lang.php';
+        }
 
         if (file_exists($learningLangFile) && is_readable($learningLangFile)) {
             $learningNotifyMessage = '';

@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 include(GetLangFileName(dirname(__FILE__) . "/", "/paycash.php"));
 
 $psTitle = GetMessage("SPCP_DTITLE");

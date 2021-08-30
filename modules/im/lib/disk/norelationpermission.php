@@ -16,21 +16,25 @@ class NoRelationPermission
     {
         $result = false;
 
-        $rowRelation = RelationTable::getRow(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=CHAT_ID' => $chatId,
-                '=USER_ID' => $userId
-            ),
-            'cache' => array('ttl' => self::CACHE_TIME)
-        ));
+        $rowRelation = RelationTable::getRow(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=CHAT_ID' => $chatId,
+                    '=USER_ID' => $userId
+                ),
+                'cache' => array('ttl' => self::CACHE_TIME)
+            )
+        );
         if (empty($rowRelation)) {
             if (\CIMDisk::ChangeFolderMembers($chatId, $userId)) {
-                $raw = NoRelationPermissionDiskTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array('=CHAT_ID' => $chatId, '=USER_ID' => $userId),
-                    'cache' => array('ttl' => self::CACHE_TIME)
-                ));
+                $raw = NoRelationPermissionDiskTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array('=CHAT_ID' => $chatId, '=USER_ID' => $userId),
+                        'cache' => array('ttl' => self::CACHE_TIME)
+                    )
+                );
 
                 $count = 0;
                 while ($row = $raw->fetch()) {
@@ -39,24 +43,31 @@ class NoRelationPermission
                     if ($count > 1) {
                         NoRelationPermissionDiskTable::delete($row['ID']);
                     } else {
-                        $updateRaw = NoRelationPermissionDiskTable::update($row['ID'], array(
-                            'ACTIVE_TO' => DateTime::createFromTimestamp(time() + self::ACCESS_TIME)
-                        ));
+                        $updateRaw = NoRelationPermissionDiskTable::update(
+                            $row['ID'],
+                            array(
+                                'ACTIVE_TO' => DateTime::createFromTimestamp(time() + self::ACCESS_TIME)
+                            )
+                        );
 
-                        if ($updateRaw->isSuccess())
+                        if ($updateRaw->isSuccess()) {
                             $result = true;
+                        }
                     }
                 }
 
                 if ($count === 0) {
-                    $addRaw = NoRelationPermissionDiskTable::add(array(
-                        'CHAT_ID' => $chatId,
-                        'USER_ID' => $userId,
-                        'ACTIVE_TO' => DateTime::createFromTimestamp(time() + self::ACCESS_TIME)
-                    ));
+                    $addRaw = NoRelationPermissionDiskTable::add(
+                        array(
+                            'CHAT_ID' => $chatId,
+                            'USER_ID' => $userId,
+                            'ACTIVE_TO' => DateTime::createFromTimestamp(time() + self::ACCESS_TIME)
+                        )
+                    );
 
-                    if ($addRaw->isSuccess())
+                    if ($addRaw->isSuccess()) {
                         $result = true;
+                    }
                 }
             }
         }
@@ -69,29 +80,35 @@ class NoRelationPermission
         $result = false;
 
         if ($permissionDisk) {
-            $rowRelation = RelationTable::getRow(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=CHAT_ID' => $chatId,
-                    '=USER_ID' => $userId
-                ),
-                'cache' => array('ttl' => self::CACHE_TIME)
-            ));
+            $rowRelation = RelationTable::getRow(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=CHAT_ID' => $chatId,
+                        '=USER_ID' => $userId
+                    ),
+                    'cache' => array('ttl' => self::CACHE_TIME)
+                )
+            );
             if (empty($rowRelation)) {
-                if (\CIMDisk::ChangeFolderMembers($chatId, $userId, false))
+                if (\CIMDisk::ChangeFolderMembers($chatId, $userId, false)) {
                     $result = true;
+                }
             }
         }
 
-        $raw = NoRelationPermissionDiskTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=CHAT_ID' => $chatId, '=USER_ID' => $userId),
-            'cache' => array('ttl' => self::CACHE_TIME)
-        ));
+        $raw = NoRelationPermissionDiskTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=CHAT_ID' => $chatId, '=USER_ID' => $userId),
+                'cache' => array('ttl' => self::CACHE_TIME)
+            )
+        );
 
         while ($row = $raw->fetch()) {
-            if (NoRelationPermissionDiskTable::delete($row['ID'])->isSuccess())
+            if (NoRelationPermissionDiskTable::delete($row['ID'])->isSuccess()) {
                 $result = true;
+            }
         }
 
         return $result;
@@ -99,15 +116,21 @@ class NoRelationPermission
 
     public static function cleaningAgent()
     {
+        if (!IsModuleInstalled('disk')) {
+            return '\Bitrix\Im\Disk\NoRelationPermission::cleaningAgent();';
+        }
+
         $relation = array();
 
-        $raw = NoRelationPermissionDiskTable::getList(array(
-            'select' => array('ID', 'CHAT_ID', 'USER_ID'),
-            'filter' => array(
-                array('<=ACTIVE_TO' => DateTime::createFromTimestamp(time()))
-            ),
-            'cache' => array('ttl' => self::CACHE_TIME)
-        ));
+        $raw = NoRelationPermissionDiskTable::getList(
+            array(
+                'select' => array('ID', 'CHAT_ID', 'USER_ID'),
+                'filter' => array(
+                    array('<=ACTIVE_TO' => DateTime::createFromTimestamp(time()))
+                ),
+                'cache' => array('ttl' => self::CACHE_TIME)
+            )
+        );
 
         $filterRelation = array();
         while ($row = $raw->fetch()) {
@@ -122,11 +145,13 @@ class NoRelationPermission
         if (!empty($filterRelation)) {
             $filterRelation['LOGIC'] = 'OR';
 
-            $rawRelation = RelationTable::getList(array(
-                'select' => array('CHAT_ID', 'USER_ID'),
-                'filter' => $filterRelation,
-                'cache' => array('ttl' => self::CACHE_TIME)
-            ));
+            $rawRelation = RelationTable::getList(
+                array(
+                    'select' => array('CHAT_ID', 'USER_ID'),
+                    'filter' => $filterRelation,
+                    'cache' => array('ttl' => self::CACHE_TIME)
+                )
+            );
 
             while ($rowRelation = $rawRelation->fetch()) {
                 $relation[$rowRelation['CHAT_ID']][$rowRelation['USER_ID']] = $rowRelation['USER_ID'];
@@ -144,8 +169,9 @@ class NoRelationPermission
                 $userDelete = array();
 
                 foreach ($userIds as $userId) {
-                    if (empty($relation[$chatId][$userId]))
+                    if (empty($relation[$chatId][$userId])) {
                         $userDelete[] = $userId;
+                    }
                 }
 
                 if (!empty($userDelete)) {

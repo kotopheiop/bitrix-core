@@ -109,25 +109,37 @@ class Double extends Base
      */
     protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
     {
+        if ($allowSelection && !($renderMode & FieldType::RENDER_MODE_PUBLIC)) {
+            return static::renderControlSelector($field, $value, 'combine', '', $fieldType);
+        }
+
         $name = static::generateControlName($field);
         $controlId = static::generateControlId($field);
         $className = static::generateControlClassName($fieldType, $field);
 
         if ($renderMode & FieldType::RENDER_MODE_PUBLIC) {
-            $renderResult = '<input type="text" class="' . htmlspecialcharsbx($className)
-                . '" name="' . htmlspecialcharsbx($name) . '" value="' . htmlspecialcharsbx((string)$value)
-                . '" placeholder="' . htmlspecialcharsbx($fieldType->getDescription()) . '" value="' . htmlspecialcharsbx((string)$value) . '"'
-                . ($allowSelection ? ' data-role="inline-selector-target"' : '')
-                . '/>';
+            $selectorAttributes = '';
+            if ($allowSelection) {
+                $selectorAttributes = sprintf(
+                    'data-role="inline-selector-target" data-property="%s" ',
+                    htmlspecialcharsbx(Main\Web\Json::encode($fieldType->getProperty()))
+                );
+            }
+
+            $renderResult = sprintf(
+                '<input type="text" class="%s" name="%s" value="%s" placeholder="%s" %s/>',
+                htmlspecialcharsbx($className),
+                htmlspecialcharsbx($name),
+                htmlspecialcharsbx((string)$value),
+                htmlspecialcharsbx($fieldType->getDescription()),
+                $selectorAttributes
+            );
         } else {
             $renderResult = '<input type="text" class="' . htmlspecialcharsbx($className)
                 . '" size="10" id="' . htmlspecialcharsbx($controlId) . '" name="'
                 . htmlspecialcharsbx($name) . '" value="' . htmlspecialcharsbx((string)$value) . '"/>';
         }
 
-        if ($allowSelection && !($renderMode & FieldType::RENDER_MODE_PUBLIC)) {
-            $renderResult .= static::renderControlSelector($field, null, false, '', $fieldType);
-        }
         return $renderResult;
     }
 
@@ -162,13 +174,20 @@ class Double extends Base
      * @param int $renderMode Control render mode.
      * @return string
      */
-    public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-    {
-        if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+    public static function renderControlMultiple(
+        FieldType $fieldType,
+        array $field,
+        $value,
+        $allowSelection,
+        $renderMode
+    ) {
+        if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
             $value = array($value);
+        }
 
-        if (empty($value))
+        if (empty($value)) {
             $value[] = null;
+        }
 
         $controls = array();
 
@@ -203,20 +222,23 @@ class Double extends Base
     {
         $value = parent::extractValue($fieldType, $field, $request);
 
-        if ($value !== null && is_string($value) && strlen($value) > 0) {
-            if (\CBPActivity::isExpression($value))
+        if ($value !== null && is_string($value) && $value <> '') {
+            if (\CBPActivity::isExpression($value)) {
                 return $value;
+            }
 
             $value = str_replace(' ', '', str_replace(',', '.', $value));
             if (is_numeric($value)) {
                 $value = (float)$value;
             } else {
                 $value = null;
-                static::addError(array(
-                    'code' => 'ErrorValue',
-                    'message' => Loc::getMessage('BPDT_DOUBLE_INVALID'),
-                    'parameter' => static::generateControlName($field),
-                ));
+                static::addError(
+                    array(
+                        'code' => 'ErrorValue',
+                        'message' => Loc::getMessage('BPDT_DOUBLE_INVALID'),
+                        'parameter' => static::generateControlName($field),
+                    )
+                );
             }
         } else {
             $value = null;

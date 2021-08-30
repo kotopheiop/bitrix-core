@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -37,7 +40,8 @@ $filter = new CAdminFilter(
 );
 
 $arFilterFields = Array(
-    "find_id", "find_id_exact_match",
+    "find_id",
+    "find_id_exact_match",
     "find_site_id",
     "find_date_start_1",
     "find_date_start_2",
@@ -48,13 +52,20 @@ $arFilterFields = Array(
     "find_ip_1",
     "find_ip_2",
     "find_ip_3",
-    "find_ip_4", "find_ip_exact_match",
-    "find_user_agent", "find_user_agent_exact_match",
-    "find_url_from", "find_url_from_exact_match",
-    "find_url_to", "find_url_to_exact_match",
-    "find_url_redirect", "find_url_redirect_exact_match",
-    "find_message", "find_message_exact_match",
-    "find_comments", "find_comments_exact_match",
+    "find_ip_4",
+    "find_ip_exact_match",
+    "find_user_agent",
+    "find_user_agent_exact_match",
+    "find_url_from",
+    "find_url_from_exact_match",
+    "find_url_to",
+    "find_url_to_exact_match",
+    "find_url_redirect",
+    "find_url_redirect_exact_match",
+    "find_message",
+    "find_message_exact_match",
+    "find_comments",
+    "find_comments_exact_match",
     "FILTER_logic",
 );
 
@@ -72,7 +83,10 @@ InitBVar($find_url_redirect_exact_match);
 InitBVar($find_comments_exact_match);
 InitBVar($find_message_exact_match);
 
-AdminListCheckDate($lAdmin, array("find_date_start_1" => $find_date_start_1, "find_date_start_2" => $find_date_start_2));
+AdminListCheckDate(
+    $lAdmin,
+    array("find_date_start_1" => $find_date_start_1, "find_date_start_2" => $find_date_start_2)
+);
 AdminListCheckDate($lAdmin, array("find_date_end_1" => $find_date_end_1, "find_date_end_2" => $find_date_end_2));
 
 $arFilter = Array(
@@ -112,27 +126,31 @@ if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $obStopList = new CStoplist;
         if (!$obStopList->Update($ID, $arFields)) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+            }
         }
     }
 }
 
 if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     if ($_REQUEST['action_target'] == "selected") {
-        $rsData = CStoplist::GetList($by, $order, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CStoplist::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
@@ -153,7 +171,9 @@ if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     }
 }
 
-$rsData = CStoplist::GetList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsData = CStoplist::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -162,29 +182,68 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_STOP_PAGES")));
 $arHeaders = Array();
 
 $arHeaders[] = array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true,);
-$arHeaders[] = array("id" => "LAMP", "content" => GetMessage("STAT_RECORD_STATUS"), "default" => true, "align" => "center");
+$arHeaders[] = array(
+    "id" => "LAMP",
+    "content" => GetMessage("STAT_RECORD_STATUS"),
+    "default" => true,
+    "align" => "center"
+);
 
-$arHeaders[] = array("id" => "DATE_START", "content" => GetMessage("STAT_DATE_START"), "sort" => "s_date_start", "default" => true,);
-$arHeaders[] = array("id" => "DATE_END", "content" => GetMessage("STAT_DATE_END"), "sort" => "s_date_end", "default" => false,);
-$arHeaders[] = array("id" => "ACTIVE", "content" => GetMessage("STAT_ACTIVE"), "sort" => "s_active", "default" => true,);
-$arHeaders[] = array("id" => "SITE_ID", "content" => GetMessage("STAT_SITE"), "sort" => "s_site_id", "default" => true,);
+$arHeaders[] = array(
+    "id" => "DATE_START",
+    "content" => GetMessage("STAT_DATE_START"),
+    "sort" => "s_date_start",
+    "default" => true,
+);
+$arHeaders[] = array(
+    "id" => "DATE_END",
+    "content" => GetMessage("STAT_DATE_END"),
+    "sort" => "s_date_end",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "ACTIVE",
+    "content" => GetMessage("STAT_ACTIVE"),
+    "sort" => "s_active",
+    "default" => true,
+);
+$arHeaders[] = array(
+    "id" => "SITE_ID",
+    "content" => GetMessage("STAT_SITE"),
+    "sort" => "s_site_id",
+    "default" => true,
+);
 $arHeaders[] = array("id" => "IP", "content" => GetMessage("STAT_IP"), "sort" => "s_ip", "default" => true,);
 $arHeaders[] = array("id" => "MASK", "content" => GetMessage("STAT_MASK"), "sort" => "s_mask", "default" => true,);
-$arHeaders[] = array("id" => "URL_FROM", "content" => GetMessage("STAT_REFERER"), "sort" => "s_url_from", "default" => false,);
-$arHeaders[] = array("id" => "URL_TO", "content" => GetMessage("STAT_URL_TO"), "sort" => "s_url_to", "default" => false,);
-$arHeaders[] = array("id" => "SAVE_STATISTIC", "content" => GetMessage("STAT_STAT"), "sort" => "s_save_statistic", "default" => true,);
+$arHeaders[] = array(
+    "id" => "URL_FROM",
+    "content" => GetMessage("STAT_REFERER"),
+    "sort" => "s_url_from",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "URL_TO",
+    "content" => GetMessage("STAT_URL_TO"),
+    "sort" => "s_url_to",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "SAVE_STATISTIC",
+    "content" => GetMessage("STAT_STAT"),
+    "sort" => "s_save_statistic",
+    "default" => true,
+);
 $arHeaders[] = array("id" => "USER_AGENT", "content" => GetMessage("STAT_USER_AGENT"), "default" => false,);
 
 $lAdmin->AddHeaders($arHeaders);
 
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
-
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    $alt = (strlen($f_MESSAGE) > 0) ? "\n" . GetMessage("STAT_MESSAGE") . ":  " . $f_MESSAGE : "";
-    $alt .= (strlen($f_COMMENTS) > 0) ? "\n" . GetMessage("STAT_COMMENT") . ":  " . $f_COMMENTS : "";
-    $alt .= (strlen($f_URL_REDIRECT) > 0) ? "\n" . GetMessage("STAT_REDIRECT") . ":  " . $f_URL_REDIRECT : "";
+    $alt = ($f_MESSAGE <> '') ? "\n" . GetMessage("STAT_MESSAGE") . ":  " . $f_MESSAGE : "";
+    $alt .= ($f_COMMENTS <> '') ? "\n" . GetMessage("STAT_COMMENT") . ":  " . $f_COMMENTS : "";
+    $alt .= ($f_URL_REDIRECT <> '') ? "\n" . GetMessage("STAT_REDIRECT") . ":  " . $f_URL_REDIRECT : "";
     if ($f_LAMP == "green") :
         $str = '<div class="lamp-green" title="' . GetMessage("STAT_LAMP_ACTIVE") . ' ' . $alt . '"></div>';
 
@@ -195,8 +254,11 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddViewField("LAMP", $str);
 
 
-    if (strlen($f_SITE_ID) > 0) :
-        $row->AddViewField("SITE_ID", '<a href="/bitrix/admin/site_edit.php?LID=' . $f_SITE_ID . '&lang=' . LANGUAGE_ID . '">' . $f_SITE_ID . '</a>');
+    if ($f_SITE_ID <> '') :
+        $row->AddViewField(
+            "SITE_ID",
+            '<a href="/bitrix/admin/site_edit.php?LID=' . $f_SITE_ID . '&lang=' . LANGUAGE_ID . '">' . $f_SITE_ID . '</a>'
+        );
 
     else:
         $row->AddViewField("SITE_ID", GetMessage("MAIN_ALL"));
@@ -219,38 +281,60 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             }
 
             $str .= '
-			<input type="text" maxlength="3" size="3" name="FIELDS[' . htmlspecialcharsbx($f_ID) . '][IP_' . $i . ']" value="' . htmlspecialcharsbx($val) . '">
-			<input type="hidden" name="FIELDS_OLD[' . htmlspecialcharsbx($f_ID) . '][IP_' . $i . ']" value="' . htmlspecialcharsbx(${"f_IP_" . $i}) . '">';
+			<input type="text" maxlength="3" size="3" name="FIELDS[' . htmlspecialcharsbx(
+                    $f_ID
+                ) . '][IP_' . $i . ']" value="' . htmlspecialcharsbx($val) . '">
+			<input type="hidden" name="FIELDS_OLD[' . htmlspecialcharsbx(
+                    $f_ID
+                ) . '][IP_' . $i . ']" value="' . htmlspecialcharsbx(${"f_IP_" . $i}) . '">';
 
             $str2 .= '
-			<input type="text" maxlength="3" size="3" name="FIELDS[' . htmlspecialcharsbx($f_ID) . '][MASK_' . $i . ']" value="' . htmlspecialcharsbx($val2) . '">
-			<input type="hidden" name="FIELDS_OLD[' . htmlspecialcharsbx($f_ID) . '][MASK_' . $i . ']" value="' . htmlspecialcharsbx(${"f_MASK_" . $i}) . '">';
+			<input type="text" maxlength="3" size="3" name="FIELDS[' . htmlspecialcharsbx(
+                    $f_ID
+                ) . '][MASK_' . $i . ']" value="' . htmlspecialcharsbx($val2) . '">
+			<input type="hidden" name="FIELDS_OLD[' . htmlspecialcharsbx(
+                    $f_ID
+                ) . '][MASK_' . $i . ']" value="' . htmlspecialcharsbx(${"f_MASK_" . $i}) . '">';
         }
         $row->AddEditField("IP", "<nobr>" . $str . "</nobr>");
         $row->AddEditField("MASK", "<nobr>" . $str2 . "</nobr>");
     } else {
-
-        $row->AddViewField("IP", intval($f_IP_1) . "." . intval($f_IP_2) . "." . intval($f_IP_3) . "." . intval($f_IP_4));
+        $row->AddViewField(
+            "IP",
+            intval($f_IP_1) . "." . intval($f_IP_2) . "." . intval($f_IP_3) . "." . intval($f_IP_4)
+        );
 
         $row->AddViewField("MASK", $f_MASK_1 . "." . $f_MASK_2 . "." . $f_MASK_3 . "." . $f_MASK_4);
     }
 
-    if (strlen($f_URL_FROM) > 0) {
-        $row->AddViewField("URL_FROM", StatAdminListFormatURL($arRes["URL_FROM"], array(
-            "new_window" => false,
-            "max_display_chars" => "default",
-            "chars_per_line" => "default",
-            "kill_sessid" => $STAT_RIGHT < "W",
-        )));
+    if ($f_URL_FROM <> '') {
+        $row->AddViewField(
+            "URL_FROM",
+            StatAdminListFormatURL(
+                $arRes["URL_FROM"],
+                array(
+                    "new_window" => false,
+                    "max_display_chars" => "default",
+                    "chars_per_line" => "default",
+                    "kill_sessid" => $STAT_RIGHT < "W",
+                )
+            )
+        );
     }
 
-    if (strlen($f_URL_TO) > 0) {
-        $row->AddViewField("URL_TO", StatAdminListFormatURL($arRes["URL_TO"], array(
-            "new_window" => false,
-            "max_display_chars" => "default",
-            "chars_per_line" => "default",
-            "kill_sessid" => $STAT_RIGHT < "W",
-        )));
+    if ($f_URL_TO <> '') {
+        $row->AddViewField(
+            "URL_TO",
+            StatAdminListFormatURL(
+                $arRes["URL_TO"],
+                array(
+                    "new_window" => false,
+                    "max_display_chars" => "default",
+                    "chars_per_line" => "default",
+                    "kill_sessid" => $STAT_RIGHT < "W",
+                )
+            )
+        );
     }
 
     $arActions = Array();
@@ -258,7 +342,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "DEFAULT" => "Y",
         "ICON" => "edit",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_EDIT"),
-        "ACTION" => $lAdmin->ActionRedirect("stoplist_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"))
+        "ACTION" => $lAdmin->ActionRedirect(
+            "stoplist_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_")
+        )
     );
 
     if ($STAT_RIGHT >= "W") {
@@ -267,7 +353,11 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM_DEL_STOP') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+            "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM_DEL_STOP') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
     $row->AddActions($arActions);
 }
@@ -280,11 +370,13 @@ $lAdmin->AddFooter(
 );
 
 if ($STAT_RIGHT >= "W") {
-    $lAdmin->AddGroupActionTable(Array(
-        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-    ));
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+            "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+        )
+    );
 }
 
 $aContext = array(
@@ -318,25 +410,46 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td><?
                 $ref = array();
                 $ref_id = array();
-                $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+                $rs = CSite::GetList();
                 while ($ar = $rs->Fetch()) {
                     $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
                     $ref_id[] = $ar["ID"];
                 }
-                echo SelectBoxMFromArray("find_site_id[]", array("reference" => $ref, "reference_id" => $ref_id), $find_site_id, "", false, "3");
+                echo SelectBoxMFromArray(
+                    "find_site_id[]",
+                    array("reference" => $ref, "reference_id" => $ref_id),
+                    $find_site_id,
+                    "",
+                    false,
+                    "3"
+                );
                 ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap>
                 <? echo GetMessage("STAT_F_DATE_START") . ":" ?></td>
             <td width="0%" nowrap>
-                <? echo CalendarPeriod("find_date_start_1", htmlspecialcharsbx($find_date_start_1), "find_date_start_2", htmlspecialcharsbx($find_date_start_2), "form1", "Y") ?></td>
+                <? echo CalendarPeriod(
+                    "find_date_start_1",
+                    htmlspecialcharsbx($find_date_start_1),
+                    "find_date_start_2",
+                    htmlspecialcharsbx($find_date_start_2),
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap>
                 <? echo GetMessage("STAT_F_DATE_END") . ":" ?></td>
             <td width="0%" nowrap>
-                <? echo CalendarPeriod("find_date_end_1", htmlspecialcharsbx($find_date_end_1), "find_date_end_2", htmlspecialcharsbx($find_date_end_2), "form1", "Y") ?></td>
+                <? echo CalendarPeriod(
+                    "find_date_end_1",
+                    htmlspecialcharsbx($find_date_end_1),
+                    "find_date_end_2",
+                    htmlspecialcharsbx($find_date_end_2),
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap>
@@ -344,7 +457,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td width="0%" nowrap>
                 <?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL"));
                 ?></td>
         </tr>
@@ -354,8 +470,16 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td width="0%" nowrap>
                 <?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_save_statistic", $arr, htmlspecialcharsbx($find_save_statistic), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_save_statistic",
+                    $arr,
+                    htmlspecialcharsbx($find_save_statistic),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         </tr>
@@ -416,8 +540,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

@@ -14,8 +14,9 @@ Loc::loadMessages(__FILE__);
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $APPLICATION->SetAdditionalCSS("/bitrix/panel/sale/preset.css");
 
@@ -39,7 +40,9 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                     <div class="sale-discount-list-action"></div>
                     <div class="sale-discount-list-title-icon"></div>
                     <div class="sale-discount-list-title-line"></div>
-                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName($presetManager::CATEGORY_PRODUCTS) ?></h2>
+                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName(
+                            $presetManager::CATEGORY_PRODUCTS
+                        ) ?></h2>
                 </div>
                 <!--  -->
                 <div class="sale-discount-list-content-container">
@@ -48,17 +51,21 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                         <?
                         foreach ($productsPresets as $preset) {
                             $extendedDescription = $preset->getExtendedDescription();
-                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_ID' => $preset::className(),
-                                ));
-                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_DISCOUNT_ID' => $preset::className(),
-                                    'apply_filter' => 'Y'
-                                ));
+                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_ID' => $preset::className(),
+                                    )
+                                );
+                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_DISCOUNT_ID' => $preset::className(),
+                                        'apply_filter' => 'Y'
+                                    )
+                                );
                             $listDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($listDiscountLink);
                             $createDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($createDiscountLink);
                             $targetHref = $adminSidePanelHelper->isPublicFrame() ? 'target="_top"' : "";
@@ -83,19 +90,22 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                                                 <dd><?= $extendedDescription['DISCOUNT_VALUE'] ?></dd>
                                             <? } ?>
                                             <? if ($extendedDescription['DISCOUNT_CONDITION']) { ?>
-                                                <dt><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION') ?>
-                                                    :
+                                                <dt><?= Loc::getMessage(
+                                                        'SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION'
+                                                    ) ?>:
                                                 </dt>
                                                 <dd><?= $extendedDescription['DISCOUNT_CONDITION'] ?></dd>
                                             <? } ?>
                                         </dl>
                                     </div>
                                     <div class="sale-discount-list-block-btn">
-                                        <a <?= $targetHref ?>
-                                                href="<?= $createDiscountLink ?>"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET') ?></a>
+                                        <a <?= $targetHref ?> href="<?= $createDiscountLink ?>"><?= Loc::getMessage(
+                                                'SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET'
+                                            ) ?></a>
                                         <? if ($presetManager->hasCreatedDiscounts($preset)) { ?>
-                                            <a href="<?= $listDiscountLink ?>"
-                                               target="_top"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET') ?></a>
+                                            <a href="<?= $listDiscountLink ?>" target="_top"><?= Loc::getMessage(
+                                                    'SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET'
+                                                ) ?></a>
                                         <? } ?>
                                     </div>
                                 </div>
@@ -114,7 +124,9 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                     <div class="sale-discount-list-action"></div>
                     <div class="sale-discount-list-title-icon"></div>
                     <div class="sale-discount-list-title-line"></div>
-                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName($presetManager::CATEGORY_DELIVERY) ?></h2>
+                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName(
+                            $presetManager::CATEGORY_DELIVERY
+                        ) ?></h2>
                 </div>
                 <!--  -->
                 <div class="sale-discount-list-content-container">
@@ -123,17 +135,21 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                         <?
                         foreach ($deliveryPresets as $preset) {
                             $extendedDescription = $preset->getExtendedDescription();
-                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_ID' => $preset::className(),
-                                ));
-                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_DISCOUNT_ID' => $preset::className(),
-                                    'apply_filter' => 'Y'
-                                ));
+                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_ID' => $preset::className(),
+                                    )
+                                );
+                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_DISCOUNT_ID' => $preset::className(),
+                                        'apply_filter' => 'Y'
+                                    )
+                                );
                             $listDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($listDiscountLink);
                             $createDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($createDiscountLink);
                             $targetHref = $adminSidePanelHelper->isPublicFrame() ? 'target="_top"' : "";
@@ -158,19 +174,22 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                                                 <dd><?= $extendedDescription['DISCOUNT_VALUE'] ?></dd>
                                             <? } ?>
                                             <? if ($extendedDescription['DISCOUNT_CONDITION']) { ?>
-                                                <dt><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION') ?>
-                                                    :
+                                                <dt><?= Loc::getMessage(
+                                                        'SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION'
+                                                    ) ?>:
                                                 </dt>
                                                 <dd><?= $extendedDescription['DISCOUNT_CONDITION'] ?></dd>
                                             <? } ?>
                                         </dl>
                                     </div>
                                     <div class="sale-discount-list-block-btn">
-                                        <a <?= $targetHref ?>
-                                                href="<?= $createDiscountLink ?>"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET') ?></a>
+                                        <a <?= $targetHref ?> href="<?= $createDiscountLink ?>"><?= Loc::getMessage(
+                                                'SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET'
+                                            ) ?></a>
                                         <? if ($presetManager->hasCreatedDiscounts($preset)) { ?>
-                                            <a href="<?= $listDiscountLink ?>"
-                                               target="_top"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET') ?></a>
+                                            <a href="<?= $listDiscountLink ?>" target="_top"><?= Loc::getMessage(
+                                                    'SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET'
+                                                ) ?></a>
                                         <? } ?>
                                     </div>
                                 </div>
@@ -189,7 +208,9 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                     <div class="sale-discount-list-action"></div>
                     <div class="sale-discount-list-title-icon"></div>
                     <div class="sale-discount-list-title-line"></div>
-                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName($presetManager::CATEGORY_PAYMENT) ?></h2>
+                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName(
+                            $presetManager::CATEGORY_PAYMENT
+                        ) ?></h2>
                 </div>
                 <!--  -->
                 <div class="sale-discount-list-content-container">
@@ -198,17 +219,21 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                         <?
                         foreach ($paymentPresets as $preset) {
                             $extendedDescription = $preset->getExtendedDescription();
-                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_ID' => $preset::className(),
-                                ));
-                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_DISCOUNT_ID' => $preset::className(),
-                                    'apply_filter' => 'Y'
-                                ));
+                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_ID' => $preset::className(),
+                                    )
+                                );
+                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_DISCOUNT_ID' => $preset::className(),
+                                        'apply_filter' => 'Y'
+                                    )
+                                );
                             $listDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($listDiscountLink);
                             $createDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($createDiscountLink);
                             $targetHref = $adminSidePanelHelper->isPublicFrame() ? 'target="_top"' : "";
@@ -233,19 +258,22 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                                                 <dd><?= $extendedDescription['DISCOUNT_VALUE'] ?></dd>
                                             <? } ?>
                                             <? if ($extendedDescription['DISCOUNT_CONDITION']) { ?>
-                                                <dt><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION') ?>
-                                                    :
+                                                <dt><?= Loc::getMessage(
+                                                        'SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION'
+                                                    ) ?>:
                                                 </dt>
                                                 <dd><?= $extendedDescription['DISCOUNT_CONDITION'] ?></dd>
                                             <? } ?>
                                         </dl>
                                     </div>
                                     <div class="sale-discount-list-block-btn">
-                                        <a <?= $targetHref ?>
-                                                href="<?= $createDiscountLink ?>"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET') ?></a>
+                                        <a <?= $targetHref ?> href="<?= $createDiscountLink ?>"><?= Loc::getMessage(
+                                                'SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET'
+                                            ) ?></a>
                                         <? if ($presetManager->hasCreatedDiscounts($preset)) { ?>
-                                            <a href="<?= $listDiscountLink ?>"
-                                               target="_top"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET') ?></a>
+                                            <a href="<?= $listDiscountLink ?>" target="_top"><?= Loc::getMessage(
+                                                    'SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET'
+                                                ) ?></a>
                                         <? } ?>
                                     </div>
                                 </div>
@@ -264,7 +292,9 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                     <div class="sale-discount-list-action"></div>
                     <div class="sale-discount-list-title-icon"></div>
                     <div class="sale-discount-list-title-line"></div>
-                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName($presetManager::CATEGORY_OTHER) ?></h2>
+                    <h2 class="sale-discount-list-title"><?= $presetManager->getCategoryName(
+                            $presetManager::CATEGORY_OTHER
+                        ) ?></h2>
                 </div>
                 <!--  -->
                 <div class="sale-discount-list-content-container">
@@ -273,17 +303,21 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                         <?
                         foreach ($otherPresets as $preset) {
                             $extendedDescription = $preset->getExtendedDescription();
-                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_ID' => $preset::className(),
-                                ));
-                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(array(
-                                    'from_list' => 'preset',
-                                    'lang' => LANGUAGE_ID,
-                                    'PRESET_DISCOUNT_ID' => $preset::className(),
-                                    'apply_filter' => 'Y'
-                                ));
+                            $createDiscountLink = $selfFolderUrl . 'sale_discount_preset_detail.php?' . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_ID' => $preset::className(),
+                                    )
+                                );
+                            $listDiscountLink = $selfFolderUrl . "sale_discount.php?" . http_build_query(
+                                    array(
+                                        'from_list' => 'preset',
+                                        'lang' => LANGUAGE_ID,
+                                        'PRESET_DISCOUNT_ID' => $preset::className(),
+                                        'apply_filter' => 'Y'
+                                    )
+                                );
                             $listDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($listDiscountLink);
                             $createDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($createDiscountLink);
                             $targetHref = $adminSidePanelHelper->isPublicFrame() ? 'target="_top"' : "";
@@ -308,19 +342,22 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_TITLE'));
                                                 <dd><?= $extendedDescription['DISCOUNT_VALUE'] ?></dd>
                                             <? } ?>
                                             <? if ($extendedDescription['DISCOUNT_CONDITION']) { ?>
-                                                <dt><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION') ?>
-                                                    :
+                                                <dt><?= Loc::getMessage(
+                                                        'SALE_DISCOUNT_PRESET_LIST_ITEM_TITLE_CONDITION'
+                                                    ) ?>:
                                                 </dt>
                                                 <dd><?= $extendedDescription['DISCOUNT_CONDITION'] ?></dd>
                                             <? } ?>
                                         </dl>
                                     </div>
                                     <div class="sale-discount-list-block-btn">
-                                        <a <?= $targetHref ?>
-                                                href="<?= $createDiscountLink ?>"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET') ?></a>
+                                        <a <?= $targetHref ?> href="<?= $createDiscountLink ?>"><?= Loc::getMessage(
+                                                'SALE_DISCOUNT_PRESET_LIST_ITEM_CREATE_BY_PRESET'
+                                            ) ?></a>
                                         <? if ($presetManager->hasCreatedDiscounts($preset)) { ?>
-                                            <a href="<?= $listDiscountLink ?>"
-                                               target="_top"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET') ?></a>
+                                            <a href="<?= $listDiscountLink ?>" target="_top"><?= Loc::getMessage(
+                                                    'SALE_DISCOUNT_PRESET_LIST_ITEM_LIST_BY_PRESET'
+                                                ) ?></a>
                                         <? } ?>
                                     </div>
                                 </div>

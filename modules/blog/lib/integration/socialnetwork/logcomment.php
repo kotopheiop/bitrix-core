@@ -70,11 +70,13 @@ class LogComment
             }
 
             if (!empty($commentFieldList['UF_BLOG_COMM_URL_PRV'])) {
-                $metadata = \Bitrix\Main\UrlPreview\UrlMetadataTable::getRowById($commentFieldList['UF_BLOG_COMM_URL_PRV']);
+                $metadata = \Bitrix\Main\UrlPreview\UrlMetadataTable::getRowById(
+                    $commentFieldList['UF_BLOG_COMM_URL_PRV']
+                );
                 if (
                     $metadata
                     && isset($metadata['TITLE'])
-                    && strlen($metadata['TITLE']) > 0
+                    && $metadata['TITLE'] <> ''
                 ) {
                     $content .= ' ' . $metadata['TITLE'];
                 }

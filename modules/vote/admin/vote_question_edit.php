@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager						#
@@ -18,8 +19,9 @@ use \Bitrix\Main\Localization\Loc;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/prolog.php");
-if ($APPLICATION->GetGroupRight("vote") <= "D")
+if ($APPLICATION->GetGroupRight("vote") <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/include.php");
 
@@ -31,11 +33,14 @@ if ($userOpt["question_edit"] != "old") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     /* @var $request \Bitrix\Main\HttpRequest */
     $request = \Bitrix\Main\Context::getCurrent()->getRequest();
-    ?><? $APPLICATION->IncludeComponent("bitrix:voting.admin.question.edit", ".default",
+    ?><? $APPLICATION->IncludeComponent(
+        "bitrix:voting.admin.question.edit",
+        ".default",
         array(
             "VOTE_ID" => $request->getQuery("VOTE_ID"),
             "QUESTION_ID" => $request->getQuery("ID")
-        ));
+        )
+    );
 
     ?><?= BeginNote(); ?><a href="javascript:void(0);"
                             onclick="BX.userOptions.save('admin_panel', 'voting_view', 'question_edit', 'old');BX.reload();return false;"><?
@@ -50,8 +55,18 @@ define("HELP_FILE", "vote_list.php");
 $old_module_version = CVote::IsOldVersion();
 
 $aTabs = array(
-    array("DIV" => "edit2", "TAB" => GetMessage("VOTE_QUESTION"), "ICON" => "vote_question_edit", "TITLE" => GetMessage("VOTE_QUESTION_TEXT")),
-    array("DIV" => "edit3", "TAB" => GetMessage("VOTE_ANSWERS"), "ICON" => "vote_question_edit", "TITLE" => GetMessage("VOTE_ANSWER_LIST")),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("VOTE_QUESTION"),
+        "ICON" => "vote_question_edit",
+        "TITLE" => GetMessage("VOTE_QUESTION_TEXT")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("VOTE_ANSWERS"),
+        "ICON" => "vote_question_edit",
+        "TITLE" => GetMessage("VOTE_ANSWER_LIST")
+    ),
 );
 /* @var $request \Bitrix\Main\HttpRequest */
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
@@ -91,13 +106,15 @@ if ($ID <= 0) {
         "REQUIRED" => "N",
         "DIAGRAM_TYPE" => VOTE_DEFAULT_DIAGRAM_TYPE,
         "TEMPLATE" => "default.php",
-        "TEMPLATE_NEW" => "default.php");
+        "TEMPLATE_NEW" => "default.php"
+    );
 }
 
 try {
     $vote = \Bitrix\Vote\Vote::loadFromId($voteId);
-    if (!$vote->canEdit($USER->GetID()))
+    if (!$vote->canEdit($USER->GetID())) {
         throw new \Bitrix\Main\ArgumentException(GetMessage("ACCESS_DENIED"), "Access denied.");
+    }
 } catch (Exception $e) {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     ShowError($e->getMessage());
@@ -113,7 +130,7 @@ $APPLICATION->SetTitle($sDocTitle);
  ********************************************************************/
 
 
-if (!($_SERVER["REQUEST_METHOD"] == "POST" && (strlen($save) > 0 || strlen($apply) > 0))) {
+if (!($_SERVER["REQUEST_METHOD"] == "POST" && ($save <> '' || $apply <> ''))) {
 } elseif (!check_bitrix_sessid()) {
 } else {
     $bVarsFromForm = false;
@@ -130,11 +147,13 @@ if (!($_SERVER["REQUEST_METHOD"] == "POST" && (strlen($save) > 0 || strlen($appl
         "DIAGRAM_TYPE" => $_REQUEST["DIAGRAM_TYPE"],
         "FIELD_TYPE" => \Bitrix\Vote\QuestionTypes::COMPATIBILITY,
         "TEMPLATE" => $_REQUEST["TEMPLATE"],
-        "TEMPLATE_NEW" => $_REQUEST["TEMPLATE_NEW"]);
+        "TEMPLATE_NEW" => $_REQUEST["TEMPLATE_NEW"]
+    );
     foreach ($_REQUEST["ANSWER"] as $pid) {
         $pid = intval($pid);
-        if ($pid <= 0)
+        if ($pid <= 0) {
             continue;
+        }
         $arAnswer = array(
             "ID" => intval($_REQUEST["ANSWER_ID_" . $pid]),
             "QUESTION_ID" => $ID,
@@ -145,7 +164,8 @@ if (!($_SERVER["REQUEST_METHOD"] == "POST" && (strlen($save) > 0 || strlen($appl
             "FIELD_WIDTH" => intval($_REQUEST["FIELD_WIDTH_" . $pid]),
             "FIELD_HEIGHT" => intval($_REQUEST["FIELD_HEIGHT_" . $pid]),
             "FIELD_PARAM" => trim($_REQUEST["FIELD_PARAM_" . $pid]),
-            "COLOR" => trim($_REQUEST["COLOR_" . $pid]));
+            "COLOR" => trim($_REQUEST["COLOR_" . $pid])
+        );
         $arAnswersFields[$pid] = $arAnswer;
         if ($arAnswer["ID"] <= 0 && empty($arAnswer["MESSAGE"])):
             unset($arAnswersFields[$pid]);
@@ -159,9 +179,9 @@ if (!($_SERVER["REQUEST_METHOD"] == "POST" && (strlen($save) > 0 || strlen($appl
     endif;
 
     $aMsg = array();
-    if (!$result)
+    if (!$result) {
         $bVarsFromForm = true;
-    else {
+    } else {
         foreach ($arAnswersFields as $pid => $arAnswer) {
             $bResult = true;
             $APPLICATION->ResetException();
@@ -183,16 +203,20 @@ if (!($_SERVER["REQUEST_METHOD"] == "POST" && (strlen($save) > 0 || strlen($appl
                 $e = $APPLICATION->GetException();
                 $aMsg[] = array(
                     "id" => "ANSWER_ID_" . $pid,
-                    "text" => ($e ? $e->Getstring() : "Error"));
+                    "text" => ($e ? $e->Getstring() : "Error")
+                );
             endif;
             $bVarsFromForm = ($bVarsFromForm ? $bVarsFromForm : !$bResult);
         }
     }
     if (!$bVarsFromForm):
-        if (strlen($save) > 0):
+        if ($save <> ''):
             LocalRedirect("vote_question_list.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $voteId);
         endif;
-        LocalRedirect("vote_question_edit.php?lang=" . LANGUAGE_ID . "&ID=$ID&VOTE_ID=" . $voteId . "&" . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            "vote_question_edit.php?lang=" . LANGUAGE_ID . "&ID=$ID&VOTE_ID=" . $voteId . "&" . $tabControl->ActiveTabParam(
+            )
+        );
     elseif (!empty($aMsg)):
         $e = new CAdminException($aMsg);
     else:
@@ -221,20 +245,27 @@ $aMenu = array(
         "TEXT" => GetMessage("VOTE_QUESTIONS"),
         "TITLE" => GetMessage("VOTE_QUESTIONS_LIST"),
         "LINK" => "/bitrix/admin/vote_question_list.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $voteId,
-        "ICON" => "btn_list"));
+        "ICON" => "btn_list"
+    )
+);
 
 if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("VOTE_CREATE"),
         "TITLE" => GetMessage("VOTE_CREATE_NEW_RECORD"),
         "LINK" => "/bitrix/admin/vote_question_edit.php?VOTE_ID=$voteId&lang=" . LANGUAGE_ID,
-        "ICON" => "btn_new");
+        "ICON" => "btn_new"
+    );
 
     $aMenu[] = array(
         "TEXT" => GetMessage("VOTE_DELETE"),
         "TITLE" => GetMessage("VOTE_DELETE_RECORD"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("VOTE_DELETE_RECORD_CONFIRM") . "')) window.location='/bitrix/admin/vote_question_list.php?action=delete&ID=$ID&VOTE_ID=$voteId&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "';",
-        "ICON" => "btn_delete");
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "VOTE_DELETE_RECORD_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/vote_question_list.php?action=delete&ID=$ID&VOTE_ID=$voteId&" . bitrix_sessid_get(
+            ) . "&lang=" . LANGUAGE_ID . "';",
+        "ICON" => "btn_delete"
+    );
 }
 
 $context = new CAdminContextMenu($aMenu);
@@ -321,6 +352,7 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
 </SCRIPT>
 <?
 /************** Table of colors/************************************/
+
 ?>
 <form name="form1" method="POST" action="" enctype="multipart/form-data">
     <script type="text/javascript">
@@ -363,7 +395,7 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
                 title="<?= GetMessage("VOTE_CONF") ?>"><?= $vote["ID"] ?></a>]&nbsp;
             <?= htmlspecialcharsbx($vote["TITLE"]) ?></td>
     </tr>
-    <? if (strlen($arQuestion["TIMESTAMP_X"]) > 0): ?>
+    <? if ($arQuestion["TIMESTAMP_X"] <> ''): ?>
         <tr>
             <td><?= GetMessage("VOTE_TIMESTAMP") ?></td>
             <td><?= $arQuestion["TIMESTAMP_X"] ?></td>
@@ -420,7 +452,7 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
     <tr>
         <td><?= GetMessage("VOTE_IMAGE") ?></td>
         <td><?= CFile::InputFile("IMAGE_ID", 20, $arQuestion["IMAGE_ID"]); ?><?
-            if (!is_array($arQuestion["IMAGE_ID"]) && strlen($arQuestion["IMAGE_ID"]) > 0):
+            if (!is_array($arQuestion["IMAGE_ID"]) && $arQuestion["IMAGE_ID"] <> ''):
                 ?><br/><?= CFile::ShowImage($arQuestion["IMAGE_ID"], 200, 200, "border=0", "", true) ?><?
             endif; ?>
         </td>
@@ -432,14 +464,30 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
     if (COption::GetOptionString("vote", "USE_HTML_EDIT") == "Y" && CModule::IncludeModule("fileman")):?>
         <tr>
             <td align="center" colspan="2"><?
-                CFileMan::AddHTMLEditorFrame("QUESTION", htmlspecialcharsbx($arQuestion["QUESTION"]), "QUESTION_TYPE", $arQuestion["QUESTION_TYPE"], array('height' => '200', 'width' => '100%'));
+                CFileMan::AddHTMLEditorFrame(
+                    "QUESTION",
+                    htmlspecialcharsbx($arQuestion["QUESTION"]),
+                    "QUESTION_TYPE",
+                    $arQuestion["QUESTION_TYPE"],
+                    array('height' => '200', 'width' => '100%')
+                );
                 ?></td>
         </tr>
     <? else:?>
         <tr>
-            <td align="center"
-                colspan="2"><?= InputType("radio", "QUESTION_TYPE", "text", $arQuestion["QUESTION_TYPE"], false) ?>Text
-                &nbsp;/&nbsp;<?= InputType("radio", "QUESTION_TYPE", "html", $arQuestion["QUESTION_TYPE"], false) ?>HTML
+            <td align="center" colspan="2"><?= InputType(
+                    "radio",
+                    "QUESTION_TYPE",
+                    "text",
+                    $arQuestion["QUESTION_TYPE"],
+                    false
+                ) ?>Text &nbsp;/&nbsp;<?= InputType(
+                    "radio",
+                    "QUESTION_TYPE",
+                    "html",
+                    $arQuestion["QUESTION_TYPE"],
+                    false
+                ) ?>HTML
             </td>
         </tr>
         <tr>
@@ -568,13 +616,23 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
                             <?= (intval($arAnswer["ID"]) > 0 ? $arAnswer["ID"] : "") ?></td>
                         <td><input type="text" name="MESSAGE_<?= $i ?>"
                                    value="<?= htmlspecialcharsbx($arAnswer["MESSAGE"]) ?>" style="width:100%;"/></td>
-                        <td><?= SelectBoxFromArray("FIELD_TYPE_" . $i, GetAnswerTypeList(), $arAnswer["FIELD_TYPE"], "", "OnChange=\"FIELD_TYPE_CHANGE(" . $i . ")\" class='typeselect'") ?></td>
+                        <td><?= SelectBoxFromArray(
+                                "FIELD_TYPE_" . $i,
+                                GetAnswerTypeList(),
+                                $arAnswer["FIELD_TYPE"],
+                                "",
+                                "OnChange=\"FIELD_TYPE_CHANGE(" . $i . ")\" class='typeselect'"
+                            ) ?></td>
                         <td><input type="text" name="FIELD_WIDTH_<?= $i ?>" id="FIELD_WIDTH_<?= $i ?>" size="3" <?
-                            ?>value="<?= (intval($arAnswer["FIELD_WIDTH"]) > 0 ? intval($arAnswer["FIELD_WIDTH"]) : "") ?>" <?
+                            ?>value="<?= (intval($arAnswer["FIELD_WIDTH"]) > 0 ? intval(
+                                $arAnswer["FIELD_WIDTH"]
+                            ) : "") ?>" <?
                             ?><?= ($arAnswer["FIELD_TYPE"] != 4 && $arAnswer["FIELD_TYPE"] != 5 ? "disabled='disabled'" : "") ?> />
                         </td>
                         <td><input type="text" name="FIELD_HEIGHT_<?= $i ?>" id="FIELD_HEIGHT_<?= $i ?>" size="3" <?
-                            ?>value="<?= (intval($arAnswer["FIELD_HEIGHT"]) > 0 ? intval($arAnswer["FIELD_HEIGHT"]) : "") ?>" <?
+                            ?>value="<?= (intval($arAnswer["FIELD_HEIGHT"]) > 0 ? intval(
+                                $arAnswer["FIELD_HEIGHT"]
+                            ) : "") ?>" <?
                             ?><?= ($arAnswer["FIELD_TYPE"] != 4 && $arAnswer["FIELD_TYPE"] != 5 ? "disabled='disabled'" : "") ?> />
                         </td>
                         <td><input type="text" name="FIELD_PARAM_<?= $i ?>"
@@ -606,7 +664,13 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
                             <input type="hidden" name="ANSWER_ID_<?= $i ?>" value="0"/>
                         </td>
                         <td><input type="text" name="MESSAGE_<?= $i ?>" value="" style="width:100%;"/></td>
-                        <td><?= SelectBoxFromArray("FIELD_TYPE_" . $i, GetAnswerTypeList(), "radio", "", "onchange=\"FIELD_TYPE_CHANGE(" . $i . ")\" class='typeselect'");
+                        <td><?= SelectBoxFromArray(
+                                "FIELD_TYPE_" . $i,
+                                GetAnswerTypeList(),
+                                "radio",
+                                "",
+                                "onchange=\"FIELD_TYPE_CHANGE(" . $i . ")\" class='typeselect'"
+                            );
                             ?></td>
                         <td><input type="text" id="FIELD_WIDTH_<?= $i ?>" name="FIELD_WIDTH_<?= $i ?>" value="" size="3"
                                    disabled="disabled"/></td>
@@ -646,6 +710,8 @@ $t_COL = array("00", "33", "66", "99", "CC", "FF");
 <?= EndNote(); ?>
 <?
 ?><?= BeginNote(); ?><a href="javascript:void(0);"
-                        onclick="BX.userOptions.save('admin_panel', 'voting_view', 'question_edit', 'new');BX.reload();return false;"><?= Loc::getMessage("VOTE_GO_TO_NEW_PAGE_TITLE") ?></a><?= EndNote();
+                        onclick="BX.userOptions.save('admin_panel', 'voting_view', 'question_edit', 'new');BX.reload();return false;"><?= Loc::getMessage(
+        "VOTE_GO_TO_NEW_PAGE_TITLE"
+    ) ?></a><?= EndNote();
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

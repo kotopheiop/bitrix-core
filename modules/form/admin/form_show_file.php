@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -9,10 +10,11 @@
 */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
-if (!CModule::IncludeModule("form"))
+if (!CModule::IncludeModule("form")) {
     die();
+}
 
-if (strlen($_REQUEST["hash"]) > 0) {
+if ($_REQUEST["hash"] <> '') {
     $arFile = CFormResult::GetFileByHash($_REQUEST["rid"], $_REQUEST["hash"]);
     if ($arFile) {
         set_time_limit(0);

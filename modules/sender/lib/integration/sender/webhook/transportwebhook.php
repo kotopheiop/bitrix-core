@@ -177,9 +177,12 @@ class TransportWebHook implements Transport\iBase, Transport\iLimitation
             return;
         }
 
-        $this->httpClient->post($this->buffer['uri'], array(
-            'list' => Json::encode($this->buffer['list']),
-        ));
+        $this->httpClient->post(
+            $this->buffer['uri'],
+            array(
+                'list' => Json::encode($this->buffer['list']),
+            )
+        );
 
         $this->getCountLimiter()->inc($count);
         $this->resetBuffer();

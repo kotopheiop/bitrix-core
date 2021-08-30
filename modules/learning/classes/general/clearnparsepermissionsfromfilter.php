@@ -16,28 +16,32 @@ class CLearnParsePermissionsFromFilter
         $loggedUserId = false;
 
         // Skip checking permissions?
-        if (isset($arFilter['CHECK_PERMISSIONS']) && ($arFilter['CHECK_PERMISSIONS'] === 'N'))
+        if (isset($arFilter['CHECK_PERMISSIONS']) && ($arFilter['CHECK_PERMISSIONS'] === 'N')) {
             return;
+        }
 
         // Determine requested operations
         $this->requestedOperations = self::ParseRequestedOperations($arFilter);
 
         // Determine logged in user
         global $USER;
-        if (is_object($USER) && method_exists($USER, 'GetID'))
+        if (is_object($USER) && method_exists($USER, 'GetID')) {
             $loggedUserId = (int)$USER->GetID();
+        }
 
         $this->requestedUserId = self::DetermineRequestedUserId($arFilter, $loggedUserId);
 
         // If user_id === current logged user_id, and he is admin => skip checking permissions
-        if (($this->requestedUserId === $loggedUserId) && $USER->IsAdmin())
-            return;        // skip checking permissions
+        if (($this->requestedUserId === $loggedUserId) && $USER->IsAdmin()) {
+            return;
+        }        // skip checking permissions
 
         $this->oAccess = CLearnAccess::GetInstance($this->requestedUserId);
 
         // If base (shared) user rights covers requested operations => nothing to check.
-        if ($this->oAccess->IsBaseAccess($this->requestedOperations))
-            return;        // skip checking permissions
+        if ($this->oAccess->IsBaseAccess($this->requestedOperations)) {
+            return;
+        }        // skip checking permissions
 
         // Checking of permissions must be.
         $this->bCheckPerm = true;
@@ -47,15 +51,17 @@ class CLearnParsePermissionsFromFilter
     protected static function DetermineRequestedUserId($arFilter, $loggedUserId)
     {
         // If user_id given - use it, instead of logged-in user_id
-        if (isset($arFilter['CHECK_PERMISSIONS_FOR_USER_ID']))
+        if (isset($arFilter['CHECK_PERMISSIONS_FOR_USER_ID'])) {
             $requestedUserId = (int)$arFilter['CHECK_PERMISSIONS_FOR_USER_ID'];
-        elseif ($loggedUserId !== false)
+        } elseif ($loggedUserId !== false) {
             $requestedUserId = $loggedUserId;
-        else {
+        } else {
             // No user logged in and no user given: this is logic error.
-            throw new LearnException ('EA_LOGIC',
+            throw new LearnException (
+                'EA_LOGIC',
                 LearnException::EXC_ERR_ALL_LOGIC
-                | LearnException::EXC_ERR_ALL_GIVEUP);
+                | LearnException::EXC_ERR_ALL_GIVEUP
+            );
         }
 
         return ($requestedUserId);
@@ -69,7 +75,8 @@ class CLearnParsePermissionsFromFilter
             throw new LearnException (
                 'EA_PARAMS: outdated "MIN_PERMISSION" key used.',
                 LearnException::EXC_ERR_ALL_LOGIC
-                | LearnException::EXC_ERR_ALL_PARAMS);
+                | LearnException::EXC_ERR_ALL_PARAMS
+            );
         }
 
         // Determine requested operations
@@ -86,7 +93,8 @@ class CLearnParsePermissionsFromFilter
                 throw new LearnException (
                     'EA_PARAMS: bitmask ACCESS_OPERATIONS must be an integer and > 0.',
                     LearnException::EXC_ERR_ALL_LOGIC
-                    | LearnException::EXC_ERR_ALL_PARAMS);
+                    | LearnException::EXC_ERR_ALL_PARAMS
+                );
             }
 
             // requested operations
@@ -101,9 +109,11 @@ class CLearnParsePermissionsFromFilter
     {
         // SQL exists only if check permissions must be done
         if ($this->bCheckPerm === false) {
-            throw new LearnException ('',
+            throw new LearnException (
+                '',
                 LearnException::EXC_ERR_ALL_LOGIC
-                | LearnException::EXC_ERR_ALL_GIVEUP);
+                | LearnException::EXC_ERR_ALL_GIVEUP
+            );
         }
 
         // Is not cached yet?

@@ -15,8 +15,9 @@ class Post
     public static function buildPreview(array $params)
     {
         global $APPLICATION;
-        if (!Loader::includeModule('blog'))
+        if (!Loader::includeModule('blog')) {
             return null;
+        }
 
         ob_start();
         $APPLICATION->includeComponent(
@@ -34,37 +35,62 @@ class Post
      */
     public static function getImAttach(array $params)
     {
-        if (!Loader::includeModule('im'))
+        if (!Loader::includeModule('im')) {
             return false;
+        }
 
-        if (!Loader::includeModule('blog'))
+        if (!Loader::includeModule('blog')) {
             return false;
+        }
 
         $cursor = \CBlogPost::getList(
             array(),
             array("ID" => $params["postId"]),
             false,
             false,
-            array("ID", "BLOG_ID", "PUBLISH_STATUS", "TITLE", "AUTHOR", "ENABLE_COMMENTS", "NUM_COMMENTS", "VIEWS", "CODE", "MICRO", "DETAIL_TEXT", "DATE_PUBLISH", "CATEGORY_ID", "HAS_SOCNET_ALL", "HAS_TAGS", "HAS_IMAGES", "HAS_PROPS", "HAS_COMMENT_IMAGES")
+            array(
+                "ID",
+                "BLOG_ID",
+                "PUBLISH_STATUS",
+                "TITLE",
+                "AUTHOR",
+                "ENABLE_COMMENTS",
+                "NUM_COMMENTS",
+                "VIEWS",
+                "CODE",
+                "MICRO",
+                "DETAIL_TEXT",
+                "DATE_PUBLISH",
+                "CATEGORY_ID",
+                "HAS_SOCNET_ALL",
+                "HAS_TAGS",
+                "HAS_IMAGES",
+                "HAS_PROPS",
+                "HAS_COMMENT_IMAGES"
+            )
         );
         $post = $cursor->fetch();
-        if (!$post)
+        if (!$post) {
             return false;
+        }
 
         // For some reason, blog stores specialchared text.
         $post['DETAIL_TEXT'] = htmlspecialcharsback($post['DETAIL_TEXT']);
-        if ($post['MICRO'] === 'Y')
+        if ($post['MICRO'] === 'Y') {
             $post['TITLE'] = null;
+        }
 
         $parser = new \blogTextParser();
         $post['PREVIEW_TEXT'] = TruncateText($parser->killAllTags($post["DETAIL_TEXT"]), 200);
         $user = User::getInstance($post['AUTHOR']);
 
         $attach = new \CIMMessageParamAttach(1, '#E30000');
-        $attach->addUser(array(
-            'NAME' => $user->getFullName(),
-            'AVATAR' => $user->getAvatar(),
-        ));
+        $attach->addUser(
+            array(
+                'NAME' => $user->getFullName(),
+                'AVATAR' => $user->getAvatar(),
+            )
+        );
 
         if ($post['TITLE'] != '') {
             $attach->addHtml('<strong>' . $post['TITLE'] . '</strong>');
@@ -82,8 +108,9 @@ class Post
      */
     public static function checkUserReadAccess(array $params, $userId)
     {
-        if (!Loader::includeModule('blog'))
+        if (!Loader::includeModule('blog')) {
             return false;
+        }
 
         $permissions = \CBlogPost::getSocNetPostPerms($params['postId'], true, $userId);
         return ($permissions >= BLOG_PERMS_READ);

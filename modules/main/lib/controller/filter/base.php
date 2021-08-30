@@ -16,9 +16,13 @@ class Base extends \Bitrix\Main\Engine\Controller
         );
 
         foreach ($entityFilter->getFields() as $field) {
-            $result[] = \Bitrix\Main\UI\Filter\FieldAdapter::adapt($field->toArray([
-                'lightweight' => true
-            ]));
+            $result[] = \Bitrix\Main\UI\Filter\FieldAdapter::adapt(
+                $field->toArray(
+                    [
+                        'lightweight' => true
+                    ]
+                )
+            );
         }
 
         return $result;
@@ -35,7 +39,12 @@ class Base extends \Bitrix\Main\Engine\Controller
         if ($field) {
             $result = \Bitrix\Main\UI\Filter\FieldAdapter::adapt($field->toArray());
         } else {
-            $this->addError(new Error(Loc::getMessage("MAIN_CONTROLLER_FILTER_FIELD_NOT_FOUND"), "MAIN_CONTROLLER_FILTER_FIELD_NOT_FOUND"));
+            $this->addError(
+                new Error(
+                    Loc::getMessage("MAIN_CONTROLLER_FILTER_FIELD_NOT_FOUND"),
+                    "MAIN_CONTROLLER_FILTER_FIELD_NOT_FOUND"
+                )
+            );
             return null;
         }
 

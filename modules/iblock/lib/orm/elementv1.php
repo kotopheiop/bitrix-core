@@ -35,7 +35,7 @@ abstract class ElementV1 extends CommonElement
 
         if ($field instanceof PropertyReference) {
             // for v1 preferable to change existing object (sel+upd) instead of new (del+ins)
-            if (!$this->sysIsFilled($fieldName)) {
+            if ($this->state !== State::RAW && !$this->sysIsFilled($fieldName)) {
                 $this->fill($fieldName);
             }
         }
@@ -50,7 +50,7 @@ abstract class ElementV1 extends CommonElement
         // save single value references
         foreach ($this->entity->getFields() as $field) {
             if ($field instanceof PropertyReference) {
-                if ($this->sysHasValue($field->getName())) {
+                if ($this->sysHasValue($field->getName()) && !empty($this->get($field->getName()))) {
                     /** @var EntityObject $valueObject */
                     $valueObject = $this->get($field->getName());
 

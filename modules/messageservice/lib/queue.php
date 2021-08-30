@@ -44,7 +44,9 @@ class Queue
             return "";
         }
 
-        return static::sendMessages();
+        Application::getInstance()->addBackgroundJob([get_called_class(), "sendMessages"]);
+
+        return "";
     }
 
     /**
@@ -55,18 +57,14 @@ class Queue
      */
     public static function sendMessages()
     {
-        if (defined("BX_FORK_AGENTS_AND_EVENTS_FUNCTION")) {
-            if (\CMain::forkActions(array(get_called_class(), "sendMessages")))
-                return "";
-        }
-
         $connection = Application::getConnection();
         $lockTag = \CMain::getServerUniqID() . '_b_messageservice_message';
 
         $lockDb = $connection->query("SELECT GET_LOCK('" . $lockTag . "', 0) as L");
         $lockRow = $lockDb->fetch();
-        if ($lockRow["L"] == "0")
+        if ($lockRow["L"] == "0") {
             return "";
+        }
 
         $counts = Internal\Entity\MessageTable::getAllDailyCount();
 
@@ -103,8 +101,9 @@ class Queue
             while ($message = $messagesResult->fetch()) {
                 $serviceId = $message['SENDER_ID'] . ':' . $message['MESSAGE_FROM'];
 
-                if (!isset($counts[$serviceId]))
+                if (!isset($counts[$serviceId])) {
                     $counts[$serviceId] = 0;
+                }
 
                 $sender = SmsManager::getSenderById($message['SENDER_ID']);
                 if ($sender) {
@@ -112,10 +111,13 @@ class Queue
                     $current = $counts[$serviceId];
 
                     if ($limit > 0 && $current >= $limit) {
-                        Internal\Entity\MessageTable::update($message['ID'], array(
-                            'NEXT_EXEC' => $nextDay,
-                            'STATUS_ID' => MessageStatus::DEFERRED
-                        ));
+                        Internal\Entity\MessageTable::update(
+                            $message['ID'],
+                            array(
+                                'NEXT_EXEC' => $nextDay,
+                                'STATUS_ID' => MessageStatus::DEFERRED
+                            )
+                        );
                         $notifyUpdateMessages[] = array(
                             'ID' => $message['ID'],
                             'STATUS_ID' => MessageStatus::DEFERRED,
@@ -126,7 +128,7 @@ class Queue
                     ++$counts[$serviceId];
                 }
 
-                $message['MESSAGE_HEADERS'] = unserialize($message['MESSAGE_HEADERS']);
+                $message['MESSAGE_HEADERS'] = unserialize($message['MESSAGE_HEADERS'], ['allowed_classes' => false]);
                 $toUpdate = array('SUCCESS_EXEC' => "E", 'DATE_EXEC' => new Type\DateTime);
 
                 try {
@@ -162,7 +164,7 @@ class Queue
                         $toUpdate['NEXT_EXEC'] = (string)$toUpdate['NEXT_EXEC'];
                     }
                     $notifyUpdateMessages[] = $toUpdate;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $application = \Bitrix\Main\Application::getInstance();
                     $exceptionHandler = $application->getExceptionHandler();
                     $exceptionHandler->writeToLog($e);

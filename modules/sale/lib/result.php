@@ -128,8 +128,9 @@ class Result extends Entity\Result
     {
         $messages = array();
 
-        foreach ($this->getWarnings() as $warning)
+        foreach ($this->getWarnings() as $warning) {
             $messages[] = $warning->getMessage();
+        }
 
         return $messages;
     }

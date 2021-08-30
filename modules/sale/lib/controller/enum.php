@@ -46,13 +46,14 @@ class Enum extends Controller
         $property = new Property();
 
         foreach ($property->getTypes()['ENUM'] as $name => $description) {
-            if ($name == 'LOCATION')
+            if ($name == 'LOCATION') {
                 continue;
-            if ($name == 'FILE')
+            }
+            if ($name == 'FILE') {
                 continue;
+            }
 
             $r[$name] = $description;
-
         }
         return ['ENUM' => $r];
     }

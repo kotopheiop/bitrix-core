@@ -64,11 +64,13 @@ class WipeEmpty
             }
 
             foreach ($pathList as $testPath) {
-                if (substr($testPath, -4) === '.php') {
+                if (mb_substr($testPath, -4) === '.php') {
                     if (Translate\IO\Path::isLangDir($testPath)) {
                         $this->pathList[] = $testPath;
                     } else {
-                        $this->addError(new Main\Error(Loc::getMessage('TR_CLEAN_FILE_NOT_LANG', array('#FILE#' => $testPath))));
+                        $this->addError(
+                            new Main\Error(Loc::getMessage('TR_CLEAN_FILE_NOT_LANG', array('#FILE#' => $testPath)))
+                        );
                     }
                 } else {
                     if (Translate\IO\Path::isLangDir($testPath)) {
@@ -81,11 +83,13 @@ class WipeEmpty
                             '=PATH' => rtrim($testPath, '/'),
                             '=%PATH' => rtrim($testPath, '/') . '/%'
                         );
-                        $pathLangRes = Index\Internals\PathLangTable::getList(array(
-                            'filter' => $pathFilter,
-                            'order' => array('ID' => 'ASC'),
-                            'select' => ['PATH'],
-                        ));
+                        $pathLangRes = Index\Internals\PathLangTable::getList(
+                            array(
+                                'filter' => $pathFilter,
+                                'order' => array('ID' => 'ASC'),
+                                'select' => ['PATH'],
+                            )
+                        );
                         while ($pathLang = $pathLangRes->fetch()) {
                             $this->pathList[] = $pathLang['PATH'];
                         }
@@ -119,13 +123,17 @@ class WipeEmpty
     private function runWiping()
     {
         $processedItemCount = 0;
-        for ($pos = ((int)$this->seekOffset > 0 ? (int)$this->seekOffset : 0), $total = count($this->pathList); $pos < $total; $pos++) {
+        for (
+            $pos = ((int)$this->seekOffset > 0 ? (int)$this->seekOffset : 0), $total = count(
+            $this->pathList
+        ); $pos < $total; $pos++
+        ) {
             $testPath = $this->pathList[$pos];
 
             $isOk = true;
 
             // file
-            if (substr($testPath, -4) === '.php') {
+            if (mb_substr($testPath, -4) === '.php') {
                 $testPath = Translate\IO\Path::replaceLangId($testPath, '#LANG_ID#');
 
                 foreach (self::$enabledLanguagesList as $langId) {
@@ -134,14 +142,16 @@ class WipeEmpty
                     $langFullPath = Main\Localization\Translation::convertLangPath($langFullPath, $langId);
 
                     if ($this->removeEmptyParents($langFullPath)) {
-                        Translate\Index\Internals\FileIndexTable::purge(new Translate\Filter(['path' => $testPath, 'langId' => $langId]));
+                        Translate\Index\Internals\FileIndexTable::purge(
+                            new Translate\Filter(['path' => $testPath, 'langId' => $langId])
+                        );
                     } else {
                         $isOk = false;
                     }
                 }
             } // folder
             else {
-                if (substr($testPath, -5) === '/lang') {
+                if (mb_substr($testPath, -5) === '/lang') {
                     $testPath .= '/#LANG_ID#';
                 } else {
                     $testPath = Translate\IO\Path::replaceLangId($testPath, '#LANG_ID#');
@@ -153,7 +163,9 @@ class WipeEmpty
                     $langFullPath = Main\Localization\Translation::convertLangPath($langFullPath, $langId);
 
                     if ($this->removeEmptyParents($langFullPath)) {
-                        Translate\Index\Internals\FileIndexTable::purge(new Translate\Filter(['path' => $testPath, 'langId' => $langId]));
+                        Translate\Index\Internals\FileIndexTable::purge(
+                            new Translate\Filter(['path' => $testPath, 'langId' => $langId])
+                        );
                     } else {
                         $isOk = false;
                     }

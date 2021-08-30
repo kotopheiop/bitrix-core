@@ -2,10 +2,9 @@
 
 namespace Bitrix\Main\UI\Filter;
 
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Type\Date;
-
 
 Loc::loadMessages(__FILE__);
 
@@ -136,8 +135,7 @@ class Field
         $include = [],
         $allowYearsSwithcer = false,
         $messages = []
-    )
-    {
+    ) {
         if (!is_bool($enableTime)) {
             $enableTime = false;
         }
@@ -150,6 +148,7 @@ class Field
 
         if (empty($values)) {
             $values = array(
+                "_allow_year" => "",
                 "_from" => "",
                 "_to" => "",
                 "_days" => "",
@@ -166,6 +165,7 @@ class Field
         $currentMonthType = array();
 
         foreach ($sourceMonths as $key => $month) {
+            $month = (string)$month;
             $months[] = array(
                 "VALUE" => $month,
                 "NAME" => static::getMessage($messages, "MAIN_UI_FILTER_FIELD_MONTH_" . $month)
@@ -186,6 +186,8 @@ class Field
         $currentQuarterType = array();
 
         foreach ($sourceQuarters as $key => $quarter) {
+            $quarter = (string)$quarter;
+
             $quarters[] = array(
                 "VALUE" => $quarter,
                 "NAME" => static::getMessage($messages, "MAIN_UI_FILTER_FIELD_QUARTER_" . $quarter)
@@ -247,6 +249,8 @@ class Field
         $currentYearType = array();
 
         foreach ($sourceYears as $key => $year) {
+            $year = (string)$year;
+
             $years[] = array(
                 "NAME" => $year,
                 "VALUE" => $year
@@ -265,11 +269,11 @@ class Field
             array(
                 array(
                     "NAME" => Loc::getMessage("MAIN_UI_FILTER_FIELD_SUBTYPE_CUSTOM_DATE_YEARS_SWITCHER_YES"),
-                    "VALUE" => 1
+                    "VALUE" => '1'
                 ),
                 array(
                     "NAME" => Loc::getMessage("MAIN_UI_FILTER_FIELD_SUBTYPE_CUSTOM_DATE_YEARS_SWITCHER_NO"),
-                    "VALUE" => 0
+                    "VALUE" => '0'
                 )
             ),
             array()
@@ -557,14 +561,21 @@ class Field
      * @param bool $lightweight
      * @return array
      */
-    public static function destSelector($name, $label = "", $placeholder = "", $multiple = false, $params = array(), $lightweight = false)
-    {
+    public static function destSelector(
+        $name,
+        $label = "",
+        $placeholder = "",
+        $multiple = false,
+        $params = array(),
+        $lightweight = false,
+        $filterName = ''
+    ) {
         \CJSCore::init(array('socnetlogdest'));
 
         global $APPLICATION;
 
         $field = array(
-            "ID" => "field_" . $name,
+            "ID" => "field_" . $name . ($filterName <> '' ? '_' . $filterName : ''),
             "TYPE" => Type::DEST_SELECTOR,
             "NAME" => $name,
             "LABEL" => $label,
@@ -622,7 +633,9 @@ class Field
                 "bitrix:main.ui.selector",
                 ".default",
                 array(
-                    'API_VERSION' => (!empty($params['apiVersion']) && intval($params['apiVersion']) >= 2 ? intval($params['apiVersion']) : 2),
+                    'API_VERSION' => (!empty($params['apiVersion']) && intval($params['apiVersion']) >= 2 ? intval(
+                        $params['apiVersion']
+                    ) : 2),
                     'ID' => $name,
                     'ITEMS_SELECTED' => array(),
                     'CALLBACK' => array(
@@ -630,7 +643,8 @@ class Field
                         'unSelect' => '',
                         'openDialog' => 'BX.Filter.DestinationSelectorManager.onDialogOpen',
                         'closeDialog' => 'BX.Filter.DestinationSelectorManager.onDialogClose',
-                        'openSearch' => ''
+                        'openSearch' => '',
+                        'closeSearch' => 'BX.Filter.DestinationSelectorManager.onDialogClose',
                     ),
                     'OPTIONS' => $optionsList,
                     'LOAD_JS' => true
@@ -641,6 +655,34 @@ class Field
 
             $field["HTML"] = ob_get_clean();
         }
+
+        return $field;
+    }
+
+    public static function entitySelector(
+        string $name,
+        string $label = '',
+        string $placeholder = '',
+        array $params = [],
+        string $filterName = ''
+    ) {
+        $multiple = $params['multiple'] ?? false;
+        $addEntityIdToResult = $params['addEntityIdToResult'] ?? false;
+        $dialogOptions = $params['dialogOptions'] ?? [];
+        $field = [
+            'ID' => 'field_' . $name . ($filterName != '' ? '_' . $filterName : ''),
+            'TYPE' => Type::ENTITY_SELECTOR,
+            'NAME' => $name,
+            'LABEL' => $label,
+            'VALUES' => [
+                '_label' => '',
+                '_value' => '',
+            ],
+            'MULTIPLE' => $multiple,
+            'PLACEHOLDER' => $placeholder,
+            'DIALOG_OPTIONS' => $dialogOptions,
+            'ADD_ENTITY_ID_TO_RESULT' => $addEntityIdToResult,
+        ];
 
         return $field;
     }

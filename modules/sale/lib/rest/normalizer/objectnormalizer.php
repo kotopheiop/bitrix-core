@@ -111,8 +111,9 @@ class ObjectNormalizer
         /** @var Shipment $shipment */
         foreach ($this->getOrder()->getShipmentCollection() as $shipment) {
             // ���� �������� �� ��������� ���������� ����������
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             $basketItems = [];
             /** @var ShipmentItem $shipmentItem */
@@ -120,8 +121,14 @@ class ObjectNormalizer
                 $stores = [];
                 /** @var ShipmentItemStore $shipmentItemStore */
                 foreach ($shipmentItem->getShipmentItemStoreCollection() as $shipmentItemStore) {
-                    $externalFieldsSIS = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()]) ?
-                        $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()] : [];
+                    $externalFieldsSIS = isset(
+                        $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex(
+                        )]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex(
+                        )]['STORE'][$shipmentItemStore->getInternalIndex()]
+                    ) ?
+                        $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex(
+                        )]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex(
+                        )]['STORE'][$shipmentItemStore->getInternalIndex()] : [];
 
                     $stores[] = array_merge(
                         $externalFieldsSIS,
@@ -129,15 +136,18 @@ class ObjectNormalizer
                     );
                 }
 
-                $externalFieldsSI = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]) ?
-                    $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()] : [];
+                $externalFieldsSI = isset(
+                    $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex(
+                    )]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]
+                ) ?
+                    $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex(
+                    )]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()] : [];
 
                 $basketItems[] = array_merge(
                     $externalFieldsSI,
                     $shipmentItem->getFieldValues(),
                     ['STORES' => $stores]
                 );
-
             }
 
             $externalFields = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]) ?
@@ -170,8 +180,9 @@ class ObjectNormalizer
             ->getTax()
             ->getTaxList();
         if (is_array($list) && !empty($list)) {
-            foreach ($list as $tax)
+            foreach ($list as $tax) {
                 $this->fields['ORDER']['TAXES'][] = $tax;
+            }
         }
         return $this;
     }

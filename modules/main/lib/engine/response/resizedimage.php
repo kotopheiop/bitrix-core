@@ -127,7 +127,7 @@ class ResizedImage extends BFile
     protected function prepareFile()
     {
         $file = parent::prepareFile();
-        /** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
         $tmpFile = \CFile::resizeImageGet(
             $file,
             ['width' => $this->getWidth(), 'height' => $this->getHeight()],

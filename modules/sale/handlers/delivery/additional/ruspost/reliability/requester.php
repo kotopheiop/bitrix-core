@@ -55,7 +55,11 @@ class Requester
                 }
             }
 
-            $hash = Service::createHash($resultItem['raw-full-name'], $resultItem['raw-address'], $resultItem['raw-telephone']);
+            $hash = Service::createHash(
+                $resultItem['raw-full-name'],
+                $resultItem['raw-address'],
+                $resultItem['raw-telephone']
+            );
 
             /** @var Reliability $askedItem */
             if ($askedItem = $collection->getByPrimary($hash)) {

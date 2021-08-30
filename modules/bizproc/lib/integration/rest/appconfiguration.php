@@ -3,28 +3,39 @@
 namespace Bitrix\Bizproc\Integration\Rest;
 
 use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
+use Bitrix\Bizproc\Script;
+use Bitrix\Bizproc\Script\Entity\ScriptTable;
 use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Event;
+use Bitrix\Rest\Configuration\Helper;
 use CBPDocument;
 use Exception;
 
-Loc::loadMessages(__FILE__);
-
 class AppConfiguration
 {
+    const ENTITY_BIZPROC_MAIN = 'BIZPROC_MAIN';
+    const ENTITY_BIZPROC_CRM_TRIGGER = 'BIZPROC_CRM_TRIGGER';
+    const ENTITY_BIZPROC_SCRIPT = 'BIZPROC_SCRIPT';
+
+    const OWNER_ENTITY_TYPE_BIZPROC = 'BIZPROC';
+    const OWNER_ENTITY_TYPE_TRIGGER = 'TRIGGER';
+    const OWNER_ENTITY_TYPE_BIZPROC_SCRIPT = 'BIZPROC_SCRIPT';
+
     private static $entityList = [
-        'BIZPROC_MAIN' => 500,
-        'BIZPROC_CRM_TRIGGER' => 600,
+        self::ENTITY_BIZPROC_MAIN => 500,
+        self::ENTITY_BIZPROC_CRM_TRIGGER => 600,
+        self::ENTITY_BIZPROC_SCRIPT => 700,
     ];
     private static $customDealMatch = '/^C([0-9]+):/';
     private static $accessModules = ['crm'];
     private static $context;
     private static $accessManifest = [
         'total',
-        'bizproc_crm'
+        'bizproc_crm',
     ];
 
     public static function getEntityList()
@@ -36,13 +47,20 @@ class AppConfiguration
     {
         $result = null;
         $code = $event->getParameter('CODE');
+        $itemCode = $event->getParameter('ITEM_CODE');
         if (!static::$entityList[$code]) {
             return $result;
         }
 
-        $manifest = $event->getParameter('MANIFEST');
-        $access = array_intersect($manifest['USES'], static::$accessManifest);
-        if (!$access) {
+        $option = $event->getParameters();
+        if ($code !== self::ENTITY_BIZPROC_SCRIPT && !Helper::checkAccessManifest($option, static::$accessManifest)) {
+            return $result;
+        }
+
+        if (
+            $code === self::ENTITY_BIZPROC_SCRIPT
+            && !Helper::checkAccessManifest($option, ['bizproc_script'])
+        ) {
             return $result;
         }
 
@@ -50,11 +68,14 @@ class AppConfiguration
             if (static::checkRequiredParams($code)) {
                 $step = $event->getParameter('STEP');
                 switch ($code) {
-                    case 'BIZPROC_MAIN':
+                    case self::ENTITY_BIZPROC_MAIN:
                         $result = static::exportBizproc($step);
                         break;
-                    case 'BIZPROC_CRM_TRIGGER':
+                    case self::ENTITY_BIZPROC_CRM_TRIGGER:
                         $result = static::exportCrmTrigger($step);
+                        break;
+                    case self::ENTITY_BIZPROC_SCRIPT:
+                        $result = static::exportScript($step, $event->getParameter('NEXT'), $itemCode);
                         break;
                 }
             }
@@ -64,7 +85,7 @@ class AppConfiguration
             $result['ERROR_MESSAGES'] = Loc::getMessage(
                 'BIZPROC_ERROR_CONFIGURATION_EXPORT_EXCEPTION',
                 [
-                    '#CODE#' => $code
+                    '#CODE#' => $code,
                 ]
             );
         }
@@ -78,17 +99,32 @@ class AppConfiguration
         if (!static::$entityList[$code]) {
             return null;
         }
+        $option = $event->getParameters();
+
+        if ($code !== self::ENTITY_BIZPROC_SCRIPT && !Helper::checkAccessManifest($option, static::$accessManifest)) {
+            return null;
+        }
+
+        if (
+            $code === self::ENTITY_BIZPROC_SCRIPT
+            && !Helper::checkAccessManifest($option, ['bizproc_script'])
+        ) {
+            return null;
+        }
+
         $result = null;
 
         try {
             if (static::checkRequiredParams($code)) {
-                $option = $event->getParameters();
                 switch ($code) {
-                    case 'BIZPROC_MAIN':
+                    case self::ENTITY_BIZPROC_MAIN:
                         $result = static::clearBizproc($option);
                         break;
-                    case 'BIZPROC_CRM_TRIGGER':
+                    case self::ENTITY_BIZPROC_CRM_TRIGGER:
                         $result = static::clearCrmTrigger($option);
+                        break;
+                    case self::ENTITY_BIZPROC_SCRIPT:
+                        $result = static::clearScript($option);
                         break;
                 }
             }
@@ -98,7 +134,7 @@ class AppConfiguration
             $result['ERROR_MESSAGES'] = Loc::getMessage(
                 'BIZPROC_ERROR_CONFIGURATION_CLEAR_EXCEPTION',
                 [
-                    '#CODE#' => $code
+                    '#CODE#' => $code,
                 ]
             );
         }
@@ -112,17 +148,33 @@ class AppConfiguration
         if (!static::$entityList[$code]) {
             return null;
         }
+        $data = $event->getParameters();
+
+        if ($code !== self::ENTITY_BIZPROC_SCRIPT && !Helper::checkAccessManifest($data, static::$accessManifest)) {
+            return null;
+        }
+
+        if (
+            $code === self::ENTITY_BIZPROC_SCRIPT
+            && !Helper::checkAccessManifest($data, ['bizproc_script'])
+        ) {
+            return null;
+        }
+
         $result = null;
+        $userId = (int)CurrentUser::get()->getId();//TODO: get from $event
 
         try {
             if (static::checkRequiredParams($code)) {
-                $data = $event->getParameters();
                 switch ($code) {
-                    case 'BIZPROC_MAIN':
+                    case self::ENTITY_BIZPROC_MAIN:
                         $result = static::importBizproc($data);
                         break;
-                    case 'BIZPROC_CRM_TRIGGER':
+                    case self::ENTITY_BIZPROC_CRM_TRIGGER:
                         $result = static::importCrmTrigger($data);
+                        break;
+                    case self::ENTITY_BIZPROC_SCRIPT:
+                        $result = static::importScript($data, $userId);
                         break;
                 }
             }
@@ -132,7 +184,7 @@ class AppConfiguration
             $result['ERROR_MESSAGES'] = Loc::getMessage(
                 'BIZPROC_ERROR_CONFIGURATION_IMPORT_EXCEPTION',
                 [
-                    '#CODE#' => $code
+                    '#CODE#' => $code,
                 ]
             );
         }
@@ -148,14 +200,7 @@ class AppConfiguration
     private static function checkRequiredParams($type)
     {
         $return = true;
-        if ($type == 'BIZPROC_MAIN') {
-            if (
-                !class_exists('\Bitrix\Bizproc\Workflow\Template\Packer\Bpt')
-                || !method_exists('Bitrix\Bizproc\Workflow\Template\Packer\Bpt', 'makePackageData')
-            ) {
-                throw new SystemException('not available bizproc');
-            }
-        } elseif ($type == 'BIZPROC_CRM_TRIGGER') {
+        if ($type == self::ENTITY_BIZPROC_CRM_TRIGGER) {
             if (!Loader::IncludeModule('crm')) {
                 throw new SystemException('need install module: crm');
             }
@@ -170,18 +215,19 @@ class AppConfiguration
         $result = [
             'FILE_NAME' => '',
             'CONTENT' => [],
-            'NEXT' => false
+            'NEXT' => false,
         ];
         $res = WorkflowTemplateTable::getList(
             [
                 'order' => [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 'filter' => [
-                    '=MODULE_ID' => static::$accessModules
+                    '=MODULE_ID' => static::$accessModules,
+                    '<AUTO_EXECUTE' => \CBPDocumentEventType::Script,
                 ],
                 'limit' => 1,
-                'offset' => $step
+                'offset' => $step,
             ]
         );
         if ($tpl = $res->fetchObject()) {
@@ -202,7 +248,7 @@ class AppConfiguration
                     'SYSTEM_CODE' => $tpl->getSystemCode(),
                     'ORIGINATOR_ID' => $tpl->getOriginatorId(),
                     'ORIGIN_ID' => $tpl->getOriginId(),
-                    'TEMPLATE_DATA' => $data
+                    'TEMPLATE_DATA' => $data,
                 ];
             }
         }
@@ -213,7 +259,8 @@ class AppConfiguration
     private static function clearBizproc($option)
     {
         $result = [
-            'NEXT' => false
+            'NEXT' => false,
+            'OWNER_DELETE' => [],
         ];
         $clearFull = $option['CLEAR_FULL'];
         $prefix = $option['PREFIX_NAME'];
@@ -222,13 +269,14 @@ class AppConfiguration
         $res = WorkflowTemplateTable::getList(
             [
                 'order' => [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 'filter' => [
                     '=MODULE_ID' => static::$accessModules,
-                    '>ID' => $option['NEXT']
+                    '>ID' => $option['NEXT'],
+                    '<AUTO_EXECUTE' => \CBPDocumentEventType::Script,
                 ],
-                'select' => ['*']
+                'select' => ['*'],
             ]
         );
         $errorsTmp = [];
@@ -250,10 +298,16 @@ class AppConfiguration
                     [
                         $item['MODULE_ID'],
                         $item['ENTITY'],
-                        $item['DOCUMENT_TYPE']
+                        $item['DOCUMENT_TYPE'],
                     ],
                     $errorsTmp
                 );
+                if (!$errorsTmp) {
+                    $result['OWNER_DELETE'][] = [
+                        'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_BIZPROC,
+                        'ENTITY' => $item['ID'],
+                    ];
+                }
             } else {
                 $name = $item['NAME'];
                 if ($prefix != '' && preg_match($pattern, $name) === 0) {
@@ -264,12 +318,12 @@ class AppConfiguration
                     [
                         $item['MODULE_ID'],
                         $item['ENTITY'],
-                        $item['DOCUMENT_TYPE']
+                        $item['DOCUMENT_TYPE'],
                     ],
                     [
                         'ACTIVE' => 'N',
                         'AUTO_EXECUTE' => \CBPDocumentEventType::None,
-                        'NAME' => $name
+                        'NAME' => $name,
                     ],
                     $errorsTmp
                 );
@@ -281,9 +335,10 @@ class AppConfiguration
 
     private static function importBizproc($importData)
     {
-        $result = true;
+        $result = [];
+
         if (!isset($importData['CONTENT']['DATA'])) {
-            return $result;
+            return false;
         }
         $item = $importData['CONTENT']['DATA'];
         if (
@@ -292,16 +347,29 @@ class AppConfiguration
             && class_exists($item['ENTITY'])
         ) {
             if (is_subclass_of($item['ENTITY'], '\\IBPWorkflowDocument')) {
-                $item['TEMPLATE_DATA'] = is_array($item['TEMPLATE_DATA']) ? @serialize($item['TEMPLATE_DATA']) : $item['TEMPLATE_DATA'];
+                if (isset($importData['RATIO']['CRM_STATUS'])) {
+                    if (is_array($item['TEMPLATE_DATA'])) {
+                        $item['TEMPLATE_DATA'] = static::changeDealCategory(
+                            $item['TEMPLATE_DATA'],
+                            $importData['RATIO']['CRM_STATUS']
+                        );
+                    }
+                    if ($item['DOCUMENT_TYPE'] == 'DEAL' && $item['DOCUMENT_STATUS']) {
+                        $item['DOCUMENT_STATUS'] = static::changeDealCategory(
+                            $item['DOCUMENT_STATUS'],
+                            $importData['RATIO']['CRM_STATUS']
+                        );
+                    }
+                }
 
                 try {
-                    $code = static::$context . '_xml_' . intVal($item['ID']);
-                    $id = \CBPWorkflowTemplateLoader::ImportTemplate(
+                    $code = static::$context . '_xml_' . intval($item['ID']);
+                    $id = \CBPWorkflowTemplateLoader::importTemplateFromArray(
                         0,
                         [
                             $item['MODULE_ID'],
                             $item['ENTITY'],
-                            $item['DOCUMENT_TYPE']
+                            $item['DOCUMENT_TYPE'],
                         ],
                         $item['AUTO_EXECUTE'],
                         $item['NAME'],
@@ -310,26 +378,20 @@ class AppConfiguration
                         $code
                     );
 
-                    if ($id > 0 && $item['DOCUMENT_STATUS']) {
-                        if ($item['DOCUMENT_TYPE'] == 'DEAL' && isset($importData['RATIO']['CRM_STATUS'])) {
-                            $statusRatio = $importData['RATIO']['CRM_STATUS'];
-                            $item['DOCUMENT_STATUS'] = preg_replace_callback(
-                                static::$customDealMatch,
-                                function ($matches) use ($statusRatio) {
-                                    if (!empty($statusRatio[$matches[1]])) {
-                                        $matches[0] = str_replace($matches[1], $statusRatio[$matches[1]], $matches[0]);
-                                    }
-                                    return $matches[0];
-                                },
-                                $item['DOCUMENT_STATUS']
+                    if ($id > 0) {
+                        $result['OWNER'] = [
+                            'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_BIZPROC,
+                            'ENTITY' => $id,
+                        ];
+
+                        if ($item['DOCUMENT_STATUS']) {
+                            \CBPWorkflowTemplateLoader::update(
+                                $id,
+                                [
+                                    'DOCUMENT_STATUS' => $item['DOCUMENT_STATUS'],
+                                ]
                             );
                         }
-                        \CBPWorkflowTemplateLoader::update(
-                            $id,
-                            [
-                                'DOCUMENT_STATUS' => $item['DOCUMENT_STATUS'],
-                            ]
-                        );
                     }
                 } catch (\Exception $e) {
                     $result['ERROR_ACTION'] = $e->getMessage();
@@ -350,18 +412,18 @@ class AppConfiguration
         $result = [
             'FILE_NAME' => '',
             'CONTENT' => [],
-            'NEXT' => false
+            'NEXT' => false,
         ];
 
         $res = TriggerTable::getList(
             [
                 'order' => [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 'filter' => [],
                 'select' => ['*'],
                 'limit' => 1,
-                'offset' => $step
+                'offset' => $step,
             ]
         );
         if ($item = $res->Fetch()) {
@@ -376,19 +438,19 @@ class AppConfiguration
     private static function clearCrmTrigger($option)
     {
         $result = [
-            'NEXT' => false
+            'NEXT' => false,
         ];
         $clearFull = $option['CLEAR_FULL'];
 
         $res = TriggerTable::getList(
             [
                 'order' => [
-                    'ID' => 'ASC'
+                    'ID' => 'ASC',
                 ],
                 'filter' => [
-                    '>ID' => $option['NEXT']
+                    '>ID' => $option['NEXT'],
                 ],
-                'limit' => 10
+                'limit' => 10,
             ]
         );
         while ($item = $res->Fetch()) {
@@ -401,7 +463,13 @@ class AppConfiguration
                     continue;
                 }
             }
-            TriggerTable::delete($item['ID']);
+            $delete = TriggerTable::delete($item['ID']);
+            if ($delete->isSuccess()) {
+                $result['OWNER_DELETE'][] = [
+                    'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_TRIGGER,
+                    'ENTITY' => $item['ID'],
+                ];
+            }
         }
 
         return $result;
@@ -409,9 +477,9 @@ class AppConfiguration
 
     private static function importCrmTrigger($importData)
     {
-        $result = true;
+        $result = [];
         if (!isset($importData['CONTENT']['DATA'])) {
-            return $result;
+            return false;
         }
         $item = $importData['CONTENT']['DATA'];
 
@@ -421,30 +489,244 @@ class AppConfiguration
             && isset($item['ENTITY_TYPE_ID'])
             && isset($item['ENTITY_STATUS'])
         ) {
-            if ($item['ENTITY_TYPE_ID'] == \CCrmOwnerType::Deal) {
-                $statusRatio = $importData['RATIO']['CRM_STATUS'];
-                $item['ENTITY_STATUS'] = preg_replace_callback(
-                    static::$customDealMatch,
-                    function ($matches) use ($statusRatio) {
-                        if (!empty($statusRatio[$matches[1]])) {
-                            $matches[0] = str_replace($matches[1], $statusRatio[$matches[1]], $matches[0]);
-                        }
-                        return $matches[0];
-                    },
-                    $item['ENTITY_STATUS']
-                );
+            if (isset($importData['RATIO']['CRM_STATUS'])) {
+                if (is_array($item['APPLY_RULES'])) {
+                    $item['APPLY_RULES'] = static::changeDealCategory(
+                        $item['APPLY_RULES'],
+                        $importData['RATIO']['CRM_STATUS']
+                    );
+                }
+                if ($item['ENTITY_TYPE_ID'] == \CCrmOwnerType::Deal) {
+                    $item['ENTITY_STATUS'] = static::changeDealCategory(
+                        $item['ENTITY_STATUS'],
+                        $importData['RATIO']['CRM_STATUS']
+                    );
+                }
             }
+
             $saveData = [
                 'NAME' => $item['NAME'],
                 'CODE' => $item['CODE'],
                 'ENTITY_TYPE_ID' => $item['ENTITY_TYPE_ID'],
                 'ENTITY_STATUS' => $item['ENTITY_STATUS'],
-                'APPLY_RULES' => is_array($item['APPLY_RULES']) ? $item['APPLY_RULES'] : null
+                'APPLY_RULES' => is_array($item['APPLY_RULES']) ? $item['APPLY_RULES'] : null,
             ];
-            TriggerTable::add($saveData);
+
+            $res = TriggerTable::add($saveData);
+            if ($res->isSuccess()) {
+                $result['OWNER'] = [
+                    'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_TRIGGER,
+                    'ENTITY' => $res->getId(),
+                ];
+            }
         }
 
         return $result;
     }
+
     //end region trigger
+
+    //region script
+    private static function exportScript($step, $nextId, $docType)
+    {
+        $result = [
+            'FILE_NAME' => '',
+            'CONTENT' => [],
+            'NEXT' => false,
+        ];
+
+        $nextId = (int)$nextId;
+
+        $filter = [
+            '>ID' => $nextId,
+            '=MODULE_ID' => static::$accessModules,
+        ];
+
+        if ($docType) {
+            $filter['=DOCUMENT_TYPE'] = $docType;
+        }
+
+        $res = ScriptTable::getList(
+            [
+                'order' => [
+                    'ID' => 'ASC',
+                ],
+                'filter' => $filter,
+                'limit' => 1,
+                'select' => ['ID'],
+            ]
+        );
+        if ($tpl = $res->fetch()) {
+            $data = Script\Manager::exportScript($tpl['ID']);
+            if ($data) {
+                $result['NEXT'] = $tpl['ID'];
+                $result['FILE_NAME'] = $step;
+                $result['CONTENT'] = $data;
+            }
+        }
+
+        return $result;
+    }
+
+    private static function clearScript($option)
+    {
+        $result = [
+            'NEXT' => false,
+            'OWNER_DELETE' => [],
+        ];
+
+        if (!$option['CLEAR_FULL']) {
+            return $result;
+        }
+
+        $res = ScriptTable::getList(
+            [
+                'order' => [
+                    'ID' => 'ASC',
+                ],
+                'filter' => [
+                    '>ID' => (int)$option['NEXT'],
+                    '=MODULE_ID' => static::$accessModules,
+                ],
+                'limit' => 1,
+                'select' => ['ID'],
+            ]
+        );
+
+        while ($item = $res->Fetch()) {
+            $result['NEXT'] = $item['ID'];
+
+            $deletionResult = Script\Manager::deleteScript($item['ID']);
+
+            if ($deletionResult->isSuccess()) {
+                $result['OWNER_DELETE'][] = [
+                    'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_BIZPROC_SCRIPT,
+                    'ENTITY' => $item['ID'],
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    private static function importScript($importData, int $userId)
+    {
+        $result = [];
+
+        if (!isset($importData['CONTENT']['DATA'])) {
+            return false;
+        }
+        $item = $importData['CONTENT']['DATA'];
+        if (
+            in_array($item['MODULE_ID'], static::$accessModules)
+            && Loader::includeModule($item['MODULE_ID'])
+            && class_exists($item['ENTITY'])
+        ) {
+            if (is_subclass_of($item['ENTITY'], '\\IBPWorkflowDocument')) {
+                if (isset($importData['RATIO']['CRM_STATUS']) && $item['DOCUMENT_TYPE'] === 'DEAL') {
+                    if (is_array($item['WORKFLOW_TEMPLATE'])) {
+                        $item['WORKFLOW_TEMPLATE'] = static::changeDealCategory(
+                            $item['WORKFLOW_TEMPLATE'],
+                            $importData['RATIO']['CRM_STATUS']
+                        );
+                    }
+                }
+
+                $importResult = Script\Manager::importScript($item, $userId);
+
+                if ($importResult->isSuccess()) {
+                    $result['OWNER'] = [
+                        'ENTITY_TYPE' => self::OWNER_ENTITY_TYPE_BIZPROC_SCRIPT,
+                        'ENTITY' => $importResult->getId(),
+                    ];
+                } else {
+                    $result['ERROR_ACTION'] = $result['ERROR_MESSAGES'] = current($importResult->getErrorMessages());
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    //end region script
+
+    private static function changeDealCategory($data, $ratio)
+    {
+        if (!empty($ratio)) {
+            $ratioRegEx = [];
+            $ratioReplace = [];
+            foreach ($ratio as $oldId => $newId) {
+                $ratioRegEx[] = '/^C' . $oldId . ':/';
+                $ratioReplace[] = 'C' . $newId . ':';
+            }
+            if (!empty($ratioRegEx)) {
+                $data = static::changeDealCategoryAction($data, $ratioRegEx, $ratioReplace, $ratio);
+            }
+        }
+
+        return $data;
+    }
+
+    private static function changeDealCategoryAction($data, $ratioRegEx, $ratioReplace, $ratio)
+    {
+        if (is_string($data)) {
+            $data = preg_replace($ratioRegEx, $ratioReplace, $data);
+        } elseif (is_array($data)) {
+            if (
+                isset($data['field'])
+                && $data['field'] == 'CATEGORY_ID'
+                && $data['value'] > 0
+                && $ratio[$data['value']] > 0
+            ) {
+                $data['value'] = $ratio[$data['value']];
+            }
+
+            foreach ($data as $key => $value) {
+                $newKey = static::changeDealCategoryAction($key, $ratioRegEx, $ratioReplace, $ratio);
+                if ($newKey != $key) {
+                    unset($data[$key]);
+                }
+
+                if ($newKey == 'CATEGORY_ID') {
+                    if (is_array($value)) {
+                        if (isset($value['Options']) && is_array($value['Options'])) {
+                            $data[$newKey]['Options'] = [];
+                            foreach ($value['Options'] as $dealId => $title) {
+                                if (isset($ratio[$dealId])) {
+                                    $data[$newKey]['Options'][$ratio[$dealId]] = $title;
+                                }
+                            }
+                        } else {
+                            $data[$newKey] = static::changeDealCategoryAction(
+                                $value,
+                                $ratioRegEx,
+                                $ratioReplace,
+                                $ratio
+                            );
+                        }
+                    } elseif (is_string($value) && isset($ratio[$value])) {
+                        $data[$newKey] = $ratio[$value];
+                    } else {
+                        $data[$newKey] = static::changeDealCategoryAction(
+                            $value,
+                            $ratioRegEx,
+                            $ratioReplace,
+                            $ratio
+                        );
+                    }
+                } elseif ($newKey == 'CategoryId' && intVal($value) > 0 && !empty($ratio[$value])) {
+                    $data[$newKey] = $ratio[$value];
+                } else {
+                    $data[$newKey] = static::changeDealCategoryAction(
+                        $value,
+                        $ratioRegEx,
+                        $ratioReplace,
+                        $ratio
+                    );
+                }
+            }
+        }
+
+        return $data;
+    }
 }

@@ -15,6 +15,7 @@ use Bitrix\Iblock\PropertyTable;
 use Bitrix\Iblock\SectionTable;
 use Bitrix\Main\FileTable;
 use Bitrix\Main\ORM\Entity;
+use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -44,7 +45,7 @@ class PropertyToField
 
             case PropertyTable::TYPE_NUMBER:
 
-                $propertyValueEntity->addField(new IntegerField('VALUE'));
+                $propertyValueEntity->addField(new FloatField('VALUE'));
                 break;
 
             case PropertyTable::TYPE_FILE:
@@ -52,10 +53,12 @@ class PropertyToField
                 $propertyValueEntity->addField(new IntegerField('VALUE'));
 
                 // add reference to file
-                $propertyValueEntity->addField(new Reference(
-                    'FILE', FileTable::class,
-                    Join::on("this.VALUE", 'ref.ID')
-                ));
+                $propertyValueEntity->addField(
+                    new Reference(
+                        'FILE', FileTable::class,
+                        Join::on("this.VALUE", 'ref.ID')
+                    )
+                );
                 break;
 
             case PropertyTable::TYPE_ELEMENT:
@@ -66,7 +69,7 @@ class PropertyToField
                 $refIblock = Iblock::wakeUp($property->getLinkIblockId());
                 $refIblock->fill('API_CODE');
 
-                if (strlen($refIblock->getApiCode())) {
+                if ($refIblock->getApiCode() <> '') {
                     $refEntityName = $refIblock->getEntityDataClass();
 
                     $propertyValueEntity->addField(
@@ -80,10 +83,12 @@ class PropertyToField
                 $propertyValueEntity->addField(new IntegerField('VALUE'));
 
                 // add reference to section
-                $propertyValueEntity->addField(new Reference(
-                    'SECTION', SectionTable::class,
-                    Join::on("this.VALUE", 'ref.ID')
-                ));
+                $propertyValueEntity->addField(
+                    new Reference(
+                        'SECTION', SectionTable::class,
+                        Join::on("this.VALUE", 'ref.ID')
+                    )
+                );
                 break;
 
             case PropertyTable::TYPE_LIST:
@@ -91,11 +96,13 @@ class PropertyToField
                 $propertyValueEntity->addField(new IntegerField('VALUE'));
 
                 // add reference to list item
-                $propertyValueEntity->addField(new Reference(
-                    'ITEM',
-                    PropertyEnumerationTable::class,
-                    Join::on('this.VALUE', 'ref.ID')
-                ));
+                $propertyValueEntity->addField(
+                    new Reference(
+                        'ITEM',
+                        PropertyEnumerationTable::class,
+                        Join::on('this.VALUE', 'ref.ID')
+                    )
+                );
                 break;
         }
     }

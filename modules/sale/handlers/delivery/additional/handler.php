@@ -68,30 +68,36 @@ class AdditionalHandler extends Base
     {
         parent::__construct($initParams);
 
-        if (isset($initParams['SERVICE_TYPE']) && strlen($initParams['SERVICE_TYPE']) > 0)
+        if (isset($initParams['SERVICE_TYPE']) && $initParams['SERVICE_TYPE'] <> '') {
             $this->serviceType = $initParams['SERVICE_TYPE'];
-        elseif (isset($this->config["MAIN"]["SERVICE_TYPE"]))
+        } elseif (isset($this->config["MAIN"]["SERVICE_TYPE"])) {
             $this->serviceType = $this->config["MAIN"]["SERVICE_TYPE"];
+        }
 
-        if (strlen($this->serviceType) <= 0)
+        if ($this->serviceType == '') {
             throw new ArgumentNullException('initParams[SERVICE_TYPE]');
+        }
 
-        if ($initParams['CONFIG']['MAIN']['SERVICE_TYPE'] == "RUSPOST")
+        if ($initParams['CONFIG']['MAIN']['SERVICE_TYPE'] == "RUSPOST") {
             $this->setTrackingClass('\Bitrix\Sale\Delivery\Tracking\RusPost');
-        elseif (empty($this->config['MAIN']['TRACKING_TITLE']))
+        } elseif (empty($this->config['MAIN']['TRACKING_TITLE'])) {
             $this->trackingClass = '';
+        }
 
         if (intval($this->id) <= 0) {
             $srvParams = $this->getServiceParams();
 
-            if (!empty($srvParams['NAME']))
+            if (!empty($srvParams['NAME'])) {
                 $this->name = $srvParams['NAME'];
+            }
 
-            if (!empty($srvParams['DESCRIPTION']))
+            if (!empty($srvParams['DESCRIPTION'])) {
                 $this->description = $srvParams['DESCRIPTION'];
+            }
 
-            if (!empty($srvParams['LOGOTIP']))
+            if (!empty($srvParams['LOGOTIP'])) {
                 $this->logotip = $srvParams['LOGOTIP'];
+            }
         }
 
         $this->deliveryRequestHandler = $this->getDeliveryRequestHandler();
@@ -101,9 +107,11 @@ class AdditionalHandler extends Base
     {
         $result = null;
 
-        if ($this->serviceType == "RUSPOST")
-            if (!empty($this->config["MAIN"]["OTPRAVKA_AUTH_TOKEN"]) && !empty($this->config["MAIN"]["OTPRAVKA_AUTH_KEY"]))
+        if ($this->serviceType == "RUSPOST") {
+            if (!empty($this->config["MAIN"]["OTPRAVKA_AUTH_TOKEN"]) && !empty($this->config["MAIN"]["OTPRAVKA_AUTH_KEY"])) {
                 $result = new RusPost\Handler($this);
+            }
+        }
 
         return $result;
     }
@@ -133,8 +141,9 @@ class AdditionalHandler extends Base
     {
         $fields = $this->getServiceParams();
 
-        if (empty($fields))
+        if (empty($fields)) {
             throw new SystemException(Loc::getMessage('SALE_DLVRS_ADD_CONFIG_RECEIVE_ERROR'));
+        }
 
         $result = array(
             "MAIN" => array(
@@ -211,25 +220,37 @@ class AdditionalHandler extends Base
             } else {
                 $errors = array();
                 $notes = array();
+                $nothingFound = false;
 
                 /** @var Error $error */
                 foreach ($res->getErrorCollection() as $error) {
+                    if ($error->getCode() === \Bitrix\Sale\Services\Base\RestClient::ERROR_NOTHING_FOUND) {
+                        $nothingFound = true;
+                        continue;
+                    }
+
                     $message = $error->getMessage();
 
-                    if ($message == 'verification_needed. License check failed.')
+                    if ($message == 'verification_needed. License check failed.') {
                         $notes[$error->getCode()] = Loc::getMessage('SALE_DLVRS_ADD_LIST_LICENSE_WRONG');
-                    else
+                    } else {
                         $errors[$error->getCode()] = $message;
+                    }
                 }
 
-                if (!empty($errors))
+                if (!empty($errors)) {
                     $result = array("ERRORS" => $errors);
+                }
 
-                if (!empty($notes))
+                if (!empty($notes)) {
                     $result['NOTES'] = $notes;
+                }
 
-                if (empty($errors) && empty($notes))
-                    $errors[] = Loc::getMessage('SALE_DLVRS_ADD_LIST_RECEIVE_ERROR');
+                if (empty($errors) && empty($notes)) {
+                    if ($nothingFound === false || $res->getErrorCollection()->count() !== 1) {
+                        $errors[] = Loc::getMessage('SALE_DLVRS_ADD_LIST_RECEIVE_ERROR');
+                    }
+                }
             }
         }
 
@@ -286,8 +307,9 @@ class AdditionalHandler extends Base
 
     protected function setLogoFileId($logoId)
     {
-        if (intval($logoId) > 0)
+        if (intval($logoId) > 0) {
             Option::set('sale', self::LOGO_FILE_ID_OPTION . '_' . $this->serviceType, $logoId);
+        }
     }
 
     /**
@@ -309,8 +331,9 @@ class AdditionalHandler extends Base
 
         $profiles = $this->getProfilesListFull();
 
-        foreach ($profiles as $profileType => $profile)
+        foreach ($profiles as $profileType => $profile) {
             $result[$profileType] = $profile['NAME'];
+        }
 
         return $result;
     }
@@ -328,8 +351,9 @@ class AdditionalHandler extends Base
         if ($res->isSuccess()) {
             $data = $res->getData();
 
-            if (!empty($data['STATUSES']) && is_array($data['STATUSES']))
+            if (!empty($data['STATUSES']) && is_array($data['STATUSES'])) {
                 $result = $data['STATUSES'];
+            }
         }
 
         return $result;
@@ -355,8 +379,9 @@ class AdditionalHandler extends Base
             $client = new RestClient();
             $res = $client->getDeliveryProfilesList($this->serviceType);
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $this->profilesListFull = $res->getData();
+            }
         }
 
         return $this->profilesListFull;
@@ -414,8 +439,9 @@ class AdditionalHandler extends Base
      */
     public static function onAfterAdd($serviceId, array $fields = array())
     {
-        if ($serviceId <= 0)
+        if ($serviceId <= 0) {
             return false;
+        }
 
         $result = true;
 
@@ -426,8 +452,9 @@ class AdditionalHandler extends Base
 
         if (is_array($profiles) && !empty($profiles)) {
             foreach ($profiles as $profileType => $pFields) {
-                if (isset($pFields['DEFAULT_INSTALL_SKIP']) && $pFields['DEFAULT_INSTALL_SKIP'] == 'Y')
+                if (isset($pFields['DEFAULT_INSTALL_SKIP']) && $pFields['DEFAULT_INSTALL_SKIP'] == 'Y') {
                     continue;
+                }
 
                 $profile = $srv->getProfileDefaultParams($profileType, $pFields);
                 $res = Manager::add($profile);
@@ -487,8 +514,12 @@ class AdditionalHandler extends Base
         switch ($type) {
             case "WEIGHT":
                 $p = array();
-                if (isset($params['MIN'])) $p['MIN_WEIGHT'] = $params['MIN'];
-                if (isset($params['MAX'])) $p['MAX_WEIGHT'] = $params['MAX'];
+                if (isset($params['MIN'])) {
+                    $p['MIN_WEIGHT'] = $params['MIN'];
+                }
+                if (isset($params['MAX'])) {
+                    $p['MAX_WEIGHT'] = $params['MAX'];
+                }
 
                 if (!empty($p)) {
                     $fields = array(
@@ -503,9 +534,15 @@ class AdditionalHandler extends Base
 
             case "DIMENSIONS":
                 $p = array();
-                if (isset($params['LENGTH'])) $p['LENGTH'] = $params['LENGTH'];
-                if (isset($params['WIDTH'])) $p['WIDTH'] = $params['WIDTH'];
-                if (isset($params['HEIGHT'])) $p['HEIGHT'] = $params['HEIGHT'];
+                if (isset($params['LENGTH'])) {
+                    $p['LENGTH'] = $params['LENGTH'];
+                }
+                if (isset($params['WIDTH'])) {
+                    $p['WIDTH'] = $params['WIDTH'];
+                }
+                if (isset($params['HEIGHT'])) {
+                    $p['HEIGHT'] = $params['HEIGHT'];
+                }
 
                 if (!empty($p)) {
                     $fields = array(
@@ -521,7 +558,9 @@ class AdditionalHandler extends Base
             case "MAX_SIZE":
 
                 $p = array();
-                if (isset($params['MAX_SIZE']) && intval($params['MAX_SIZE']) > 0) $p['MAX_SIZE'] = $params['MAX_SIZE'];
+                if (isset($params['MAX_SIZE']) && intval($params['MAX_SIZE']) > 0) {
+                    $p['MAX_SIZE'] = $params['MAX_SIZE'];
+                }
 
                 if (!empty($p)) {
                     $fields = array(
@@ -533,11 +572,11 @@ class AdditionalHandler extends Base
                 }
 
                 break;
-
         }
 
-        if (!empty($fields))
+        if (!empty($fields)) {
             ServiceRestrictionTable::add($fields);
+        }
     }
 
     /**
@@ -547,15 +586,17 @@ class AdditionalHandler extends Base
      */
     protected function getProfileDefaultParams($type, array $fields)
     {
-        if (isset($fields["ACTIVE"]))
+        if (isset($fields["ACTIVE"])) {
             $active = $fields["ACTIVE"];
-        else
+        } else {
             $active = $this->active ? "Y" : "N";
+        }
 
-        if (isset($fields["SORT"]))
+        if (isset($fields["SORT"])) {
             $sort = $fields["SORT"];
-        else
+        } else {
             $sort = $this->sort;
+        }
 
         $result = array(
             "CODE" => "",
@@ -575,11 +616,13 @@ class AdditionalHandler extends Base
             )
         );
 
-        if (!empty($fields["MODE"]))
+        if (!empty($fields["MODE"])) {
             $result['CONFIG']['MAIN']["MODE"] = $fields["MODE"];
+        }
 
-        if (!empty($fields['DEFAULT']['MAIN']))
+        if (!empty($fields['DEFAULT']['MAIN'])) {
             $result['CONFIG']['MAIN'] = array_merge($result['CONFIG']['MAIN'], $fields['DEFAULT']['MAIN']);
+        }
 
         return $result;
     }
@@ -589,12 +632,13 @@ class AdditionalHandler extends Base
         $result = array();
         $message = '';
 
-        if ($this->isLicenseWrong())
+        if ($this->isLicenseWrong()) {
             $message = Loc::getMessage('SALE_DLVRS_ADD_LICENSE_WRONG');
-        elseif (!Location::isInstalled() && !empty($_REQUEST['ID']))
+        } elseif (!Location::isInstalled() && !empty($_REQUEST['ID'])) {
             $message = Loc::getMessage('SALE_DLVRS_ADD_LOC_INSTALL');
+        }
 
-        if (strlen($message) > 0) {
+        if ($message <> '') {
             $result = array(
                 "DETAILS" => $message,
                 "TYPE" => "ERROR",
@@ -615,8 +659,11 @@ class AdditionalHandler extends Base
         $result = new \Bitrix\Sale\Result();
         \Bitrix\Main\UI\Extension::load("main.core");
         Asset::getInstance()->addJs("/bitrix/js/sale/additional_delivery.js");
-        Asset::getInstance()->addString('<link rel="stylesheet" type="text/css" href="/bitrix/css/sale/additional_delivery.css">');
-        Asset::getInstance()->addString('<script language="javascript">
+        Asset::getInstance()->addString(
+            '<link rel="stylesheet" type="text/css" href="/bitrix/css/sale/additional_delivery.css">'
+        );
+        Asset::getInstance()->addString(
+            '<script language="javascript">
 			if(top.BX)
 			{
 				BX.addCustomEvent(
@@ -624,7 +671,8 @@ class AdditionalHandler extends Base
 					BX.Sale.Handler.Delivery.Additional.onRusPostShippingPointsSelect
 				);
 			}
-		</script>');
+		</script>'
+        );
         return $result;
     }
 
@@ -653,27 +701,48 @@ class AdditionalHandler extends Base
         if (!file_exists($_SERVER["DOCUMENT_ROOT"] . '/bitrix/css/sale/additional_delivery.css')) {
             CopyDirFiles(
                 $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/css",
-                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/css/sale", true, true
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/css/sale",
+                true,
+                true
             );
             CopyDirFiles(
                 $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/js",
-                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js/sale", true, true
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js/sale",
+                true,
+                true
             );
             CopyDirFiles(
                 $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/tools",
-                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/sale", true, true
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tools/sale",
+                true,
+                true
             );
         }
 
         $con = \Bitrix\Main\Application::getConnection();
 
         if (!$con->isTableExists('b_sale_hdale')) {
-            $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/db/" . $con->getType() . "/install.sql");
+            $DB->RunSQLBatch(
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/db/" . $con->getType(
+                ) . "/install.sql"
+            );
         }
 
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        $eventManager->registerEventHandler('sale', 'onSaleDeliveryExtraServicesClassNamesBuildList', 'sale', '\Sale\Handlers\Delivery\AdditionalHandler', 'onSaleDeliveryExtraServicesClassNamesBuildList');
-        $eventManager->registerEventHandler('sale', 'onSaleDeliveryTrackingClassNamesBuildList', 'sale', '\Sale\Handlers\Delivery\AdditionalHandler', 'onSaleDeliveryTrackingClassNamesBuildList');
+        $eventManager->registerEventHandler(
+            'sale',
+            'onSaleDeliveryExtraServicesClassNamesBuildList',
+            'sale',
+            '\Sale\Handlers\Delivery\AdditionalHandler',
+            'onSaleDeliveryExtraServicesClassNamesBuildList'
+        );
+        $eventManager->registerEventHandler(
+            'sale',
+            'onSaleDeliveryTrackingClassNamesBuildList',
+            'sale',
+            '\Sale\Handlers\Delivery\AdditionalHandler',
+            'onSaleDeliveryTrackingClassNamesBuildList'
+        );
 
         return parent::install();
     }
@@ -700,12 +769,27 @@ class AdditionalHandler extends Base
         $con = \Bitrix\Main\Application::getConnection();
 
         if (!$con->isTableExists('b_sale_hdale')) {
-            $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/db/" . $con->getType() . "/uninstall.sql");
+            $DB->RunSQLBatch(
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/install/db/" . $con->getType(
+                ) . "/uninstall.sql"
+            );
         }
 
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        $eventManager->unRegisterEventHandler('sale', 'onSaleDeliveryExtraServicesClassNamesBuildList', 'sale', '\Sale\Handlers\Delivery\AdditionalHandler', 'onSaleDeliveryExtraServicesClassNamesBuildList');
-        $eventManager->unRegisterEventHandler('sale', 'onSaleDeliveryTrackingClassNamesBuildList', 'sale', '\Sale\Handlers\Delivery\AdditionalHandler', 'onSaleDeliveryTrackingClassNamesBuildList');
+        $eventManager->unRegisterEventHandler(
+            'sale',
+            'onSaleDeliveryExtraServicesClassNamesBuildList',
+            'sale',
+            '\Sale\Handlers\Delivery\AdditionalHandler',
+            'onSaleDeliveryExtraServicesClassNamesBuildList'
+        );
+        $eventManager->unRegisterEventHandler(
+            'sale',
+            'onSaleDeliveryTrackingClassNamesBuildList',
+            'sale',
+            '\Sale\Handlers\Delivery\AdditionalHandler',
+            'onSaleDeliveryTrackingClassNamesBuildList'
+        );
 
         return parent::install();
     }
@@ -728,8 +812,9 @@ class AdditionalHandler extends Base
             $client = new RestClient();
             $res = $client->getDeliveryExtraServices($this->serviceType);
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $this->extraServicesList = $res->getData();
+            }
         }
 
         return $this->extraServicesList;
@@ -776,13 +861,15 @@ class AdditionalHandler extends Base
         $locFromRequest = array();
         $locToRequest = array();
 
-        if (!empty($locToInternalCode))
+        if (!empty($locToInternalCode)) {
             $locToRequest = self::getLocationForRequest($locToInternalCode);
+        }
 
         $shopLocation = \CSaleHelper::getShopLocation();
 
-        if (!empty($shopLocation['CODE']))
+        if (!empty($shopLocation['CODE'])) {
             $locFromRequest = self::getLocationForRequest($shopLocation['CODE']);
+        }
 
         $result = array(
             "ITEMS" => array(),
@@ -793,37 +880,42 @@ class AdditionalHandler extends Base
             "LOCATION_TO_TYPES" => self::getLocationChainByTypes($locToInternalCode, LANGUAGE_ID)
         );
 
-        if ($address = $props->getAddress())
+        if ($address = $props->getAddress()) {
             $result["ADDRESS"] = $address->getValue();
+        }
 
-        if ($phone = $props->getPhone())
+        if ($phone = $props->getPhone()) {
             $result["PHONE"] = $phone->getValue();
+        }
 
-        if ($payerName = $props->getPayerName())
+        if ($payerName = $props->getPayerName()) {
             $result["PAYER_NAME"] = $payerName->getValue();
+        }
 
         if ($serviceType == "RUSPOST") {
             $zipFrom = \CSaleHelper::getShopLocationZIP();
 
-            if (strlen($zipFrom) > 0) {
+            if ($zipFrom <> '') {
                 $result["ZIP_FROM"] = $zipFrom;
             } elseif (!empty($shopLocation['CODE'])) {
                 $extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'], array('limit' => 1))->fetch();
 
-                if (!empty($extLoc['XML_ID']))
+                if (!empty($extLoc['XML_ID'])) {
                     $result["ZIP_FROM"] = $extLoc['XML_ID'];
+                }
             }
 
             $zipTo = $props->getDeliveryLocationZip();
             $zipTo = !!$zipTo ? $zipTo->getValue() : "";
 
-            if (strlen($zipTo) > 0) {
+            if ($zipTo <> '') {
                 $result["ZIP_TO"] = $zipTo;
             } elseif (!empty($locToInternalCode)) {
                 $extLoc = LocationHelper::getZipByLocation($locToInternalCode, array('limit' => 1))->fetch();
 
-                if (!empty($extLoc['XML_ID']))
+                if (!empty($extLoc['XML_ID'])) {
                     $result["ZIP_TO"] = $extLoc['XML_ID'];
+                }
             }
         }
 
@@ -834,8 +926,9 @@ class AdditionalHandler extends Base
         foreach ($shipment->getShipmentItemCollection()->getShippableItems() as $shipmentItem) {
             $basketItem = $shipmentItem->getBasketItem();
 
-            if (!$basketItem)
+            if (!$basketItem) {
                 continue;
+            }
 
             //$itemFieldValues = $basketItem->getFieldValues();
             $itemFieldValues = array(
@@ -848,8 +941,12 @@ class AdditionalHandler extends Base
 
             $price += $itemFieldValues["PRICE"] * $itemFieldValues["QUANTITY"];
 
-            if (!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"]))
-                $itemFieldValues["DIMENSIONS"] = unserialize($itemFieldValues["DIMENSIONS"]);
+            if (!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"])) {
+                $itemFieldValues["DIMENSIONS"] = unserialize(
+                    $itemFieldValues["DIMENSIONS"],
+                    ['allowed_classes' => false]
+                );
+            }
 
             $result["ITEMS"][] = $itemFieldValues;
         }
@@ -861,11 +958,13 @@ class AdditionalHandler extends Base
             $result['EXTRA_SERVICES'] = array();
 
             foreach ($shipment->getExtraServices() as $esId => $esVal) {
-                if (empty($esList[$esId]['CODE']))
+                if (empty($esList[$esId]['CODE'])) {
                     continue;
+                }
 
-                if ($esList[$esId]['CLASS_NAME'] == '\Bitrix\Sale\Delivery\ExtraServices\Checkbox' && $esVal != 'Y')
+                if ($esList[$esId]['CLASS_NAME'] == '\Bitrix\Sale\Delivery\ExtraServices\Checkbox' && $esVal != 'Y') {
                     continue;
+                }
 
                 $result['EXTRA_SERVICES'][$esList[$esId]['CODE']] = $esVal;
             }
@@ -888,8 +987,9 @@ class AdditionalHandler extends Base
      */
     protected static function getLocationForRequest($locationCode)
     {
-        if (strlen($locationCode) <= 0)
+        if ($locationCode == '') {
             return array();
+        }
 
         static $result = array();
 
@@ -897,18 +997,21 @@ class AdditionalHandler extends Base
             $externalId = Location::getExternalId($locationCode);
             $name = '';
 
-            if (strlen($externalId) > 0) {
-                $dbRes = ExternalTable::getList(array(
-                    'filter' => array(
-                        'XML_ID' => $externalId,
-                        'SERVICE_ID' => Location::getExternalServiceId(),
-                        'LOCATION.NAME.LANGUAGE_ID' => 'ru'
-                    ),
-                    'select' => array('NAME' => 'LOCATION.NAME.NAME')
-                ));
+            if ($externalId <> '') {
+                $dbRes = ExternalTable::getList(
+                    array(
+                        'filter' => array(
+                            'XML_ID' => $externalId,
+                            'SERVICE_ID' => Location::getExternalServiceId(),
+                            'LOCATION.NAME.LANGUAGE_ID' => 'ru'
+                        ),
+                        'select' => array('NAME' => 'LOCATION.NAME.NAME')
+                    )
+                );
 
-                if ($rec = $dbRes->fetch())
+                if ($rec = $dbRes->fetch()) {
                     $name = $rec['NAME'];
+                }
             }
 
             $result[$locationCode] = array(
@@ -928,58 +1031,91 @@ class AdditionalHandler extends Base
      */
     protected static function getLocationChainByTypes($locationCode, $lang = LANGUAGE_ID)
     {
-        if (strlen($locationCode) <= 0)
+        if ($locationCode == '') {
             return array();
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationCode
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationCode
+                    ),
                 ),
-            ),
-            'select' => array(
-                'ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN'
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN'
+                )
             )
-        ));
+        );
 
-        if (!$loc = $res->fetch())
+        if (!$loc = $res->fetch()) {
             return array();
+        }
 
         $result = array();
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '<=LEFT_MARGIN' => $loc['LEFT_MARGIN'],
-                '>=RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
-                'NAME.LANGUAGE_ID' => $lang,
-                'TYPE.NAME.LANGUAGE_ID' => $lang
-            ),
-            'select' => array(
-                'ID', 'CODE',
-                'LOCATION_NAME' => 'NAME.NAME',
-                'TYPE_NAME' => 'TYPE.NAME.NAME',
-                'TYPE_CODE' => 'TYPE.CODE'
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '<=LEFT_MARGIN' => $loc['LEFT_MARGIN'],
+                    '>=RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
+                    'NAME.LANGUAGE_ID' => $lang,
+                    'TYPE.NAME.LANGUAGE_ID' => $lang
+                ),
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LOCATION_NAME' => 'NAME.NAME',
+                    'TYPE_NAME' => 'TYPE.NAME.NAME',
+                    'TYPE_CODE' => 'TYPE.CODE'
+                )
             )
-        ));
+        );
 
-        while ($locParent = $res->fetch())
+        while ($locParent = $res->fetch()) {
             $result[$locParent['TYPE_CODE']] = $locParent['LOCATION_NAME'];
+        }
 
         return $result;
     }
 
     public function prepareFieldsForSaving(array $fields)
     {
-        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME']))
-            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME'] = htmlspecialcharsback($fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME']);
+        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME'])) {
+            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME'] = htmlspecialcharsback(
+                $fields['CONFIG']['MAIN']['SHIPPING_POINT']['NAME']
+            );
+        }
 
-        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE']))
-            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE'] = htmlspecialcharsback($fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE']);
+        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE'])) {
+            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE'] = htmlspecialcharsback(
+                $fields['CONFIG']['MAIN']['SHIPPING_POINT']['VALUE']
+            );
+        }
 
-        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL']))
-            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL'] = htmlspecialcharsback($fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL']);
+        if (isset($fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL'])) {
+            $fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL'] = htmlspecialcharsback(
+                $fields['CONFIG']['MAIN']['SHIPPING_POINT']['ADDITIONAL']
+            );
+        }
 
         return parent::prepareFieldsForSaving($fields);
+    }
+
+    /** @inheritDoc */
+    public static function isHandlerCompatible()
+    {
+        if (!parent::isHandlerCompatible()) {
+            return false;
+        }
+
+        return in_array(
+            \Bitrix\Sale\Delivery\Helper::getPortalZone(),
+            ['ru', 'kz', 'by']
+        );
     }
 }

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -11,28 +12,35 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 /** @var  CMain $APPLICATION */
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_DSL_ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/delivery.js");
 $sTableID = "tbl_sale_delivery_list";
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 $adminNotes = array();
 
 //Base::isHandlerCompatible() - small temporary hack usage to know if we can use locations.
-if ((int)\Bitrix\Main\Config\Option::get('sale', 'location', 0) <= 0 && \Bitrix\Sale\Delivery\Services\Base::isHandlerCompatible()) {
+if ((int)\Bitrix\Main\Config\Option::get(
+        'sale',
+        'location',
+        0
+    ) <= 0 && \Bitrix\Sale\Delivery\Services\Base::isHandlerCompatible()) {
     $settingsUrl = ($publicMode ? "/crm/configs/sale/?type=common" : "/bitrix/admin/settings.php?lang=" . LANGUAGE_ID . "&mid=sale");
     $adminNotes[] = Loc::getMessage('SALE_SDL_LOCATION_NOTE');
 }
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $groupId = intval(isset($filter_group) && (isset($apply_filter) || $apply_filter == 'Y') ? $filter_group : -1);
 
@@ -47,18 +55,21 @@ $groups = array(
     "" => GetMessage("SALE_SDL_ALL"),
     "0" => GetMessage("SALE_SDL_UPPER_LEVELL")
 );
-$groupsQueryObject = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-    "filter" => array("=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'),
-    "select" => array("ID", "NAME", "PARENT_ID"),
-    "order" => array("PARENT_ID" => "ASC", "NAME" => "ASC")
-));
+$groupsQueryObject = \Bitrix\Sale\Delivery\Services\Table::getList(
+    array(
+        "filter" => array("=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'),
+        "select" => array("ID", "NAME", "PARENT_ID"),
+        "order" => array("PARENT_ID" => "ASC", "NAME" => "ASC")
+    )
+);
 while ($group = $groupsQueryObject->fetch()) {
     $groups[$group["ID"]] = $group;
 }
 $sitesList = array();
 $db = \Bitrix\Main\SiteTable::getList(array('filter' => array('ACTIVE' => 'Y'), 'order' => array('SORT' => 'ASC')));
-while ($site = $db->fetch())
+while ($site = $db->fetch()) {
     $sitesList[$site['LID']] = $site['NAME'];
+}
 
 $filterFields = array(
     array(
@@ -135,28 +146,32 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             'select' => array("ID")
         );
 
-        if (strlen($by) > 0 && strlen($order) > 0)
+        if ($by <> '' && $order <> '') {
             $params['order'] = array($by => $order);
+        }
 
         $dbResultList = \Bitrix\Sale\Delivery\Services\Table::getList($params);
 
-        while ($arResult = $dbResultList->fetch())
+        while ($arResult = $dbResultList->fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 $res = \Bitrix\Sale\Delivery\Services\Manager::delete($ID);
 
                 if (!$res->isSuccess()) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(Loc::getMessage("SALE_SDL_ERROR_DELETE"), $ID);
+                    }
                 }
 
                 break;
@@ -170,10 +185,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 $res = \Bitrix\Sale\Delivery\Services\Manager::update($ID, $arFields);
 
                 if (!$res->isSuccess()) {
-                    if ($errors = $res->getErrors())
+                    if ($errors = $res->getErrors()) {
                         $lAdmin->AddGroupError(implode("<br>/n", $errors), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(Loc::getMessage("SALE_SDL_ERROR_UPDATE"), $ID);
+                    }
                 } else {
                     \Bitrix\Sale\Delivery\Services\Manager::setChildrenFieldsValues(
                         $ID,
@@ -197,17 +213,20 @@ $vatList = array(
 );
 
 if (\Bitrix\Main\Loader::includeModule('catalog')) {
-    $dbRes = \Bitrix\Catalog\VatTable::getList(array(
-        'filter' => array('ACTIVE' => 'Y'),
-        'order' => array('SORT' => 'ASC')
-    ));
+    $dbRes = \Bitrix\Catalog\VatTable::getList(
+        array(
+            'filter' => array('ACTIVE' => 'Y'),
+            'order' => array('SORT' => 'ASC')
+        )
+    );
 
-    while ($vat = $dbRes->fetch())
+    while ($vat = $dbRes->fetch()) {
         $vatList[$vat['ID']] = $vat['NAME'];
+    }
 }
 
 $siteId = "";
-if (strlen($filter["LID"]) > 0) {
+if ($filter["LID"] <> '') {
     $siteId = $filter["LID"];
     unset($filter["LID"]);
 }
@@ -217,19 +236,41 @@ $glParams = array(
     'order' => array($by => $order)
 );
 
-$lAdmin->AddHeaders(array(
-    array("id" => "NAME", "content" => Loc::getMessage("SALE_SDL_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "DESCRIPTION", "content" => Loc::getMessage("SALE_SDL_DESCRIPTION"), "sort" => "", "default" => true),
-    array("id" => "LOGOTIP", "content" => Loc::getMessage("SALE_SDL_LOGOTIP"), "sort" => "", "default" => true),
-    array("id" => "GROUP_NAME", "content" => Loc::getMessage("SALE_SDL_GROUP_NAME"), "sort" => "PARENT.NAME", "default" => true),
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "SORT", "content" => Loc::getMessage("SALE_SDL_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_SDL_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "ALLOW_EDIT_SHIPMENT", "content" => Loc::getMessage("SALE_SDL_ALLOW_EDIT_SHIPMENT"), "sort" => "ALLOW_EDIT_SHIPMENT", "default" => false),
-    array("id" => "CLASS_NAME", "content" => Loc::getMessage("SALE_SDL_CLASS_NAME"), "sort" => "CLASS_NAME", "default" => false),
-    array("id" => "SITES", "content" => Loc::getMessage("SALE_SDL_SITES"), "default" => false),
-    array("id" => "VAT_ID", "content" => Loc::getMessage("SALE_SDL_VAT_ID"), "default" => false)
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "NAME", "content" => Loc::getMessage("SALE_SDL_NAME"), "sort" => "NAME", "default" => true),
+        array(
+            "id" => "DESCRIPTION",
+            "content" => Loc::getMessage("SALE_SDL_DESCRIPTION"),
+            "sort" => "",
+            "default" => true
+        ),
+        array("id" => "LOGOTIP", "content" => Loc::getMessage("SALE_SDL_LOGOTIP"), "sort" => "", "default" => true),
+        array(
+            "id" => "GROUP_NAME",
+            "content" => Loc::getMessage("SALE_SDL_GROUP_NAME"),
+            "sort" => "PARENT.NAME",
+            "default" => true
+        ),
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "SORT", "content" => Loc::getMessage("SALE_SDL_SORT"), "sort" => "SORT", "default" => true),
+        array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_SDL_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array(
+            "id" => "ALLOW_EDIT_SHIPMENT",
+            "content" => Loc::getMessage("SALE_SDL_ALLOW_EDIT_SHIPMENT"),
+            "sort" => "ALLOW_EDIT_SHIPMENT",
+            "default" => false
+        ),
+        array(
+            "id" => "CLASS_NAME",
+            "content" => Loc::getMessage("SALE_SDL_CLASS_NAME"),
+            "sort" => "CLASS_NAME",
+            "default" => false
+        ),
+        array("id" => "SITES", "content" => Loc::getMessage("SALE_SDL_SITES"), "default" => false),
+        array("id" => "VAT_ID", "content" => Loc::getMessage("SALE_SDL_VAT_ID"), "default" => false)
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -252,18 +293,23 @@ if (in_array('SITES', $arVisibleColumns)) {
     );
 }
 
-$backUrl = urlencode($APPLICATION->GetCurPageParam("", array("mode", "internal", "grid_id", "grid_action", "bxajaxid", "sessid"))); //todo replace to $lAdmin->getCurPageParam()
+$backUrl = urlencode(
+    $APPLICATION->GetCurPageParam("", array("mode", "internal", "grid_id", "grid_action", "bxajaxid", "sessid"))
+); //todo replace to $lAdmin->getCurPageParam()
 $dbResultList = \Bitrix\Sale\Delivery\Services\Table::getList($glParams);
 
+$result = [];
 while ($service = $dbResultList->fetch()) {
-    if (strlen($siteId) > 0) {
-        $dbRestriction = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-            'filter' => array(
-                '=SERVICE_ID' => $service['ID'],
-                '=SERVICE_TYPE' => \Bitrix\Sale\Services\PaySystem\Restrictions\Manager::SERVICE_TYPE_SHIPMENT,
-                '=CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+    if ($siteId <> '') {
+        $dbRestriction = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+            array(
+                'filter' => array(
+                    '=SERVICE_ID' => $service['ID'],
+                    '=SERVICE_TYPE' => \Bitrix\Sale\Services\PaySystem\Restrictions\Manager::SERVICE_TYPE_SHIPMENT,
+                    '=CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+                )
             )
-        ));
+        );
 
         while ($restriction = $dbRestriction->fetch()) {
             if (!\Bitrix\Sale\Delivery\Restrictions\BySite::check($siteId, $restriction['PARAMS'])) {
@@ -283,48 +329,78 @@ $dbResultList->NavStart();
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "sale_delivery_service_list.php"));
 
 while ($service = $dbResultList->NavNext(false)) {
-    if (is_callable($service["CLASS_NAME"] . '::canHasChildren') && $service["CLASS_NAME"]::canHasChildren()) //has children
+    if (is_callable($service["CLASS_NAME"] . '::canHasChildren') && $service["CLASS_NAME"]::canHasChildren(
+        )) //has children
     {
         $actUrl = $selfFolderUrl . "sale_delivery_service_list.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . $service["ID"] . "&apply_filter=Y";
         $actUrl = $adminSidePanelHelper->editUrlToPublicPage($actUrl);
         $row =& $lAdmin->AddRow($service["ID"], $service, $actUrl, GetMessage("SALE_SALE_EDIT_DESCR"));
 
-        $row->AddField("NAME", '<a href="' . $actUrl . '" class="adm-list-table-icon-link">' .
+        $row->AddField(
+            "NAME",
+            '<a href="' . $actUrl . '" class="adm-list-table-icon-link">' .
             '<span class="adm-submenu-item-link-icon adm-list-table-icon sale_section_icon"></span>' .
             '<span class="adm-list-table-link">' .
             htmlspecialcharsbx($service["NAME"]) .
             '</span>' .
-            '</a>');
+            '</a>'
+        );
     } else //has no children
     {
         $actUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . $service["PARENT_ID"] . "&ID=" . $service["ID"] . "&back_url=" . $backUrl;
         $actUrl = $adminSidePanelHelper->editUrlToPublicPage($actUrl);
         $row =& $lAdmin->AddRow($service["ID"], $service, $actUrl, GetMessage("SALE_SALE_EDIT_DESCR"));
 
-        $row->AddField("NAME", '<a href="' . $actUrl . '" class="adm-list-table-icon-link">' .
+        $row->AddField(
+            "NAME",
+            '<a href="' . $actUrl . '" class="adm-list-table-icon-link">' .
             '<span class="adm-list-table-link">' .
             htmlspecialcharsbx($service["NAME"]) .
             '</span>' .
-            '</a>');
+            '</a>'
+        );
     }
 
     $row->AddField("ID", $service["ID"]);
 
-    $logoHtml = intval($service["LOGOTIP"]) > 0 ? CFile::ShowImage(CFile::GetFileArray($service["LOGOTIP"]), 150, 150, "border=0", "", false) : "";
+    $logoHtml = intval($service["LOGOTIP"]) > 0 ? CFile::ShowImage(
+        CFile::GetFileArray($service["LOGOTIP"]),
+        150,
+        150,
+        "border=0",
+        "",
+        false
+    ) : "";
     $row->AddField("LOGOTIP", $logoHtml);
-    $row->AddField("DESCRIPTION", $service["DESCRIPTION"], false, true);
+
+    $sanitizer = new CBXSanitizer();
+    $sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+    $description = $sanitizer->SanitizeHtml($service["DESCRIPTION"]);
+    $row->AddField("DESCRIPTION", $description, false, true);
     $row->AddField("SORT", $service["SORT"]);
-    $row->AddField("ACTIVE", (($service["ACTIVE"] == "Y") ? Loc::getMessage("SALE_SDL_YES") : Loc::getMessage("SALE_SDL_NO")));
-    $row->AddField("ALLOW_EDIT_SHIPMENT", (($service["ALLOW_EDIT_SHIPMENT"] == "Y") ? Loc::getMessage("SALE_SDL_YES") : Loc::getMessage("SALE_SDL_NO")));
-    $row->AddField("CLASS_NAME", (is_callable($service["CLASS_NAME"] . "::getClassTitle") ? $service["CLASS_NAME"]::getClassTitle() : "") . " [" . $service["CLASS_NAME"] . "]");
+    $row->AddField(
+        "ACTIVE",
+        (($service["ACTIVE"] == "Y") ? Loc::getMessage("SALE_SDL_YES") : Loc::getMessage("SALE_SDL_NO"))
+    );
+    $row->AddField(
+        "ALLOW_EDIT_SHIPMENT",
+        (($service["ALLOW_EDIT_SHIPMENT"] == "Y") ? Loc::getMessage("SALE_SDL_YES") : Loc::getMessage("SALE_SDL_NO"))
+    );
+    $row->AddField(
+        "CLASS_NAME",
+        (is_callable($service["CLASS_NAME"] . "::getClassTitle") ? $service["CLASS_NAME"]::getClassTitle(
+        ) : "") . " [" . $service["CLASS_NAME"] . "]"
+    );
 
     $sites = "";
 
-    if (isset($service["SITES"]) && !empty($service["SITES"]['SITE_ID']) && is_array($service["SITES"]['SITE_ID']))
-        foreach ($service["SITES"]['SITE_ID'] as $lid)
+    if (isset($service["SITES"]) && !empty($service["SITES"]['SITE_ID']) && is_array($service["SITES"]['SITE_ID'])) {
+        foreach ($service["SITES"]['SITE_ID'] as $lid) {
             $sites .= $sitesList[$lid] . " (" . $lid . ")<br>";
+        }
+    }
 
-    $row->AddField("SITES", strlen($sites) > 0 ? $sites : Loc::getMessage('SALE_SDL_ALL'));
+    $row->AddField("SITES", $sites <> '' ? $sites : Loc::getMessage('SALE_SDL_ALL'));
     $row->AddField("VAT_ID", isset($vatList[$service["VAT_ID"]]) ? $vatList[$service["VAT_ID"]] : $vatList[0]);
 
     $groupNameHtml = "";
@@ -385,7 +461,9 @@ if ($saleModulePermissions == "W") {
     $aContext = array();
 
     if (isset($filter["=CLASS_NAME"]) && $filter["=CLASS_NAME"] == '\Bitrix\Sale\Delivery\Services\Group') {
-        $addUrl = "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&CLASS_NAME=" . urlencode('\Bitrix\Sale\Delivery\Services\Group') . "&back_url=" . $backUrl;
+        $addUrl = "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&CLASS_NAME=" . urlencode(
+                '\Bitrix\Sale\Delivery\Services\Group'
+            ) . "&back_url=" . $backUrl;
         $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
         $aContext[] = array(
             "TEXT" => Loc::getMessage("SALE_SDL_ADD_NEW"),
@@ -401,7 +479,6 @@ if ($saleModulePermissions == "W") {
             "LINK" => $listUrl,
             "TITLE" => Loc::getMessage("SALE_SDL_TO_LIST_ALT"),
         );
-
     } else {
         $classNamesList = \Bitrix\Sale\Delivery\Services\Manager::getHandlersList();
 
@@ -410,32 +487,45 @@ if ($saleModulePermissions == "W") {
             '\Bitrix\Sale\Delivery\Services\Group'
         );
 
-        if (\Bitrix\Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId() > 0)
+        if (\Bitrix\Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId() > 0) {
             $classesToExclude[] = '\Bitrix\Sale\Delivery\Services\EmptyDeliveryService';
+        }
 
         $menu = array();
 
         /** @var \Bitrix\Sale\Delivery\Services\Base $class */
 
         foreach ($classNamesList as $class) {
-            if (in_array($class, $classesToExclude))
+            if (in_array($class, $classesToExclude)) {
                 continue;
+            }
 
-            if ($class::isProfile())
+            if ($class::isProfile()) {
                 continue;
+            }
 
             $supportedServices = $class::getSupportedServicesList();
 
+            $restServices = [];
+            $isRest = ($class === "\\" . \Sale\Handlers\Delivery\RestHandler::class);
+            if ($isRest) {
+                $restServices = \Bitrix\Sale\Delivery\Services\Manager::getRestHandlerList();
+            }
+
             if (is_array($supportedServices) && !empty($supportedServices)) {
-                if (!empty($supportedServices['ERRORS']) && is_array($supportedServices['ERRORS']))
-                    foreach ($supportedServices['ERRORS'] as $error)
+                if (!empty($supportedServices['ERRORS']) && is_array($supportedServices['ERRORS'])) {
+                    foreach ($supportedServices['ERRORS'] as $error) {
                         $lAdmin->AddGroupError($error);
+                    }
+                }
 
                 unset($supportedServices['ERRORS']);
 
-                if (!empty($supportedServices['NOTES']) && is_array($supportedServices['NOTES']))
-                    foreach ($supportedServices['NOTES'] as $note)
+                if (!empty($supportedServices['NOTES']) && is_array($supportedServices['NOTES'])) {
+                    foreach ($supportedServices['NOTES'] as $note) {
                         $adminNotes[] = $note;
+                    }
+                }
 
                 unset($supportedServices['NOTES']);
 
@@ -453,8 +543,28 @@ if ($saleModulePermissions == "W") {
                         }
                     }
                 }
+            } elseif ($restServices) {
+                foreach ($restServices as $restService) {
+                    $editUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . (intval(
+                            $filter["=PARENT_ID"]
+                        ) > 0 ? $filter["=PARENT_ID"] : 0) .
+                        "&CLASS_NAME=" . urlencode(
+                            $class
+                        ) . "&REST_CODE=" . $restService['CODE'] . "&back_url=" . $backUrl;
+                    $editUrl = $adminSidePanelHelper->editUrlToPublicPage($editUrl);
+                    $menu[] = array(
+                        "TEXT" => $restService["NAME"],
+                        "LINK" => $editUrl
+                    );
+                }
             } else {
-                $editUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . (intval($filter["=PARENT_ID"]) > 0 ? $filter["=PARENT_ID"] : 0) .
+                if ($isRest) {
+                    continue;
+                }
+
+                $editUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . (intval(
+                        $filter["=PARENT_ID"]
+                    ) > 0 ? $filter["=PARENT_ID"] : 0) .
                     "&CLASS_NAME=" . urlencode($class) . "&back_url=" . $backUrl;
                 $menu[] = array(
                     "TEXT" => $class::getClassTitle(),

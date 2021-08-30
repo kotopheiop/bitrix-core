@@ -8,8 +8,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 global $APPLICATION;
 global $DB;
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_discount');
 
@@ -30,31 +31,39 @@ define('RANGE_ROW_PREFIX', 'RNG');
 
 function __cmpRange($a, $b)
 {
-    if ($a['RANGE_FROM'] == $b['RANGE_FROM'])
+    if ($a['RANGE_FROM'] == $b['RANGE_FROM']) {
         return 0;
+    }
     return ($a['RANGE_FROM'] < $b['RANGE_FROM']) ? -1 : 1;
 }
 
 function __GetRangeInfo($ID, $strPrefix)
 {
     $arResult = false;
-    if ((true == isset($_POST[$strPrefix . $ID . '_SUMM'])) && (0 < strlen($_POST[$strPrefix . $ID . '_SUMM']))) {
+    if ((true == isset($_POST[$strPrefix . $ID . '_SUMM'])) && ($_POST[$strPrefix . $ID . '_SUMM'] <> '')) {
         $arResult['RANGE_FROM'] = doubleval(str_replace(',', '.', $_POST[$strPrefix . $ID . '_SUMM']));
         $arResult['VALUE'] = 0;
-        if (isset($_POST[$strPrefix . $ID . '_VALUE']))
+        if (isset($_POST[$strPrefix . $ID . '_VALUE'])) {
             $arResult['VALUE'] = doubleval(str_replace(',', '.', $_POST[$strPrefix . $ID . '_VALUE']));
-        if (0 > $arResult['VALUE'])
+        }
+        if (0 > $arResult['VALUE']) {
             $arResult['VALUE'] = 0;
+        }
         $arResult['TYPE'] = 'P';
-        if (isset($_POST[$strPrefix . $ID . '_TYPE']) && $_POST[$strPrefix . $ID . '_TYPE'] == 'F')
+        if (isset($_POST[$strPrefix . $ID . '_TYPE']) && $_POST[$strPrefix . $ID . '_TYPE'] == 'F') {
             $arResult['TYPE'] = 'F';
+        }
     }
     return $arResult;
 }
 
 function __AddRangeCellSum($intRangeID, $strPrefix, $arRange)
 {
-    return '<td>' . htmlspecialcharsex(GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_FROM')) . ' <input type="text" name="' . $strPrefix . $intRangeID . '_SUMM" size="13" value="' . htmlspecialcharsbx($arRange['RANGE_FROM']) . '"></td>';
+    return '<td>' . htmlspecialcharsex(
+            GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_FROM')
+        ) . ' <input type="text" name="' . $strPrefix . $intRangeID . '_SUMM" size="13" value="' . htmlspecialcharsbx(
+            $arRange['RANGE_FROM']
+        ) . '"></td>';
 }
 
 function __AddRangeCellDiscount($intRangeID, $strPrefix, $arRange)
@@ -63,7 +72,9 @@ function __AddRangeCellDiscount($intRangeID, $strPrefix, $arRange)
     if ($discsaveTypes === null) {
         $discsaveTypes = CCatalogDiscountSave::GetDiscountSaveTypes(true);
     }
-    $result = '<td><input type="text" name="' . $strPrefix . $intRangeID . '_VALUE" size="13" value="' . htmlspecialcharsbx($arRange['VALUE']) . '"> <select name="' . $strPrefix . $intRangeID . '_TYPE" style="width:150px;">';
+    $result = '<td><input type="text" name="' . $strPrefix . $intRangeID . '_VALUE" size="13" value="' . htmlspecialcharsbx(
+            $arRange['VALUE']
+        ) . '"> <select name="' . $strPrefix . $intRangeID . '_TYPE" style="width:150px;">';
     foreach ($discsaveTypes as $key => $value) {
         $result .= '<option value="' . $key . '" ' . ($key == $arRange['TYPE'] ? 'selected' : '') . '>' . $value . '</option>';
     }
@@ -73,7 +84,11 @@ function __AddRangeCellDiscount($intRangeID, $strPrefix, $arRange)
 
 function __AddRangeRow($intRangeID, $strPrefix, $arRange)
 {
-    return '<tr id="' . $strPrefix . $intRangeID . '">' . __AddRangeCellSum($intRangeID, $strPrefix, $arRange) . __AddRangeCellDiscount($intRangeID, $strPrefix, $arRange) . '</tr>';
+    return '<tr id="' . $strPrefix . $intRangeID . '">' . __AddRangeCellSum(
+            $intRangeID,
+            $strPrefix,
+            $arRange
+        ) . __AddRangeCellDiscount($intRangeID, $strPrefix, $arRange) . '</tr>';
 }
 
 $arDefRange = array(
@@ -84,9 +99,15 @@ $arDefRange = array(
 
 function __AddHiddenRow($intRangeID, $strPrefix, $arRange)
 {
-    return '<input type="hidden" name="' . $strPrefix . $intRangeID . '_SUMM" value="' . htmlspecialcharsbx($arRange['RANGE_FROM']) . '">' .
-        '<input type="hidden" name="' . $strPrefix . $intRangeID . '_VALUE" value="' . htmlspecialcharsbx($arRange['VALUE']) . '">' .
-        '<input type="hidden" name="' . $strPrefix . $intRangeID . '_TYPE" value="' . htmlspecialcharsbx($arRange['TYPE']) . '">';
+    return '<input type="hidden" name="' . $strPrefix . $intRangeID . '_SUMM" value="' . htmlspecialcharsbx(
+            $arRange['RANGE_FROM']
+        ) . '">' .
+        '<input type="hidden" name="' . $strPrefix . $intRangeID . '_VALUE" value="' . htmlspecialcharsbx(
+            $arRange['VALUE']
+        ) . '">' .
+        '<input type="hidden" name="' . $strPrefix . $intRangeID . '_TYPE" value="' . htmlspecialcharsbx(
+            $arRange['TYPE']
+        ) . '">';
 }
 
 $arCellTemplates = array();
@@ -96,10 +117,30 @@ $arCellTemplates[] = CUtil::JSEscape(__AddRangeCellDiscount('tmp_xxx', 'PREFIX',
 $message = false;
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_MAIN"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_MAIN")),
-    array("DIV" => "edit2", "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_RANGES"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_RANGES")),
-    array("DIV" => "edit3", "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_GROUPS"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_GROUPS")),
-    array("DIV" => "edit4", "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_MISC"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_MISC")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_MAIN"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_MAIN")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_RANGES"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_RANGES")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_GROUPS"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_GROUPS")
+    ),
+    array(
+        "DIV" => "edit4",
+        "TAB" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_NAME_MISC"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_TAB_TITLE_MISC")
+    ),
 );
 $tabControl = new CAdminForm("cat_disc_save", $aTabs);
 
@@ -126,10 +167,13 @@ if (
     $obDiscSave = new CCatalogDiscountSave();
 
     if (isset($_POST['ACTION_PERIOD'])) {
-        $ACTION_PERIOD = substr(trim($_POST['ACTION_PERIOD']), 0, 1);
+        $ACTION_PERIOD = mb_substr(trim($_POST['ACTION_PERIOD']), 0, 1);
         if ('D' == $ACTION_PERIOD) {
             if (empty($_POST['ACTIVE_FROM']) && empty($_POST['ACTIVE_TO'])) {
-                $arErrors[] = array('id' => 'ACTIVE_FROM', "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_DATE_EMPTY'));
+                $arErrors[] = array(
+                    'id' => 'ACTIVE_FROM',
+                    "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_DATE_EMPTY')
+                );
                 $bVarsFromForm = true;
             } else {
                 $_POST['ACTION_SIZE'] = 0;
@@ -139,7 +183,10 @@ if (
             }
         } elseif ('P' == $ACTION_PERIOD) {
             if (0 >= intval($_POST['ACTION_SIZE']) || empty($_POST['ACTION_TYPE'])) {
-                $arErrors[] = array('id' => 'ACTION_SIZE', "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_SIZE_EMPTY'));
+                $arErrors[] = array(
+                    'id' => 'ACTION_SIZE',
+                    "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_SIZE_EMPTY')
+                );
                 $bVarsFromForm = true;
             } else {
                 $_POST['ACTIVE_FROM'] = '';
@@ -157,7 +204,10 @@ if (
             $ACTIVE_FROM = '';
             $ACTIVE_TO = '';
         } else {
-            $arErrors[] = array('id' => 'ACTION_PERIOD', "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_PERIOD'));
+            $arErrors[] = array(
+                'id' => 'ACTION_PERIOD',
+                "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_ACTION_PERIOD')
+            );
             $bVarsFromForm = true;
         }
     } else {
@@ -166,10 +216,13 @@ if (
     }
 
     if (isset($_POST['COUNT_PERIOD'])) {
-        $COUNT_PERIOD = substr(trim($_POST['COUNT_PERIOD']), 0, 1);
+        $COUNT_PERIOD = mb_substr(trim($_POST['COUNT_PERIOD']), 0, 1);
         if ('D' == $COUNT_PERIOD) {
             if (empty($_POST['COUNT_FROM']) && empty($_POST['COUNT_TO'])) {
-                $arErrors[] = array('id' => 'COUNT_FROM', "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_COUNT_DATE_EMPTY'));
+                $arErrors[] = array(
+                    'id' => 'COUNT_FROM',
+                    "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_COUNT_DATE_EMPTY')
+                );
                 $bVarsFromForm = true;
             } else {
                 $_POST['COUNT_SIZE'] = 0;
@@ -179,7 +232,10 @@ if (
             }
         } elseif ('P' == $COUNT_PERIOD) {
             if (0 >= intval($_POST['COUNT_SIZE']) || empty($_POST['COUNT_TYPE'])) {
-                $arErrors[] = array('id' => 'COUNT_SIZE', "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_COUNT_SIZE_EMPTY'));
+                $arErrors[] = array(
+                    'id' => 'COUNT_SIZE',
+                    "text" => GetMessage('BT_CAT_DISC_SAVE_EDIT_ERR_COUNT_SIZE_EMPTY')
+                );
                 $bVarsFromForm = true;
             } else {
                 $_POST['COUNT_FROM'] = '';
@@ -210,8 +266,9 @@ if (
         $intCount = intval($_POST['RANGES_COUNT']);
         for ($i = 0; $i < $intCount; $i++) {
             $arOneRange = __GetRangeInfo($i, RANGE_ROW_PREFIX);
-            if (!empty($arOneRange))
+            if (!empty($arOneRange)) {
                 $arFormRanges[] = $arOneRange;
+            }
         }
         if (!empty($arFormRanges)) {
             usort($arFormRanges, "__cmpRange");
@@ -251,10 +308,15 @@ if (
         }
 
         if ($mxRes) {
-            if (!empty($apply))
-                LocalRedirect("/bitrix/admin/cat_discsave_edit.php?ID=" . $ID . "&mess=ok&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
-            else
+            if (!empty($apply)) {
+                LocalRedirect(
+                    "/bitrix/admin/cat_discsave_edit.php?ID=" . $ID . "&mess=ok&lang=" . urlencode(
+                        LANGUAGE_ID
+                    ) . "&" . $tabControl->ActiveTabParam()
+                );
+            } else {
                 LocalRedirect("/bitrix/admin/cat_discsave_admin.php?lang=" . urlencode(LANGUAGE_ID));
+            }
         } else {
             $bVarsFromForm = true;
         }
@@ -289,8 +351,9 @@ $arGroupList = array();
 
 if ($ID > 0) {
     $rsDiscSaves = CCatalogDiscountSave::GetByID($ID);
-    if (!$rsDiscSaves->ExtractFields("str_"))
+    if (!$rsDiscSaves->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
 if ($ID > 0) {
@@ -330,8 +393,9 @@ if (!isset($ACTION_PERIOD)) {
 
 if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_discount", "", "str_");
-    if (is_array($_POST['GROUP_IDS']))
+    if (is_array($_POST['GROUP_IDS'])) {
         $arGroupList = $_POST['GROUP_IDS'];
+    }
     if (!empty($arFormRanges)) {
         $arRanges = $arFormRanges;
     }
@@ -379,13 +443,19 @@ if (!$bReadOnly) {
             $aMenu[] = array(
                 "TEXT" => GetMessage("BT_CAT_DISC_SAVE_EDIT_CONT_NAME_COPY"),
                 "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_CONT_TITLE_COPY"),
-                "LINK" => "/bitrix/admin/cat_discsave_edit.php?ID=" . $ID . "&action=copy&lang=" . urlencode(LANGUAGE_ID),
+                "LINK" => "/bitrix/admin/cat_discsave_edit.php?ID=" . $ID . "&action=copy&lang=" . urlencode(
+                        LANGUAGE_ID
+                    ),
                 "ICON" => "btn_copy",
             );
             $aMenu[] = array(
                 "TEXT" => GetMessage("BT_CAT_DISC_SAVE_EDIT_CONT_NAME_DELETE"),
                 "TITLE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_CONT_TITLE_DELETE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("BT_CAT_DISC_SAVE_EDIT_CONT_CONF_DELETE") . "'))window.location='/bitrix/admin/cat_discsave_admin.php?ID=" . $ID . "&action=delete&lang=" . urlencode(LANGUAGE_ID) . "&" . bitrix_sessid_get() . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "BT_CAT_DISC_SAVE_EDIT_CONT_CONF_DELETE"
+                    ) . "'))window.location='/bitrix/admin/cat_discsave_admin.php?ID=" . $ID . "&action=delete&lang=" . urlencode(
+                        LANGUAGE_ID
+                    ) . "&" . bitrix_sessid_get() . "';",
                 "ICON" => "btn_delete",
             );
         }
@@ -396,8 +466,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if ($_REQUEST["mess"] == "ok" && $ID > 0)
+if ($_REQUEST["mess"] == "ok" && $ID > 0) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("BT_CAT_DISC_SAVE_EDIT_MESS_OK2"), "TYPE" => "OK"));
+}
 $obMessages = false;
 if ($bVarsFromForm) {
     if ($ex = $APPLICATION->GetException()) {
@@ -409,17 +480,13 @@ if ($bVarsFromForm) {
 
 <?
 $arSiteList = array();
-$by = 'sort';
-$order = 'asc';
-$rsSites = CSite::GetList($by, $order);
+$rsSites = CSite::GetList();
 while ($arSite = $rsSites->Fetch()) {
     $arSiteList[$arSite['LID']] = '(' . $arSite['LID'] . ') ' . $arSite['NAME'];
 }
 
 $arCurrencyList = array();
-$by2 = 'sort';
-$order2 = 'asc';
-$rsCurrencies = CCurrency::GetList($by2, $order2);
+$rsCurrencies = CCurrency::GetList('sort', 'asc');
 while ($arCurrency = $rsCurrencies->Fetch()) {
     $arCurrencyList[$arCurrency['CURRENCY']] = $arCurrency['CURRENCY'];
 }
@@ -443,16 +510,37 @@ if ($boolCopy) {
 }
 
 $tabControl->EndEpilogContent();
-$tabControl->Begin(array(
-    "FORM_ACTION" => '/bitrix/admin/cat_discsave_edit.php?lang=' . urlencode(LANGUAGE_ID),
-));
+$tabControl->Begin(
+    array(
+        "FORM_ACTION" => '/bitrix/admin/cat_discsave_edit.php?lang=' . urlencode(LANGUAGE_ID),
+    )
+);
 $tabControl->BeginNextFormTab();
-if ($ID > 0 && !$boolCopy)
+if ($ID > 0 && !$boolCopy) {
     $tabControl->AddViewField('ID', 'ID:', $ID, false);
+}
 
-$tabControl->AddCheckBoxField("ACTIVE", GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_ACTIVE") . ":", false, "Y", $str_ACTIVE == "Y");
-$tabControl->AddEditField("NAME", GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_NAME") . ":", true, array("size" => 50, "maxlength" => 255), $str_NAME);
-$tabControl->AddDropDownField("SITE_ID", GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_SITE_ID') . ':', true, $arSiteList, $str_SITE_ID);
+$tabControl->AddCheckBoxField(
+    "ACTIVE",
+    GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_ACTIVE") . ":",
+    false,
+    "Y",
+    $str_ACTIVE == "Y"
+);
+$tabControl->AddEditField(
+    "NAME",
+    GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_NAME") . ":",
+    true,
+    array("size" => 50, "maxlength" => 255),
+    $str_NAME
+);
+$tabControl->AddDropDownField(
+    "SITE_ID",
+    GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_SITE_ID') . ':',
+    true,
+    $arSiteList,
+    $str_SITE_ID
+);
 
 $tabControl->BeginNextFormTab();
 
@@ -465,8 +553,11 @@ $tabControl->BeginCustomField("COUNT", GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_
         <td width="60%"><select name="COUNT_PERIOD" id="COUNT_PERIOD"><?
                 foreach ($arCountPeriod as $key => $value) {
                     ?>
-                    <option
-                    value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $str_COUNT_PERIOD ? 'selected' : ''); ?>><? echo htmlspecialcharsex($value); ?></option><?
+                    <optionvalue="<? echo htmlspecialcharsbx(
+                        $key
+                    ); ?>" <? echo($key == $str_COUNT_PERIOD ? 'selected' : ''); ?>><? echo htmlspecialcharsex(
+                        $value
+                    ); ?></option><?
                 }
                 ?></select></td>
     </tr>
@@ -484,14 +575,18 @@ $tabControl->BeginCustomField("COUNT", GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_
                                size="7" maxlength="10">&nbsp;<select name="COUNT_TYPE" id="COUNT_TYPE"><?
                 foreach ($arTypeList as $key => $value) {
                     ?>
-                    <option
-                    value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $str_COUNT_TYPE ? 'selected' : ''); ?>><? echo htmlspecialcharsex($value); ?></option><?
+                    <optionvalue="<? echo htmlspecialcharsbx(
+                        $key
+                    ); ?>" <? echo($key == $str_COUNT_TYPE ? 'selected' : ''); ?>><? echo htmlspecialcharsex(
+                        $value
+                    ); ?></option><?
                 }
                 ?></select>
         </td>
     </tr>
 <?
-$tabControl->EndCustomField("COUNT",
+$tabControl->EndCustomField(
+    "COUNT",
     '<input type="hidden" name="COUNT_PERIOD" value="' . $str_COUNT_PERIOD . '">' .
     '<input type="hidden" name="COUNT_SIZE" value="' . $str_COUNT_SIZE . '">' .
     '<input type="hidden" name="COUNT_TYPE" value="' . $str_COUNT_TYPE . '">' .
@@ -499,7 +594,10 @@ $tabControl->EndCustomField("COUNT",
     '<input type="hidden" name="COUNT_TO" value="' . $str_COUNT_TO . '">'
 );
 
-$tabControl->AddSection("BT_CAT_DISC_SAVE_EDIT_SECTIONS_ACTIVITY", GetMessage("BT_CAT_DISC_SAVE_EDIT_SECTIONS_ACTIVITY"));
+$tabControl->AddSection(
+    "BT_CAT_DISC_SAVE_EDIT_SECTIONS_ACTIVITY",
+    GetMessage("BT_CAT_DISC_SAVE_EDIT_SECTIONS_ACTIVITY")
+);
 
 $tabControl->BeginCustomField('ACTIVITY_INFO', GetMessage("BT_CAT_DISC_SAVE_EDIT_FILEDS_ACTIVITY") . ":", true);
 ?>
@@ -508,8 +606,11 @@ $tabControl->BeginCustomField('ACTIVITY_INFO', GetMessage("BT_CAT_DISC_SAVE_EDIT
         <td width="60%"><select name="ACTION_PERIOD" id="ACTION_PERIOD"><?
                 foreach ($arActionPeriod as $key => $value) {
                     ?>
-                    <option
-                    value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $str_ACTION_PERIOD ? 'selected' : ''); ?>><? echo htmlspecialcharsex($value); ?></option><?
+                    <optionvalue="<? echo htmlspecialcharsbx(
+                        $key
+                    ); ?>" <? echo($key == $str_ACTION_PERIOD ? 'selected' : ''); ?>><? echo htmlspecialcharsex(
+                        $value
+                    ); ?></option><?
                 }
                 ?></select></td>
     </tr>
@@ -528,14 +629,18 @@ $tabControl->BeginCustomField('ACTIVITY_INFO', GetMessage("BT_CAT_DISC_SAVE_EDIT
                     name="ACTION_TYPE" id="ACTION_TYPE"><?
                 foreach ($arTypeList as $key => $value) {
                     ?>
-                    <option
-                    value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $str_ACTION_TYPE ? 'selected' : ''); ?>><? echo htmlspecialcharsex($value); ?></option><?
+                    <optionvalue="<? echo htmlspecialcharsbx(
+                        $key
+                    ); ?>" <? echo($key == $str_ACTION_TYPE ? 'selected' : ''); ?>><? echo htmlspecialcharsex(
+                        $value
+                    ); ?></option><?
                 }
                 ?></select>
         </td>
     </tr>
 <?
-$tabControl->EndCustomField("ACTIVITY_INFO",
+$tabControl->EndCustomField(
+    "ACTIVITY_INFO",
     '<input type="hidden" name="ACTION_PERIOD" value="' . $str_ACTION_PERIOD . '">' .
     '<input type="hidden" name="ACTIVE_FROM" value="' . $str_ACTIVE_FROM . '">' .
     '<input type="hidden" name="ACTIVE_TO" value="' . $str_ACTIVE_TO . '">' .
@@ -545,7 +650,13 @@ $tabControl->EndCustomField("ACTIVITY_INFO",
 
 $tabControl->AddSection("BT_CAT_DISC_SAVE_EDIT_SECTIONS_RANGES", GetMessage("BT_CAT_DISC_SAVE_EDIT_SECTIONS_RANGES"));
 
-$tabControl->AddDropDownField("CURRENCY", GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_CURRENCY') . ':', true, $arCurrencyList, $str_CURRENCY);
+$tabControl->AddDropDownField(
+    "CURRENCY",
+    GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_CURRENCY') . ':',
+    true,
+    $arCurrencyList,
+    $str_CURRENCY
+);
 
 $tabControl->BeginCustomField('RANGES', GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS_RANGES'), true);
 ?>
@@ -573,16 +684,21 @@ $tabControl->BeginCustomField('RANGES', GetMessage('BT_CAT_DISC_SAVE_EDIT_FIELDS
             <table id="range_list" class="internal" cellspacing="0" cellpadding="0" border="0" style="width: auto;">
                 <tbody>
                 <tr class="heading">
-                    <td align="center"><? echo htmlspecialcharsex(GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_SUMM')) ?></td>
-                    <td align="center"><? echo htmlspecialcharsex(GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_DISCOUNT')) ?></td>
+                    <td align="center"><? echo htmlspecialcharsex(
+                            GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_SUMM')
+                        ) ?></td>
+                    <td align="center"><? echo htmlspecialcharsex(
+                            GetMessage('BT_CAT_DISC_SAVE_EDIT_RANGE_DISCOUNT')
+                        ) ?></td>
                 </tr><?
                 $intCount = 0;
                 foreach ($arRanges as &$arOneRange) {
                     echo __AddRangeRow($intCount, RANGE_ROW_PREFIX, $arOneRange);
                     $intCount++;
                 }
-                if (isset($arOneRange))
+                if (isset($arOneRange)) {
                     unset($arOneRange);
+                }
                 for ($i = 0; $i < RANGE_EMPTY_ROW_SIZE; $i++) {
                     echo __AddRangeRow($intCount, RANGE_ROW_PREFIX, $arDefRange);
                     $intCount++;
@@ -604,10 +720,12 @@ foreach ($arRanges as &$arOneRange) {
     $strHiddenRanges .= __AddHiddenRow($intCount, RANGE_ROW_PREFIX, $arOneRange);
     $intCount++;
 }
-if (isset($arOneRange))
+if (isset($arOneRange)) {
     unset($arOneRange);
+}
 $strHiddenRanges .= '<input type="hidden" name="RANGES_COUNT" value="' . intval($intCount) . '">';
-$tabControl->EndCustomField('RANGES',
+$tabControl->EndCustomField(
+    'RANGES',
     $strHiddenRanges
 );
 
@@ -618,12 +736,14 @@ $tabControl->BeginCustomField('GROUP_IDS', GetMessage('BT_CAT_DISC_SAVE_EDIT_FIE
     <tr id="tr_GROUP_IDS" class="adm-detail-required-field">
         <td valign="top" width="40%"><? echo $tabControl->GetCustomLabelHTML(); ?>:</td>
         <td width="60%" align="left"><select name="GROUP_IDS[]" multiple size="8"><?
-                $rsUserGroups = CGroup::GetList(($by = 'c_sort'), ($order = "asc"), array(), "N");
+                $rsUserGroups = CGroup::GetList();
                 while ($arUserGroup = $rsUserGroups->Fetch()) {
                     if (2 != $arUserGroup['ID']) {
                         ?>
-                        <option
-                        value="<? echo intval($arUserGroup['ID']) ?>" <? echo(in_array($arUserGroup['ID'], $arGroupList) ? 'selected' : ''); ?>><? echo htmlspecialcharsex($arUserGroup['NAME']); ?></option><?
+                        <option value="<? echo intval($arUserGroup['ID']) ?>" <? echo(in_array(
+                            $arUserGroup['ID'],
+                            $arGroupList
+                        ) ? 'selected' : ''); ?>><? echo htmlspecialcharsex($arUserGroup['NAME']); ?></option><?
                     }
                 }
 
@@ -633,22 +753,37 @@ $tabControl->BeginCustomField('GROUP_IDS', GetMessage('BT_CAT_DISC_SAVE_EDIT_FIE
 if ($ID > 0 && !empty($arGroupList)) {
     $strGroupsHidden = '';
     foreach ($arGroupList as &$value) {
-        if (0 < intval($value))
+        if (0 < intval($value)) {
             $strGroupsHidden .= '<input type="hidden" name="GROUP_IDS[]" value="' . intval($value) . '">';
+        }
     }
-    if (isset($value))
+    if (isset($value)) {
         unset($value);
+    }
 } else {
     $strGroupsHidden = '<input type="hidden" name="GROUP_IDS[]" value="">';
 }
-$tabControl->EndCustomField('GROUP_IDS',
+$tabControl->EndCustomField(
+    'GROUP_IDS',
     $strGroupsHidden
 );
 
 $tabControl->BeginNextFormTab();
 
-$tabControl->AddEditField("XML_ID", GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_XML_ID") . ":", false, array("size" => 50, "maxlength" => 255), $str_XML_ID);
-$tabControl->AddEditField("SORT", GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_SORT") . ":", false, array("size" => 7, "maxlength" => 10), $str_SORT);
+$tabControl->AddEditField(
+    "XML_ID",
+    GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_XML_ID") . ":",
+    false,
+    array("size" => 50, "maxlength" => 255),
+    $str_XML_ID
+);
+$tabControl->AddEditField(
+    "SORT",
+    GetMessage("BT_CAT_DISC_SAVE_EDIT_FIELDS_SORT") . ":",
+    false,
+    array("size" => 7, "maxlength" => 10),
+    $str_SORT
+);
 
 $arButtonsParams = array(
     'disabled' => $bReadOnly,

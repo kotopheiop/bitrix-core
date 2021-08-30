@@ -1,9 +1,11 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if (!$USER->CanDoOperation('seo_tools'))
+if (!$USER->CanDoOperation('seo_tools')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 CModule::IncludeModule('seo');
@@ -17,7 +19,7 @@ $arCallbacks = array('set_stats' => 'window.BXSetStats', 'set_keywords_stats' =>
 if (
     $_SERVER['REQUEST_METHOD'] == 'POST'
     && check_bitrix_sessid()
-    && $_REQUEST['url'] && substr($_REQUEST['url'], 0, 1) == '/'
+    && $_REQUEST['url'] && mb_substr($_REQUEST['url'], 0, 1) == '/'
     && $_REQUEST['site']
     && $_REQUEST['callback']
     && array_key_exists($_REQUEST['callback'], $arCallbacks)
@@ -28,7 +30,9 @@ if (
     if (!$obChecker->bError) {
         if ($_REQUEST['keywords']) {
             $arKeywords = explode(',', $_REQUEST['keywords']);
-            foreach ($arKeywords as $k => $v) $arKeywords[$k] = trim($v);
+            foreach ($arKeywords as $k => $v) {
+                $arKeywords[$k] = trim($v);
+            }
             $arKeywords = array_unique($arKeywords);
             TrimArr($arKeywords);
 
@@ -39,11 +43,13 @@ if (
             foreach ($arKeywords as $key => $value) {
                 $arWordData = array_values($arPageResult[$key]);
                 $arWordData = $arWordData[0];
-                if (is_array($arWordData))
+                if (is_array($arWordData)) {
                     $arWordData['CONTRAST'] = number_format($arWordData['CONTRAST'], 2);
+                }
 
                 $arResult[] = array(
-                    $value, $arWordData
+                    $value,
+                    $arWordData
                 );
             }
         } else {
@@ -52,15 +58,17 @@ if (
 
         if ($bGetFullInfo) {
             $extended = $obChecker->GetExtendedData();
-            if (strlen($extended['META_DESCRIPTION']) > 0)
+            if ($extended['META_DESCRIPTION'] <> '') {
                 $extended['META_DESCRIPTION'] = array($extended['META_DESCRIPTION']);
-            else
+            } else {
                 $extended['META_DESCRIPTION'] = array();
+            }
 
-            if (strlen($extended['META_KEYWORDS']) > 0)
+            if ($extended['META_KEYWORDS'] <> '') {
                 $extended['META_KEYWORDS'] = array($extended['META_KEYWORDS']);
-            else
+            } else {
                 $extended['META_KEYWORDS'] = array();
+            }
 
             $extended['TITLE'] = array($extended['TITLE']);
             $arExt = $extended;
@@ -70,7 +78,11 @@ if (
             }
         }
 
-        echo $arCallbacks[$_REQUEST['callback']] . '(' . CUtil::PhpToJsObject($arResult) . ($bGetFullInfo ? ', ' . CUtil::PhpToJsObject($obChecker->GetStatistics()) . ', ' . CUtil::PhpToJsObject($obChecker->GetErrors()) . ', ' . CUtil::PhpToJsObject($arExt) : '') . '); ';
+        echo $arCallbacks[$_REQUEST['callback']] . '(' . CUtil::PhpToJsObject(
+                $arResult
+            ) . ($bGetFullInfo ? ', ' . CUtil::PhpToJsObject($obChecker->GetStatistics()) . ', ' . CUtil::PhpToJsObject(
+                    $obChecker->GetErrors()
+                ) . ', ' . CUtil::PhpToJsObject($arExt) : '') . '); ';
     }
 
     if ($ex = $APPLICATION->GetException()) {

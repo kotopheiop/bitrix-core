@@ -1,50 +1,59 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule("forum");
 IncludeModuleLangFile(__FILE__);
 ClearVars();
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 $message = false;
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $forumPermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $forumPermissions == "W" && check_bitrix_sessid()) {
     $POINTS_PER_POST = str_replace(",", ".", $POINTS_PER_POST);
 
     $arFields = array(
         "MIN_NUM_POSTS" => $MIN_NUM_POSTS,
-        "POINTS_PER_POST" => $POINTS_PER_POST);
+        "POINTS_PER_POST" => $POINTS_PER_POST
+    );
     $res = 0;
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = CForumPoints2Post::Update($ID, $arFields);
-    else
+    } else {
         $res = CForumPoints2Post::Add($arFields);
+    }
 
-    if (intVal($res) <= 0 && $e = $GLOBALS["APPLICATION"]->GetException()) {
-        $message = new CAdminMessage(($ID > 0 ? GetMessage("FORUM_PPE_EDDOR_UPDATE") : GetMessage("FORUM_PPE_ERROR_ADD")), $e);
-        $bInitVars = True;
-    } elseif (strlen($save) > 0)
+    if (intval($res) <= 0 && $e = $GLOBALS["APPLICATION"]->GetException()) {
+        $message = new CAdminMessage(
+            ($ID > 0 ? GetMessage("FORUM_PPE_EDDOR_UPDATE") : GetMessage("FORUM_PPE_ERROR_ADD")), $e
+        );
+        $bInitVars = true;
+    } elseif ($save <> '') {
         LocalRedirect("forum_points2post.php?lang=" . LANG . "&" . GetFilterParams("filter_", false));
-    else
+    } else {
         $ID = $res;
+    }
 }
 
 if ($ID > 0) {
     $db_points = CForumPoints2Post::GetList(array(), array("ID" => $ID));
-    $db_points->ExtractFields("str_", False);
+    $db_points->ExtractFields("str_", false);
 }
 
 if ($bInitVars) {
     $DB->InitTableVarsForEdit("b_forum_points2post", "", "str_");
 }
 
-$sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("FORUM_PPE_TITLE_UPD")) : GetMessage("FORUM_PPE_TITLE_ADD");
+$sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("FORUM_PPE_TITLE_UPD")) : GetMessage(
+    "FORUM_PPE_TITLE_ADD"
+);
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -74,14 +83,18 @@ if ($ID > 0 && $forumPermissions == "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("FPPN_DELETE_POINT"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("FPPN_DELETE_POINT_CONFIRM") . "')) window.location='/bitrix/admin/forum_points2post.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "FPPN_DELETE_POINT_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/forum_points2post.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="forum_edit">
         <input type="hidden" name="Update" value="Y">
@@ -91,7 +104,12 @@ if ($message)
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("FPPN_TAB_POINT"), "ICON" => "forum", "TITLE" => GetMessage("FPPN_TAB_POINT_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("FPPN_TAB_POINT"),
+                "ICON" => "forum",
+                "TITLE" => GetMessage("FPPN_TAB_POINT_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -131,7 +149,10 @@ if ($message)
         $tabControl->Buttons(
             array(
                 "disabled" => ($forumPermissions < "W"),
-                "back_url" => "/bitrix/admin/forum_points2post.php?lang=" . LANG . "&" . GetFilterParams("filter_", false)
+                "back_url" => "/bitrix/admin/forum_points2post.php?lang=" . LANG . "&" . GetFilterParams(
+                        "filter_",
+                        false
+                    )
             )
         );
         $tabControl->End();

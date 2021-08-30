@@ -64,12 +64,14 @@ class BlacklistTable extends Entity\DataManager
     {
         static $hasEmails = null;
         if ($hasEmails === null) {
-            $row = static::getRow([
-                'select' => ['ID'],
-                'limit' => 1,
-                'order' => ['ID' => 'ASC'],
-                'cache' => ['ttl' => 36000]
-            ]);
+            $row = static::getRow(
+                [
+                    'select' => ['ID'],
+                    'limit' => 1,
+                    'order' => ['ID' => 'ASC'],
+                    'cache' => ['ttl' => 36000]
+                ]
+            );
 
             $hasEmails = $row !== null;
         }

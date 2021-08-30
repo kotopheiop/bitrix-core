@@ -177,7 +177,6 @@ class Widget extends ConfigurableModel
             $report->setWidget($this);
             $reportHandler->fillReport($report);
         }
-
     }
 
     /**
@@ -360,12 +359,14 @@ class Widget extends ConfigurableModel
      */
     public static function getWidgetsByBoard($boardId)
     {
-        $widgets = static::getModelList(array(
-            'select' => array('*'),
-            'filter' => array('=BOARD_ID' => $boardId),
-            'with' => array('reports.configurations', 'reports.widget', 'configurations'),
-            'order' => array('WEIGHT'),
-        ));
+        $widgets = static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => array('=BOARD_ID' => $boardId),
+                'with' => array('reports.configurations', 'reports.widget', 'configurations'),
+                'order' => array('WEIGHT'),
+            )
+        );
         return $widgets;
     }
 
@@ -378,21 +379,26 @@ class Widget extends ConfigurableModel
         $userId = $USER->getId();
         $filter = Query::filter()
             ->where('IS_PATTERN', '1')
-            ->where(Query::filter()
-                ->where(Query::filter()
-                    ->where('OWNER_ID', $userId)
-                )
-                ->logic('or')
-                ->where(Query::filter()
-                    ->where('OWNER_ID', 0)
-                    ->whereNot('CATEGORY_KEY', '')
-                )
+            ->where(
+                Query::filter()
+                    ->where(
+                        Query::filter()
+                            ->where('OWNER_ID', $userId)
+                    )
+                    ->logic('or')
+                    ->where(
+                        Query::filter()
+                            ->where('OWNER_ID', 0)
+                            ->whereNot('CATEGORY_KEY', '')
+                    )
             );
-        $widgets = static::getModelList(array(
-            'select' => array('*'),
-            'filter' => $filter,
-            'order' => array('CREATED_DATE' => 'DESC'),
-        ));
+        $widgets = static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => $filter,
+                'order' => array('CREATED_DATE' => 'DESC'),
+            )
+        );
         return $widgets ? $widgets : array();
     }
 
@@ -419,7 +425,10 @@ class Widget extends ConfigurableModel
     {
         static $widgets;
         if (!isset($widgets[$widgetId])) {
-            $widgets[$widgetId] = static::load(array('ID' => $widgetId), array('row', 'reports.configurations', 'configurations'));
+            $widgets[$widgetId] = static::load(
+                array('ID' => $widgetId),
+                array('row', 'reports.configurations', 'configurations')
+            );
         }
         return $widgets[$widgetId];
     }
@@ -469,7 +478,7 @@ class Widget extends ConfigurableModel
      */
     public static function buildPseudoWidget($params)
     {
-        if (strpos($params['widgetGId'], 'pseudo_') === 0) {
+        if (mb_strpos($params['widgetGId'], 'pseudo_') === 0) {
             $widget = new self();
             $widget->setViewKey($params['viewKey']);
             $widget->setGId($params['widgetGId']);
@@ -535,7 +544,6 @@ class Widget extends ConfigurableModel
             return $widgetGId;
         }
         return null;
-
     }
 
     /**

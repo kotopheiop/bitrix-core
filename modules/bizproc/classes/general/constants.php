@@ -223,8 +223,9 @@ class CBPSetPermissionsMode
 
     public static function outScope($v)
     {
-        if ($v == self::ScopeDocument)
+        if ($v == self::ScopeDocument) {
             return "ScopeDocument";
+        }
         return "ScopeWorkflow";
     }
 }
@@ -249,7 +250,7 @@ class CBPTaskUserStatus
 
     public static function resolveStatus($name)
     {
-        switch (strtolower((string)$name)) {
+        switch (mb_strtolower((string)$name)) {
             case '0':
             case 'waiting':
                 return self::Waiting;

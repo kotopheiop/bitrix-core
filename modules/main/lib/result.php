@@ -78,8 +78,9 @@ class Result
     {
         $messages = array();
 
-        foreach ($this->getErrors() as $error)
+        foreach ($this->getErrors() as $error) {
             $messages[] = $error->getMessage();
+        }
 
         return $messages;
     }

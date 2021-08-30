@@ -3,6 +3,7 @@
 namespace Bitrix\Rest;
 
 use Bitrix\Main;
+use Bitrix\Main\Data\Cache;
 
 /**
  * Class EventOfflineTable
@@ -20,10 +21,27 @@ use Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\Rest
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EventOffline_Query query()
+ * @method static EO_EventOffline_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EventOffline_Result getById($id)
+ * @method static EO_EventOffline_Result getList(array $parameters = array())
+ * @method static EO_EventOffline_Entity getEntity()
+ * @method static \Bitrix\Rest\EO_EventOffline createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rest\EO_EventOffline_Collection createCollection()
+ * @method static \Bitrix\Rest\EO_EventOffline wakeUpObject($row)
+ * @method static \Bitrix\Rest\EO_EventOffline_Collection wakeUpCollection($rows)
+ */
 class EventOfflineTable extends Main\Entity\DataManager
 {
     const PROCESS_ID_LIFETIME = 2952000; // 30 days
+    private const OFFLINE_EVENT_DEFAULT_TIMEOUT = 1;
+    private const OFFLINE_EVENT_CACHE_PREFIX = 'OFFLINE_EVENT_TIMEOUT';
+
+    private static $isSendOfflineEvent = false;
 
     /**
      * Returns DB table name for entity.
@@ -218,6 +236,7 @@ class EventOfflineTable extends Main\Entity\DataManager
             $sqlProcessId = $helper->forSql($processId);
 
             $sql = array();
+            $sql[] = "DELETE FROM {$sqlTable} WHERE {$sqlWhere} AND ERROR=0 AND PROCESS_ID <> '{$sqlProcessId}'";
             $sql[] = "UPDATE {$sqlTable} SET ERROR=1, PROCESS_ID=IF(PROCESS_ID='{$sqlProcessId}', '', 'fake_process_id') WHERE {$sqlWhere} AND ERROR=0 ORDER BY PROCESS_ID ASC";
             $sql[] = "DELETE FROM {$sqlTable} WHERE {$sqlWhere} AND PROCESS_ID='fake_process_id'";
 
@@ -234,6 +253,46 @@ class EventOfflineTable extends Main\Entity\DataManager
 
     protected static function getMessageId($fields)
     {
-        return isset($fields['MESSAGE_ID']) ? $fields['MESSAGE_ID'] : md5($fields['EVENT_NAME'] . '|' . Main\Web\Json::encode($fields['EVENT_DATA']));
+        return isset($fields['MESSAGE_ID']) ? $fields['MESSAGE_ID'] : md5(
+            $fields['EVENT_NAME'] . '|' . Main\Web\Json::encode($fields['EVENT_DATA'])
+        );
+    }
+
+    public static function checkSendTime($id, $timeout = null): bool
+    {
+        $result = false;
+        $timeout = !is_null($timeout) ? (int)$timeout : static::OFFLINE_EVENT_DEFAULT_TIMEOUT;
+
+        if ($timeout > 0) {
+            $key = static::OFFLINE_EVENT_CACHE_PREFIX . '|' . $id . '|' . $timeout;
+            $cache = Cache::createInstance();
+            if ($cache->initCache($timeout, $key)) {
+                $result = false;
+            } elseif ($cache->startDataCache()) {
+                $result = true;
+                $data = 1;
+                $cache->endDataCache($data);
+            }
+        } elseif (static::$isSendOfflineEvent === false) {
+            static::$isSendOfflineEvent = true;
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    public static function prepareOfflineEvent($params, $handler)
+    {
+        $data = reset($params);
+        if (!is_array($data['APP_LIST']) || !in_array((int)$handler['APP_ID'], $data['APP_LIST'], true)) {
+            throw new RestException('Wrong application.');
+        }
+
+        $timeout = $handler['OPTIONS']['minTimeout'] ?? null;
+        if (!static::checkSendTime($handler['ID'], $timeout)) {
+            throw new RestException('Time is not up.');
+        }
+
+        return null;
     }
 }

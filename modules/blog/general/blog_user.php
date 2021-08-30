@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\ModuleManager;
+
 IncludeModuleLangFile(__FILE__);
 $GLOBALS["BLOG_USER"] = Array();
 
@@ -8,32 +12,35 @@ class CAllBlogUser
 {
     public static function IsLocked($userID)
     {
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         if ($userID > 0) {
             $arUser = CBlogUser::GetByID($userID, BLOG_BY_USER_ID);
             if ($arUser) {
-                if ($arUser["ALLOW_POST"] != "Y")
-                    return True;
+                if ($arUser["ALLOW_POST"] != "Y") {
+                    return true;
+                }
             }
         }
-        return False;
+        return false;
     }
 
     public static function CanUserUpdateUser($ID, $userID, $selectType = BLOG_BY_BLOG_USER_ID)
     {
-        $ID = IntVal($ID);
-        $userID = IntVal($userID);
+        $ID = intval($ID);
+        $userID = intval($userID);
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
 
         $blogModulePermissions = $GLOBALS["APPLICATION"]->GetGroupRight("blog");
-        if ($blogModulePermissions >= "W")
-            return True;
+        if ($blogModulePermissions >= "W") {
+            return true;
+        }
 
         $arUser = CBlogUser::GetByID($ID, $selectType);
-        if ($arUser && IntVal($arUser["USER_ID"]) == $userID)
-            return True;
+        if ($arUser && intval($arUser["USER_ID"]) == $userID) {
+            return true;
+        }
 
-        return False;
+        return false;
     }
 
     /*************** ADD, UPDATE, DELETE *****************/
@@ -41,7 +48,7 @@ class CAllBlogUser
     {
         global $DB;
 
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && IntVal($arFields["USER_ID"]) <= 0) {
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intval($arFields["USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_EMPTY_USER_ID"), "EMPTY_USER_ID");
             return false;
         } elseif (is_set($arFields, "USER_ID")) {
@@ -52,8 +59,14 @@ class CAllBlogUser
             }
         }
 
-        if (is_set($arFields, "ALIAS") && strlen($arFields["ALIAS"]) > 0) {
-            $dbResult = CBlogUser::GetList(array(), array("ALIAS" => $arFields["ALIAS"], "!ID" => IntVal($ID)), false, false, array("ID"));
+        if (is_set($arFields, "ALIAS") && $arFields["ALIAS"] <> '') {
+            $dbResult = CBlogUser::GetList(
+                array(),
+                array("ALIAS" => $arFields["ALIAS"], "!ID" => intval($ID)),
+                false,
+                false,
+                array("ID")
+            );
             if ($dbResult->Fetch()) {
                 $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_ERROR_DUPL_ALIAS"), "ERROR_DUPL_ALIAS");
                 return false;
@@ -70,48 +83,56 @@ class CAllBlogUser
             return false;
         }
 
-        if ((is_set($arFields, "ALLOW_POST") || $ACTION == "ADD") && $arFields["ALLOW_POST"] != "Y" && $arFields["ALLOW_POST"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "ALLOW_POST"
+                ) || $ACTION == "ADD") && $arFields["ALLOW_POST"] != "Y" && $arFields["ALLOW_POST"] != "N") {
             $arFields["ALLOW_POST"] = "Y";
+        }
 
-        if (is_set($arFields, "AVATAR") && strlen($arFields["AVATAR"]["name"]) <= 0 && strlen($arFields["AVATAR"]["del"]) <= 0)
+        if (is_set($arFields, "AVATAR") && $arFields["AVATAR"]["name"] == '' && $arFields["AVATAR"]["del"] == '') {
             unset($arFields["AVATAR"]);
+        }
 
         if (is_set($arFields, "AVATAR")) {
-            $max_size = COption::GetOptionInt("blog", "avatar_max_size", 30000);
-            //$max_width = COption::GetOptionInt("blog", "avatar_max_width", 100);
-            //$max_height = COption::GetOptionInt("blog", "avatar_max_height", 100);
+            $max_size = Option::get('blog', 'avatar_max_size', 30000);
             $res = CFile::CheckImageFile($arFields["AVATAR"], $max_size, 0, 0);
-            if (strlen($res) > 0) {
+            if ($res <> '') {
                 $GLOBALS["APPLICATION"]->ThrowException($res, "ERROR_AVATAR");
                 return false;
             }
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         $arUser = CBlogUser::GetByID($ID, BLOG_BY_USER_ID);
         if ($arUser) {
-
             $dbResult = CBlog::GetList(array(), array("OWNER_ID" => $arUser["USER_ID"]), false, false, array("ID"));
             if ($dbResult->Fetch()) {
                 $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_ERROR_OWNER"), "ERROR_OWNER");
-                $bSuccess = False;
+                $bSuccess = false;
             }
 
             if ($bSuccess) {
-                $dbResult = CBlogPost::GetList(array(), array("AUTHOR_ID" => $arUser["USER_ID"]), false, false, array("ID"));
+                $dbResult = CBlogPost::GetList(
+                    array(),
+                    array("AUTHOR_ID" => $arUser["USER_ID"]),
+                    false,
+                    false,
+                    array("ID")
+                );
                 if ($arResult = $dbResult->Fetch()) {
                     if (!CBlogPost::Delete($arResult["ID"])) {
                         $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_ERROR_AUTHOR"), "ERROR_AUTHOR");
-                        $bSuccess = False;
+                        $bSuccess = false;
                     }
                 }
             }
@@ -122,7 +143,15 @@ class CAllBlogUser
 
                 $DB->Query(
                     "UPDATE b_blog_comment SET " .
-                    "	AUTHOR_NAME = '" . $DB->ForSql(CBlogUser::GetUserName($arUser["ALIAS"], $arGloUser["NAME"], $arGloUser["LAST_NAME"], $arGloUser["LOGIN"], $arGloUser["SECOND_NAME"])) . "', " .
+                    "	AUTHOR_NAME = '" . $DB->ForSql(
+                        CBlogUser::GetUserName(
+                            $arUser["ALIAS"],
+                            $arGloUser["NAME"],
+                            $arGloUser["LAST_NAME"],
+                            $arGloUser["LOGIN"],
+                            $arGloUser["SECOND_NAME"]
+                        )
+                    ) . "', " .
                     "	AUTHOR_ID = null " .
                     "WHERE AUTHOR_ID = " . $arUser["USER_ID"] . "",
                     true
@@ -138,12 +167,15 @@ class CAllBlogUser
                     "WHERE FU.ID = " . $arUser["ID"] . " " .
                     "	AND FU.AVATAR = F.ID ";
                 $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . " LINE:" . __LINE__);
-                while ($zr = $z->Fetch())
+                while ($zr = $z->Fetch()) {
                     CFile::Delete($zr["ID"]);
+                }
 
 
                 if (CModule::IncludeModule("search")) {
-                    CSearch::Index("blog", "U" . $arUser["ID"],
+                    CSearch::Index(
+                        "blog",
+                        "U" . $arUser["ID"],
                         array(
                             "TITLE" => "",
                             "BODY" => ""
@@ -159,27 +191,31 @@ class CAllBlogUser
 
                 return $DB->Query("DELETE FROM b_blog_user WHERE ID = " . $arUser["ID"] . "", true);
             }
-            if (!$bSuccess)
+            if (!$bSuccess) {
                 return false;
+            }
         }
 
-        return True;
+        return true;
     }
 
     public static function DeleteFromUserGroup($ID, $blogID, $selectType = BLOG_BY_BLOG_USER_ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        $blogID = IntVal($blogID);
+        $ID = intval($ID);
+        $blogID = intval($blogID);
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
 
-        $bSuccess = True;
+        $bSuccess = true;
 
         $arResult = CBlog::GetByID($blogID);
         if (!$arResult) {
-            $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $blogID, GetMessage("BLG_GU_ERROR_NO_BLOG")), "ERROR_NO_BLOG");
-            $bSuccess = False;
+            $GLOBALS["APPLICATION"]->ThrowException(
+                str_replace("#ID#", $blogID, GetMessage("BLG_GU_ERROR_NO_BLOG")),
+                "ERROR_NO_BLOG"
+            );
+            $bSuccess = false;
         }
 
         if ($bSuccess) {
@@ -188,14 +224,14 @@ class CAllBlogUser
             $dbResult = CUser::GetByID($arUser["USER_ID"]);
             if (!$dbResult->Fetch()) {
                 $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_ERROR_NO_USER_ID"), "ERROR_NO_USER_ID");
-                $bSuccess = False;
+                $bSuccess = false;
             }
         }
 
         if ($bSuccess) {
             $DB->Query(
                 "DELETE FROM b_blog_user2user_group " .
-                "WHERE USER_ID = " . IntVal($arUser["USER_ID"]) . " " .
+                "WHERE USER_ID = " . intval($arUser["USER_ID"]) . " " .
                 "	AND BLOG_ID = " . $blogID . " "
             );
         }
@@ -203,24 +239,34 @@ class CAllBlogUser
         return $bSuccess;
     }
 
-    public static function AddToUserGroup($ID, $blogID, $arGroups = array(), $joinStatus = "Y", $selectType = BLOG_BY_BLOG_USER_ID, $action = BLOG_CHANGE)
-    {
+    public static function AddToUserGroup(
+        $ID,
+        $blogID,
+        $arGroups = array(),
+        $joinStatus = "Y",
+        $selectType = BLOG_BY_BLOG_USER_ID,
+        $action = BLOG_CHANGE
+    ) {
         global $DB;
 
-        $ID = IntVal($ID);
-        $blogID = IntVal($blogID);
-        if (!is_array($arGroups))
+        $ID = intval($ID);
+        $blogID = intval($blogID);
+        if (!is_array($arGroups)) {
             $arGroups = array($arGroups);
+        }
         $joinStatus = (($joinStatus == "Y") ? "Y" : "N");
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
         $action = (($action == BLOG_ADD) ? BLOG_ADD : BLOG_CHANGE);
 
-        $bSuccess = True;
+        $bSuccess = true;
 
         $arResult = CBlog::GetByID($blogID);
         if (!$arResult) {
-            $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $blogID, GetMessage("BLG_GU_ERROR_NO_BLOG")), "ERROR_NO_BLOG");
-            $bSuccess = False;
+            $GLOBALS["APPLICATION"]->ThrowException(
+                str_replace("#ID#", $blogID, GetMessage("BLG_GU_ERROR_NO_BLOG")),
+                "ERROR_NO_BLOG"
+            );
+            $bSuccess = false;
         }
 
         if ($bSuccess) {
@@ -229,20 +275,26 @@ class CAllBlogUser
             $dbResult = CUser::GetByID($arUser["USER_ID"]);
             if (!$dbResult->Fetch()) {
                 $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GU_ERROR_NO_USER_ID"), "ERROR_NO_USER_ID");
-                $bSuccess = False;
+                $bSuccess = false;
             }
         }
 
         if ($bSuccess) {
-            if ($action == BLOG_CHANGE)
+            if ($action == BLOG_CHANGE) {
                 $DB->Query(
                     "DELETE FROM b_blog_user2user_group " .
-                    "WHERE USER_ID = " . IntVal($arUser["USER_ID"]) . " " .
+                    "WHERE USER_ID = " . intval($arUser["USER_ID"]) . " " .
                     "	AND BLOG_ID = " . $blogID . " "
                 );
+            }
 
             if (count($arGroups) > 0) {
-                array_walk($arGroups, create_function("&\$item", "\$item=IntVal(\$item);"));
+                array_walk(
+                    $arGroups,
+                    function (&$item) {
+                        $item = (int)$item;
+                    }
+                );
 
                 $dbUserGroups = CBlogUserGroup::GetList(
                     array(),
@@ -252,11 +304,13 @@ class CAllBlogUser
                     array("ID")
                 );
                 $arGroups = array();
-                while ($arUserGroup = $dbUserGroups->Fetch())
-                    $arGroups[] = IntVal($arUserGroup["ID"]);
+                while ($arUserGroup = $dbUserGroups->Fetch()) {
+                    $arGroups[] = intval($arUserGroup["ID"]);
+                }
 
-                if ($action == BLOG_ADD)
+                if ($action == BLOG_ADD) {
                     $arCurrentGroups = CBlogUser::GetUserGroups($ID, $blogID, "", $selectType);
+                }
 
                 foreach ($arGroups as $val) {
                     if ($val != 1 && $val != 2) {
@@ -264,7 +318,7 @@ class CAllBlogUser
                             || $action == BLOG_ADD && !in_array($val, $arCurrentGroups)) {
                             $DB->Query(
                                 "INSERT INTO b_blog_user2user_group (USER_ID, BLOG_ID, USER_GROUP_ID) " .
-                                "VALUES (" . IntVal($arUser["USER_ID"]) . ", " . $blogID . ", " . IntVal($val) . ")"
+                                "VALUES (" . intval($arUser["USER_ID"]) . ", " . $blogID . ", " . intval($val) . ")"
                             );
                         }
                     }
@@ -280,23 +334,26 @@ class CAllBlogUser
 
     public static function SetLastVisit()
     {
-        if (isset($GLOBALS["BLOG_USER"]["BLOG_LAST_VISIT_SET"]) && $GLOBALS["BLOG_USER"]["BLOG_LAST_VISIT_SET"] == "Y")
-            return True;
+        if (isset($GLOBALS["BLOG_USER"]["BLOG_LAST_VISIT_SET"]) && $GLOBALS["BLOG_USER"]["BLOG_LAST_VISIT_SET"] == "Y") {
+            return true;
+        }
 
-        if (!$GLOBALS["USER"]->IsAuthorized())
-            return False;
+        if (!$GLOBALS["USER"]->IsAuthorized()) {
+            return false;
+        }
 
-        $userID = IntVal($GLOBALS["USER"]->GetID());
-        if ($userID <= 0)
-            return False;
+        $userID = intval($GLOBALS["USER"]->GetID());
+        if ($userID <= 0) {
+            return false;
+        }
 
         $arBlogUser = CBlogUser::GetByID($userID, BLOG_BY_USER_ID);
-        if ($arBlogUser)
+        if ($arBlogUser) {
             CBlogUser::Update(
                 $arBlogUser["ID"],
                 array("=LAST_VISIT" => $GLOBALS["DB"]->GetNowFunction())
             );
-        else
+        } else {
             CBlogUser::Add(
                 array(
                     "USER_ID" => $userID,
@@ -305,10 +362,11 @@ class CAllBlogUser
                     "ALLOW_POST" => "Y"
                 )
             );
+        }
 
         $GLOBALS["BLOG_USER"]["BLOG_LAST_VISIT_SET"] = "Y";
 
-        return True;
+        return true;
     }
 
     //*************** SELECT *********************/
@@ -316,11 +374,14 @@ class CAllBlogUser
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
 
         $varName = (($selectType == BLOG_BY_USER_ID) ? "BLOG_USER1_CACHE_" : "BLOG_USER_CACHE_");
-        if (isset($GLOBALS["BLOG_USER"][$varName . $ID]) && is_array($GLOBALS["BLOG_USER"][$varName . $ID]) && is_set($GLOBALS["BLOG_USER"][$varName . $ID], "ID")) {
+        if (isset($GLOBALS["BLOG_USER"][$varName . $ID]) && is_array($GLOBALS["BLOG_USER"][$varName . $ID]) && is_set(
+                $GLOBALS["BLOG_USER"][$varName . $ID],
+                "ID"
+            )) {
             return $GLOBALS["BLOG_USER"][$varName . $ID];
         } else {
             $strSql =
@@ -330,7 +391,7 @@ class CAllBlogUser
                 "	" . $DB->DateToCharFunction("B.DATE_REG", "FULL") . " as DATE_REG " .
                 "FROM b_blog_user B " .
                 "WHERE B." . (($selectType == BLOG_BY_USER_ID) ? "USER_ID" : "ID") . " = " . $ID . "";
-            $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             if ($arResult = $dbResult->Fetch()) {
                 $GLOBALS["BLOG_USER"]["BLOG_USER_CACHE_" . $arResult["ID"]] = $arResult;
                 $GLOBALS["BLOG_USER"]["BLOG_USER1_CACHE_" . $arResult["USER_ID"]] = $arResult;
@@ -338,14 +399,14 @@ class CAllBlogUser
             }
         }
 
-        return False;
+        return false;
     }
 
-    public static function GetUserFriends($ID, $bFlag = True)
+    public static function GetUserFriends($ID, $bFlag = true)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         if ($bFlag) {
             $strSql =
@@ -382,27 +443,34 @@ class CAllBlogUser
                 "ORDER BY B.NAME ASC";
         }
 
-        $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return $dbResult;
     }
 
-    public static function GetUserGroups($ID, $blogID, $joinStatus = "", $selectType = BLOG_BY_BLOG_USER_ID, $bUrl = false)
-    {
+    public static function GetUserGroups(
+        $ID,
+        $blogID,
+        $joinStatus = "",
+        $selectType = BLOG_BY_BLOG_USER_ID,
+        $bUrl = false
+    ) {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $joinStatus = (($joinStatus == "Y" || $joinStatus == "N") ? $joinStatus : "");
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
-        if ($bUrl)
+        if ($bUrl) {
             $bUrl = true;
-        else
+        } else {
             $bUrl = false;
+        }
 
-        if (!$bUrl)
-            $blogID = IntVal($blogID);
-        else
+        if (!$bUrl) {
+            $blogID = intval($blogID);
+        } else {
             $blogID = preg_replace("/[^a-zA-Z0-9_-]/is", "", Trim($blogID));
+        }
 
         $varName = (($selectType == BLOG_BY_USER_ID) ? "BLOG_USER2GROUP1_CACHE_" . $blogID . "_" . $joinStatus . "_" . $ID . "_" . $bUrl : "BLOG_USER2GROUP_CACHE_" . $blogID . "_" . $joinStatus . "_" . $ID . "_" . $bUrl);
 
@@ -410,68 +478,86 @@ class CAllBlogUser
             return $GLOBALS["BLOG_USER"][$varName];
         } else {
             $arGroups = array(1);
-            if (isset($GLOBALS["USER"]) && is_object($GLOBALS["USER"]) && $GLOBALS["USER"]->IsAuthorized())
+            if (isset($GLOBALS["USER"]) && is_object($GLOBALS["USER"]) && $GLOBALS["USER"]->IsAuthorized()) {
                 $arGroups[] = 2;
+            }
 
-            if ($ID > 0 && strlen($blogID) > 0) {
+            if ($ID > 0 && $blogID <> '') {
                 if ($selectType == BLOG_BY_BLOG_USER_ID) {
                     $arBlogUser = CBlogUser::GetByID($ID, $selectType);
                     $userID = $arBlogUser["USER_ID"];
-                } else
+                } else {
                     $userID = $ID;
+                }
 
                 $strSql =
                     "SELECT UG.ID, UG.USER_ID, UG.BLOG_ID, UG.USER_GROUP_ID " .
                     "FROM b_blog_user2user_group UG ";
-                if ($bUrl)
+                if ($bUrl) {
                     $strSql .= " INNER JOIN b_blog B ON (UG.BLOG_ID = B.ID AND B.URL='" . $DB->ForSql($blogID) . "') ";
+                }
 
                 $strSql .= " WHERE UG.USER_ID = " . $userID . " ";
 
-                if (!$bUrl)
+                if (!$bUrl) {
                     $strSql .= "	AND UG.BLOG_ID = " . $blogID . " ";
+                }
 
-                $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-                while ($arResult = $dbResult->Fetch())
-                    $arGroups[] = IntVal($arResult["USER_GROUP_ID"]);
+                while ($arResult = $dbResult->Fetch()) {
+                    $arGroups[] = intval($arResult["USER_GROUP_ID"]);
+                }
             }
 
-            if ($selectType == BLOG_BY_BLOG_USER_ID && !empty($arBlogUser))
-                $GLOBALS["BLOG_USER"]["BLOG_USER2GROUP_CACHE_" . $blogID . "_" . $joinStatus . "_" . IntVal($arBlogUser["ID"]) . "_" . $bUrl] = $arGroups;
-            $GLOBALS["BLOG_USER"]["BLOG_USER2GROUP1_CACHE_" . $blogID . "_" . $joinStatus . "_" . IntVal($userID) . "_" . $bUrl] = $arGroups;
+            if ($selectType == BLOG_BY_BLOG_USER_ID && !empty($arBlogUser)) {
+                $GLOBALS["BLOG_USER"]["BLOG_USER2GROUP_CACHE_" . $blogID . "_" . $joinStatus . "_" . intval(
+                    $arBlogUser["ID"]
+                ) . "_" . $bUrl] = $arGroups;
+            }
+            $GLOBALS["BLOG_USER"]["BLOG_USER2GROUP1_CACHE_" . $blogID . "_" . $joinStatus . "_" . intval(
+                $userID
+            ) . "_" . $bUrl] = $arGroups;
             return $arGroups;
         }
 
-        return False;
+        return false;
     }
 
-    public static function GetUserPerms($arGroups, $blogID, $postID = 0, $permsType = BLOG_PERMS_POST, $selectType = BLOG_BY_BLOG_USER_ID)
-    {
+    public static function GetUserPerms(
+        $arGroups,
+        $blogID,
+        $postID = 0,
+        $permsType = BLOG_PERMS_POST,
+        $selectType = BLOG_BY_BLOG_USER_ID
+    ) {
         global $DB;
 
-        $blogID = IntVal($blogID);
-        $postID = IntVal($postID);
+        $blogID = intval($blogID);
+        $postID = intval($postID);
         $permsType = (($permsType == BLOG_PERMS_COMMENT) ? BLOG_PERMS_COMMENT : BLOG_PERMS_POST);
         $selectType = (($selectType == BLOG_BY_USER_ID) ? BLOG_BY_USER_ID : BLOG_BY_BLOG_USER_ID);
 
         if (!is_array($arGroups)) {
-            $ID = IntVal($arGroups);
+            $ID = intval($arGroups);
             $arGroups = CBlogUser::GetUserGroups($ID, $blogID, "Y", $selectType);
         }
 
         $strGroups = "";
         foreach ($arGroups as $val) {
-            if (strlen($strGroups) > 0)
+            if ($strGroups <> '') {
                 $strGroups .= ",";
+            }
 
-            $strGroups .= IntVal($val);
+            $strGroups .= intval($val);
         }
 
         $varName = "BLOG_USER_PERMS_CACHE_" . $blogID . "_" . $postID . "_" . $permsType;
 
         if (isset($GLOBALS["BLOG_USER"][$varName]) && is_array($GLOBALS["BLOG_USER"][$varName])
-            && isset($GLOBALS["BLOG_USER"][$varName][$strGroups]) && is_array($GLOBALS["BLOG_USER"][$varName][$strGroups])) {
+            && isset($GLOBALS["BLOG_USER"][$varName][$strGroups]) && is_array(
+                $GLOBALS["BLOG_USER"][$varName][$strGroups]
+            )) {
             return $GLOBALS["BLOG_USER"][$varName][$strGroups];
         } else {
             if ($postID > 0) {
@@ -482,8 +568,8 @@ class CAllBlogUser
                     "	AND P.USER_GROUP_ID IN (" . $strGroups . ") " .
                     "	AND P.PERMS_TYPE = '" . $DB->ForSql($permsType) . "' " .
                     "	AND P.POST_ID = " . $postID . " ";
-                $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                if (($arResult = $dbResult->Fetch()) && (strlen($arResult["PERMS"]) > 0)) {
+                $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                if (($arResult = $dbResult->Fetch()) && ($arResult["PERMS"] <> '')) {
                     $GLOBALS["BLOG_USER"][$varName][$strGroups] = $arResult["PERMS"];
                     return $arResult["PERMS"];
                 }
@@ -496,13 +582,13 @@ class CAllBlogUser
                 "	AND P.USER_GROUP_ID IN (" . $strGroups . ") " .
                 "	AND P.PERMS_TYPE = '" . $DB->ForSql($permsType) . "' " .
                 "	AND P.POST_ID IS NULL ";
-            $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if (($arResult = $dbResult->Fetch()) && (strlen($arResult["PERMS"]) > 0)) {
+            $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            if (($arResult = $dbResult->Fetch()) && ($arResult["PERMS"] <> '')) {
                 $GLOBALS[$varName][$strGroups] = $arResult["PERMS"];
                 return $arResult["PERMS"];
             }
 
-            return False;
+            return false;
         }
     }
 
@@ -516,27 +602,30 @@ class CAllBlogUser
         return BlogUser::GetUserNameEx($arUser, $arBlogUser, $arParams);
     }
 
-    public static function PreparePath($userID = 0, $siteID = False, $is404 = True)
+    public static function PreparePath($userID = 0, $siteID = false, $is404 = true)
     {
-        $userID = IntVal($userID);
-        if (!$siteID)
+        $userID = intval($userID);
+        if (!$siteID) {
             $siteID = SITE_ID;
+        }
 
         $dbPath = CBlogSitePath::GetList(array(), array("SITE_ID" => $siteID));
         while ($arPath = $dbPath->Fetch()) {
-            if (strlen($arPath["TYPE"]) > 0)
+            if ($arPath["TYPE"] <> '') {
                 $arPaths[$arPath["TYPE"]] = $arPath["PATH"];
-            else
+            } else {
                 $arPaths["OLD"] = $arPath["PATH"];
+            }
         }
 
-        if (strlen($arPaths["U"]) > 0) {
+        if ($arPaths["U"] <> '') {
             $result = str_replace("#user_id#", $userID, $arPaths["U"]);
         } else {
-            if ($is404)
+            if ($is404) {
                 $result = htmlspecialcharsbx($arPaths["OLD"]) . "/users/" . $userID . ".php";
-            else
+            } else {
                 $result = htmlspecialcharsbx($arPaths["OLD"]) . "/users.php?&user_id=" . $userID;
+            }
         }
 
         return $result;
@@ -546,7 +635,7 @@ class CAllBlogUser
     {
         return CBlogUser::PreparePath(
             isset($arParams["USER_ID"]) ? $arParams["USER_ID"] : 0,
-            False
+            false
         );
     }
 
@@ -559,7 +648,7 @@ class CAllBlogUser
         }
 
         $clientProxy = $_SERVER["REMOTE_ADDR"];
-        if (strlen($clientIP) <= 0) {
+        if ($clientIP == '') {
             $clientIP = $clientProxy;
             $clientProxy = "";
         }
@@ -572,31 +661,66 @@ class CAllBlogUser
         if (!empty(CBlogPost::$arBlogUCache[$id])) {
             $arResult["arUser"] = CBlogPost::$arBlogUCache[$id];
         } else {
-            if (intval($arParams["AVATAR_SIZE"]) <= 0)
+            if (intval($arParams["AVATAR_SIZE"]) <= 0) {
                 $arParams["AVATAR_SIZE"] = 100;
+            }
 
-            if (intval($arParams["AVATAR_SIZE_COMMENT"]) <= 0)
+            if (intval($arParams["AVATAR_SIZE_COMMENT"]) <= 0) {
                 $arParams["AVATAR_SIZE_COMMENT"] = 100;
+            }
 
             $bResizeImmediate = (isset($arParams["RESIZE_IMMEDIATE"]) && $arParams["RESIZE_IMMEDIATE"] == "Y");
 
             $arSelect = Array(
-                "FIELDS" => Array("ID", "LAST_NAME", "NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "PERSONAL_GENDER", "EXTERNAL_AUTH_ID")
+                "FIELDS" => Array(
+                    "ID",
+                    "LAST_NAME",
+                    "NAME",
+                    "SECOND_NAME",
+                    "LOGIN",
+                    "PERSONAL_PHOTO",
+                    "PERSONAL_GENDER",
+                    "EXTERNAL_AUTH_ID"
+                )
             );
 
-            if (IsModuleInstalled('extranet')) {
+            if (ModuleManager::isModuleInstalled('extranet')) {
                 $arSelect["SELECT"] = array('UF_DEPARTMENT');
             }
 
             $dbUser = CUser::GetList(
-                ($sort_by = Array('ID' => 'desc')),
-                ($dummy = ''),
+                Array('ID' => 'desc'),
+                '',
                 Array("ID" => $id),
                 $arSelect
             );
             if ($arResult["arUser"] = $dbUser->GetNext()) {
-                if (IntVal($arResult["arUser"]["PERSONAL_PHOTO"]) > 0) {
-                    $arResult["arUser"]["PERSONAL_PHOTO_file"] = CFile::GetFileArray($arResult["arUser"]["PERSONAL_PHOTO"]);
+                if (
+                    intval($arResult["arUser"]["PERSONAL_PHOTO"]) <= 0
+                    && ModuleManager::isModuleInstalled('socialnetwork')
+                ) {
+                    switch ($arResult["arUser"]["PERSONAL_GENDER"]) {
+                        case "M":
+                            $suffix = "male";
+                            break;
+                        case "F":
+                            $suffix = "female";
+                            break;
+                        default:
+                            $suffix = "unknown";
+                    }
+                    $arResult["arUser"]["PERSONAL_PHOTO"] = Option::get(
+                        'socialnetwork',
+                        'default_user_picture_' . $suffix,
+                        false,
+                        SITE_ID
+                    );
+                }
+
+                if (intval($arResult["arUser"]["PERSONAL_PHOTO"]) > 0) {
+                    $arResult["arUser"]["PERSONAL_PHOTO_file"] = CFile::GetFileArray(
+                        $arResult["arUser"]["PERSONAL_PHOTO"]
+                    );
                     $arResult["arUser"]["PERSONAL_PHOTO_resized"] = CFile::ResizeImageGet(
                         $arResult["arUser"]["PERSONAL_PHOTO_file"],
                         array("width" => $arParams["AVATAR_SIZE"], "height" => $arParams["AVATAR_SIZE"]),
@@ -605,18 +729,33 @@ class CAllBlogUser
                         false,
                         $bResizeImmediate
                     );
-                    if ($arResult["arUser"]["PERSONAL_PHOTO_resized"] !== false)
-                        $arResult["arUser"]["PERSONAL_PHOTO_img"] = CFile::ShowImage($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"], $arParams["AVATAR_SIZE"], $arParams["AVATAR_SIZE"], "border=0 align='right'");
+                    if ($arResult["arUser"]["PERSONAL_PHOTO_resized"] !== false) {
+                        $arResult["arUser"]["PERSONAL_PHOTO_img"] = CFile::ShowImage(
+                            $arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"],
+                            $arParams["AVATAR_SIZE"],
+                            $arParams["AVATAR_SIZE"],
+                            "border=0 align='right'"
+                        );
+                    }
                     $arResult["arUser"]["PERSONAL_PHOTO_resized_30"] = CFile::ResizeImageGet(
                         $arResult["arUser"]["PERSONAL_PHOTO_file"],
-                        array("width" => $arParams["AVATAR_SIZE_COMMENT"], "height" => $arParams["AVATAR_SIZE_COMMENT"]),
+                        array(
+                            "width" => $arParams["AVATAR_SIZE_COMMENT"],
+                            "height" => $arParams["AVATAR_SIZE_COMMENT"]
+                        ),
                         BX_RESIZE_IMAGE_EXACT,
                         false,
                         false,
                         $bResizeImmediate
                     );
-                    if ($arResult["arUser"]["PERSONAL_PHOTO_resized_30"] !== false)
-                        $arResult["arUser"]["PERSONAL_PHOTO_img_30"] = CFile::ShowImage($arResult["arUser"]["PERSONAL_PHOTO_resized_30"]["src"], $arParams["AVATAR_SIZE_COMMENT"], $arParams["AVATAR_SIZE_COMMENT"], "border=0 align='right'");
+                    if ($arResult["arUser"]["PERSONAL_PHOTO_resized_30"] !== false) {
+                        $arResult["arUser"]["PERSONAL_PHOTO_img_30"] = CFile::ShowImage(
+                            $arResult["arUser"]["PERSONAL_PHOTO_resized_30"]["src"],
+                            $arParams["AVATAR_SIZE_COMMENT"],
+                            $arParams["AVATAR_SIZE_COMMENT"],
+                            "border=0 align='right'"
+                        );
+                    }
                 }
                 $arResult["arUser"]["url"] = CComponentEngine::MakePathFromTemplate($path, array("user_id" => $id));
             }
@@ -660,30 +799,61 @@ class CAllBlogUser
             }
 
             $arSelectParams = Array(
-                "FIELDS" => Array("ID", "LAST_NAME", "NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "PERSONAL_GENDER", "EXTERNAL_AUTH_ID")
+                "FIELDS" => Array(
+                    "ID",
+                    "LAST_NAME",
+                    "NAME",
+                    "SECOND_NAME",
+                    "LOGIN",
+                    "PERSONAL_PHOTO",
+                    "PERSONAL_GENDER",
+                    "EXTERNAL_AUTH_ID"
+                )
             );
 
             if (
-                IsModuleInstalled('intranet')
-                || IsModuleInstalled('crm')
+                ModuleManager::isModuleInstalled('intranet')
+                || ModuleManager::isModuleInstalled('crm')
             ) {
                 $arSelectParams["SELECT"] = array();
-                if (IsModuleInstalled('intranet')) {
+                if (ModuleManager::isModuleInstalled('intranet')) {
                     $arSelectParams["SELECT"][] = "UF_DEPARTMENT";
                 }
-                if (IsModuleInstalled('crm')) {
+                if (ModuleManager::isModuleInstalled('crm')) {
                     $arSelectParams["SELECT"][] = "UF_USER_CRM_ENTITY";
                 }
             }
 
             $dbUser = CUser::GetList(
-                ($sort_by = Array('ID' => 'desc')),
-                ($dummy = ''),
+                Array('ID' => 'desc'),
+                '',
                 Array("ID" => implode(" | ", $arIdToGet)),
                 $arSelectParams
             );
             while ($arUser = $dbUser->GetNext()) {
-                if (IntVal($arUser["PERSONAL_PHOTO"]) > 0) {
+                if (
+                    intval($arUser["PERSONAL_PHOTO"]) <= 0
+                    && ModuleManager::isModuleInstalled('socialnetwork')
+                ) {
+                    switch ($arUser['PERSONAL_GENDER']) {
+                        case "M":
+                            $suffix = "male";
+                            break;
+                        case "F":
+                            $suffix = "female";
+                            break;
+                        default:
+                            $suffix = "unknown";
+                    }
+                    $arUser['PERSONAL_PHOTO'] = Option::get(
+                        'socialnetwork',
+                        'default_user_picture_' . $suffix,
+                        false,
+                        SITE_ID
+                    );
+                }
+
+                if (intval($arUser["PERSONAL_PHOTO"]) > 0) {
                     $arUser["PERSONAL_PHOTO_file"] = CFile::GetFileArray($arUser["PERSONAL_PHOTO"]);
                     $arUser["PERSONAL_PHOTO_resized"] = CFile::ResizeImageGet(
                         $arUser["PERSONAL_PHOTO_file"],
@@ -692,19 +862,33 @@ class CAllBlogUser
                         false
                     );
                     if ($arUser["PERSONAL_PHOTO_resized"] !== false) {
-                        $arUser["PERSONAL_PHOTO_img"] = CFile::ShowImage($arUser["PERSONAL_PHOTO_resized"]["src"], $arParams["AVATAR_SIZE"], $arParams["AVATAR_SIZE"], "border=0 align='right'");
+                        $arUser["PERSONAL_PHOTO_img"] = CFile::ShowImage(
+                            $arUser["PERSONAL_PHOTO_resized"]["src"],
+                            $arParams["AVATAR_SIZE"],
+                            $arParams["AVATAR_SIZE"],
+                            "border=0 align='right'"
+                        );
                     }
 
                     $arUser["PERSONAL_PHOTO_resized_30"] = CFile::ResizeImageGet(
                         $arUser["PERSONAL_PHOTO_file"],
-                        array("width" => $arParams["AVATAR_SIZE_COMMENT"], "height" => $arParams["AVATAR_SIZE_COMMENT"]),
+                        array(
+                            "width" => $arParams["AVATAR_SIZE_COMMENT"],
+                            "height" => $arParams["AVATAR_SIZE_COMMENT"]
+                        ),
                         BX_RESIZE_IMAGE_EXACT,
                         false
                     );
                     if ($arUser["PERSONAL_PHOTO_resized_30"] !== false) {
-                        $arUser["PERSONAL_PHOTO_img_30"] = CFile::ShowImage($arUser["PERSONAL_PHOTO_resized_30"]["src"], $arParams["AVATAR_SIZE_COMMENT"], $arParams["AVATAR_SIZE_COMMENT"], "border=0 align='right'");
+                        $arUser["PERSONAL_PHOTO_img_30"] = CFile::ShowImage(
+                            $arUser["PERSONAL_PHOTO_resized_30"]["src"],
+                            $arParams["AVATAR_SIZE_COMMENT"],
+                            $arParams["AVATAR_SIZE_COMMENT"],
+                            "border=0 align='right'"
+                        );
                     }
                 }
+
                 $arUser["url"] = CComponentEngine::MakePathFromTemplate($path, array("user_id" => $arUser["ID"]));
 
                 $arResult["arUser"][$arUser["ID"]] = CBlogPost::$arBlogUCache[$arUser["ID"]] = $arUser;

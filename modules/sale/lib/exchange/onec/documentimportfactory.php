@@ -40,7 +40,11 @@ class DocumentImportFactory
         } elseif ($documentTypeID === DocumentType::USER_PROFILE) {
             return new UserProfileDocument();
         } else {
-            throw new Main\NotSupportedException("Document type: '" . Exchange\EntityType::ResolveName($documentTypeID) . "' is not supported in current context");
+            throw new Main\NotSupportedException(
+                "Document type: '" . Exchange\EntityType::ResolveName(
+                    $documentTypeID
+                ) . "' is not supported in current context"
+            );
         }
     }
 }

@@ -74,7 +74,9 @@ class CCatalogCSVSettings
                             'value' => 'IE_PREVIEW_TEXT_TYPE',
                             'field' => 'PREVIEW_TEXT_TYPE',
                             'important' => 'N',
-                            'name' => Loc::getMessage('CATI_FI_CATDESCRTYPE_EXT') . ' (B_IBLOCK_ELEMENT.PREVIEW_TEXT_TYPE)'
+                            'name' => Loc::getMessage(
+                                    'CATI_FI_CATDESCRTYPE_EXT'
+                                ) . ' (B_IBLOCK_ELEMENT.PREVIEW_TEXT_TYPE)'
                         ),
                         'IE_DETAIL_PICTURE' => array(
                             'value' => 'IE_DETAIL_PICTURE',
@@ -92,7 +94,9 @@ class CCatalogCSVSettings
                             'value' => 'IE_DETAIL_TEXT_TYPE',
                             'field' => 'DETAIL_TEXT_TYPE',
                             'important' => 'N',
-                            'name' => Loc::getMessage('CATI_FI_DETDESCRTYPE_EXT') . ' (B_IBLOCK_ELEMENT.DETAIL_TEXT_TYPE)'
+                            'name' => Loc::getMessage(
+                                    'CATI_FI_DETDESCRTYPE_EXT'
+                                ) . ' (B_IBLOCK_ELEMENT.DETAIL_TEXT_TYPE)'
                         ),
                         'IE_CODE' => array(
                             'value' => 'IE_CODE',
@@ -164,13 +168,17 @@ class CCatalogCSVSettings
                             'value' => 'CP_PURCHASING_PRICE',
                             'field' => 'PURCHASING_PRICE',
                             'important' => 'N',
-                            'name' => Loc::getMessage('CATI_FI_PURCHASING_PRICE') . ' (B_CATALOG_PRODUCT.PURCHASING_PRICE)'
+                            'name' => Loc::getMessage(
+                                    'CATI_FI_PURCHASING_PRICE'
+                                ) . ' (B_CATALOG_PRODUCT.PURCHASING_PRICE)'
                         ),
                         'CP_PURCHASING_CURRENCY' => array(
                             'value' => 'CP_PURCHASING_CURRENCY',
                             'field' => 'PURCHASING_CURRENCY',
                             'important' => 'N',
-                            'name' => Loc::getMessage('CATI_FI_PURCHASING_CURRENCY') . ' (B_CATALOG_PRODUCT.PURCHASING_CURRENCY)'
+                            'name' => Loc::getMessage(
+                                    'CATI_FI_PURCHASING_CURRENCY'
+                                ) . ' (B_CATALOG_PRODUCT.PURCHASING_CURRENCY)'
                         ),
                         'CP_PRICE_TYPE' => array(
                             'value' => 'CP_PRICE_TYPE',
@@ -182,7 +190,9 @@ class CCatalogCSVSettings
                             'value' => 'CP_RECUR_SCHEME_LENGTH',
                             'field' => 'RECUR_SCHEME_LENGTH',
                             'important' => 'N',
-                            'name' => Loc::getMessage('I_PAY_PERIOD_LENGTH') . ' (B_CATALOG_PRODUCT.RECUR_SCHEME_LENGTH)'
+                            'name' => Loc::getMessage(
+                                    'I_PAY_PERIOD_LENGTH'
+                                ) . ' (B_CATALOG_PRODUCT.RECUR_SCHEME_LENGTH)'
                         ),
                         'CP_RECUR_SCHEME_TYPE' => array(
                             'value' => 'CP_RECUR_SCHEME_TYPE',
@@ -218,7 +228,9 @@ class CCatalogCSVSettings
                             'value' => 'CP_MEASURE',
                             'field' => 'MEASURE',
                             'important' => 'N',
-                            'name' => Loc::getMessage('BX_CAT_CSV_SETTINGS_PRODUCT_FIELD_NAME_MEASURE_ID') . ' (B_CATALOG_PRODUCT.MEASURE)'
+                            'name' => Loc::getMessage(
+                                    'BX_CAT_CSV_SETTINGS_PRODUCT_FIELD_NAME_MEASURE_ID'
+                                ) . ' (B_CATALOG_PRODUCT.MEASURE)'
                         ),
                     );
                     break;

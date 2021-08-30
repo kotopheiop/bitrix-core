@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 define('ADMIN_MODULE_NAME', 'seo');
@@ -87,31 +88,46 @@ if (!$bVendor) {
 $aTabs = array();
 
 foreach ($arRobotsConfig as $key => $arConfig) {
-    $aTabs[] = array("DIV" => "seo_robots_" . $key, "TAB" => Loc::getMessage('SEO_ROBOTS_' . $key), "TITLE" => Loc::getMessage('SEO_ROBOTS_TITLE_' . $key));
+    $aTabs[] = array(
+        "DIV" => "seo_robots_" . $key,
+        "TAB" => Loc::getMessage('SEO_ROBOTS_' . $key),
+        "TITLE" => Loc::getMessage('SEO_ROBOTS_TITLE_' . $key)
+    );
 }
 
-$aTabs[] = array("DIV" => "seo_robots_edit", "TAB" => Loc::getMessage('SEO_ROBOTS_EDIT'), "TITLE" => Loc::getMessage('SEO_ROBOTS_TITLE_EDIT'), 'ONSELECT' => 'seoParser.compile();');
+$aTabs[] = array(
+    "DIV" => "seo_robots_edit",
+    "TAB" => Loc::getMessage('SEO_ROBOTS_EDIT'),
+    "TITLE" => Loc::getMessage('SEO_ROBOTS_TITLE_EDIT'),
+    'ONSELECT' => 'seoParser.compile();'
+);
 
 $tabControl = new \CAdminTabControl("seoRobotsTabControl", $aTabs, true, true);
 
 $robotsFile = new RobotsFile($siteId);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && strlen($_POST["save"]) > 0) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $_POST["save"] <> '') {
     $robotsFile->putContents($_REQUEST['ROBOTS']);
-    LocalRedirect(BX_ROOT . "/admin/seo_robots.php?lang=" . LANGUAGE_ID . '&site_id=' . $siteId . "&" . $tabControl->ActiveTabParam());
+    LocalRedirect(
+        BX_ROOT . "/admin/seo_robots.php?lang=" . LANGUAGE_ID . '&site_id=' . $siteId . "&" . $tabControl->ActiveTabParam(
+        )
+    );
 }
 
 $hostName = $arCurrentSite['SERVER_NAME'];
-if (strlen($hostName) <= 0) {
+if ($hostName == '') {
     $hostName = COption::GetOptionString('main', 'server_name', '');
 }
 
-CJSCore::RegisterExt('seo_robots', array(
-    'js' => '/bitrix/js/seo/robots.js',
-    'css' => '/bitrix/panel/seo/robots.css',
-    'lang' => BX_ROOT . '/modules/seo/lang/' . LANGUAGE_ID . '/js_robots.php',
-    'lang_additional' => array('SEO_HOST' => $hostName, 'SEO_SITE_ID' => $siteId),
-));
+CJSCore::RegisterExt(
+    'seo_robots',
+    array(
+        'js' => '/bitrix/js/seo/robots.js',
+        'css' => '/bitrix/panel/seo/robots.css',
+        'lang' => BX_ROOT . '/modules/seo/lang/' . LANGUAGE_ID . '/js_robots.php',
+        'lang_additional' => array('SEO_HOST' => $hostName, 'SEO_SITE_ID' => $siteId),
+    )
+);
 
 $APPLICATION->addHeadScript('/bitrix/js/main/utils.js');
 $APPLICATION->addHeadScript('/bitrix/js/main/file_dialog.js');
@@ -157,11 +173,16 @@ if (!empty($errors)) {
         if ($robotsFile->isExists()) {
             $fileContent = $robotsFile->getContents();
         } else {
-            $msg = new CAdminMessage(array(
-                'TYPE' => 'ERROR',
-                'MESSAGE' => Loc::getMessage('SEO_ROBOTS_ERROR_NO_ROBOTS', array('#PATH#' => $robotsFile->getPath())),
-                'DETAILS' => Loc::getMessage('SEO_ROBOTS_ERROR_NO_ROBOTS_MESSAGE'),
-            ));
+            $msg = new CAdminMessage(
+                array(
+                    'TYPE' => 'ERROR',
+                    'MESSAGE' => Loc::getMessage(
+                        'SEO_ROBOTS_ERROR_NO_ROBOTS',
+                        array('#PATH#' => $robotsFile->getPath())
+                    ),
+                    'DETAILS' => Loc::getMessage('SEO_ROBOTS_ERROR_NO_ROBOTS_MESSAGE'),
+                )
+            );
             echo $msg->Show();
         }
         ?>
@@ -179,7 +200,11 @@ if (!empty($errors)) {
                     <?
                     $arSubTabs = array();
                     foreach ($arConfig as $i => $arAgent) {
-                        $arSubTabs[] = array('DIV' => 'subtab_' . $key . '_' . $i, 'TAB' => $arAgent[0] == '*' ? $arAgent[1] : $arAgent[0], 'TITLE' => $arAgent[0] == '*' ? $arAgent[1] : '');
+                        $arSubTabs[] = array(
+                            'DIV' => 'subtab_' . $key . '_' . $i,
+                            'TAB' => $arAgent[0] == '*' ? $arAgent[1] : $arAgent[0],
+                            'TITLE' => $arAgent[0] == '*' ? $arAgent[1] : ''
+                        );
                     }
 
                     $childTabControl = new CAdminViewTabControl("childTabControl_" . $key, $arSubTabs);
@@ -222,7 +247,9 @@ if (!empty($errors)) {
                 </td>
             </tr>
             <tr>
-                <td colspan="2"><? echo BeginNote() . Loc::getMessage('SEO_ROBOTS_HINT' . (!$bVendor ? '' : '_1C')) . EndNote();
+                <td colspan="2"><? echo BeginNote() . Loc::getMessage(
+                            'SEO_ROBOTS_HINT' . (!$bVendor ? '' : '_1C')
+                        ) . EndNote();
                     ?></td>
             </tr>
 
@@ -239,7 +266,9 @@ if (!empty($errors)) {
             </td>
         </tr>
         <tr>
-            <td colspan="2"><? echo BeginNote() . Loc::getMessage('SEO_ROBOTS_HINT' . (!$bVendor ? '' : '_1C')) . EndNote();
+            <td colspan="2"><? echo BeginNote() . Loc::getMessage(
+                        'SEO_ROBOTS_HINT' . (!$bVendor ? '' : '_1C')
+                    ) . EndNote();
                 ?></td>
         </tr>
 

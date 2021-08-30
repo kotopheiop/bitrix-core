@@ -1,16 +1,17 @@
 <?php
-$MESS['SALE_HPS_BILL_TAX'] = 'Налог';
-$MESS['SALE_HPS_BILL_BASKET_ITEM_NAME'] = 'Тест';
-$MESS['SALE_HPS_BILL_BASKET_ITEM_MEASURE'] = 'шт.';
-$MESS['SALE_HPS_BILL_BANK_CITY'] = 'Москва';
-$MESS['SALE_HPS_BILL_BANK_ADDRESS'] = 'Россия';
-$MESS['SALE_HPS_BILL_BANK_NAME'] = 'АО Битрикс';
-$MESS['SALE_HPS_BILL_COMPANY_NAME'] = 'Битрикс';
-$MESS['SALE_HPS_BILL_BUYER_COMPANY_NAME'] = 'Компания';
-$MESS['SALE_HPS_BILL_BUYER_COMPANY_ADDRESS'] = 'Москва';
-$MESS['SALE_HPS_BILL_BUYER_NAME_CONTACT'] = 'Компания';
-$MESS['SALE_HPS_BILL_DIRECTOR_POSITION'] = 'Директор';
-$MESS['SALE_HPS_BILL_DIRECTOR_NAME'] = 'Петров В.В.';
-$MESS['SALE_HPS_BILL_ACCOUNTANT_POSITION'] = 'Бухгалтер';
-$MESS['SALE_HPS_BILL_ACCOUNTANT_NAME'] = 'Иванов И.И.';
-$MESS['SALE_HPS_BILL_DOC_TEMPLATE_NO_CHOOSE'] = 'Не выбрано';
+
+$MESS['SALE_HPS_BILL_TAX'] = 'пїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BASKET_ITEM_NAME'] = 'пїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BASKET_ITEM_MEASURE'] = 'пїЅпїЅ.';
+$MESS['SALE_HPS_BILL_BANK_CITY'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BANK_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BANK_NAME'] = 'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_COMPANY_NAME'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BUYER_COMPANY_NAME'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BUYER_COMPANY_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BUYER_NAME_CONTACT'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_DIRECTOR_POSITION'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_DIRECTOR_NAME'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ.пїЅ.';
+$MESS['SALE_HPS_BILL_ACCOUNTANT_POSITION'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_ACCOUNTANT_NAME'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ.пїЅ.';
+$MESS['SALE_HPS_BILL_DOC_TEMPLATE_NO_CHOOSE'] = 'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ';

@@ -1,26 +1,30 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 $module_id = "forum";
 $FORUM_RIGHT = $APPLICATION->GetGroupRight($module_id);
 $zr = "";
-if (!($FORUM_RIGHT >= "R"))
+if (!($FORUM_RIGHT >= "R")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 ClearVars();
 CModule::IncludeModule("forum");
 
-if ($_SERVER["REQUEST_METHOD"] == "GET" && $FORUM_RIGHT > "R" && $_REQUEST["RestoreDefaults"] <> '' && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "GET" && $FORUM_RIGHT > "R" && $_REQUEST["RestoreDefaults"] <> '' && check_bitrix_sessid(
+    )) {
     COption::RemoveOption("forum");
-    $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-    while ($zr = $z->Fetch())
+    $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+    while ($zr = $z->Fetch()) {
         $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+    }
 }
 
 $arLangs = array();
 $arNameStatusesDefault = array();
-$arNameStatuses = @unserialize(COption::GetOptionString("forum", "statuses_name"));
+$arNameStatuses = @unserialize(COption::GetOptionString("forum", "statuses_name"), ["allowed_classes" => false]);
 
-$db_res = CLanguage::GetList(($b = "sort"), ($o = "asc"));
+$db_res = CLanguage::GetList();
 if ($db_res && $res = $db_res->Fetch()) {
     do {
         $arLangs[$res["LID"]] = $res;
@@ -29,7 +33,8 @@ if ($db_res && $res = $db_res->Fetch()) {
             "user" => "User",
             "moderator" => "Moderator",
             "editor" => "Editor",
-            "administrator" => "Administrator");
+            "administrator" => "Administrator"
+        );
         /*
         GetMessage("FR_GUEST");
         GetMessage("FR_USER");
@@ -39,7 +44,7 @@ if ($db_res && $res = $db_res->Fetch()) {
         */
         $arMess = IncludeModuleLangFile(__FILE__, $res["LID"], true);
         foreach ($name as $k => $v):
-            $mess = $arMess["FR_" . strToUpper($k)];
+            $mess = $arMess["FR_" . mb_strtoupper($k)];
             $name[$k] = (!empty($mess) ? $mess : $name[$k]);
         endforeach;
         $arNameStatusesDefault[$res["LID"]] = $name;
@@ -55,17 +60,22 @@ if ($db_res && $res = $db_res->Fetch()) {
     } while ($res = $db_res->Fetch());
     $tmp = array_diff(array_keys($arNameStatuses), array_keys($arNameStatusesDefault));
     foreach ($arNameStatuses as $k => $v):
-        if (!is_set($arNameStatusesDefault, $k))
+        if (!is_set($arNameStatusesDefault, $k)) {
             unset($arNameStatuses[$k]);
+        }
     endforeach;
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $FORUM_RIGHT == "W" && strlen($_REQUEST["Update"]) > 0 && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $FORUM_RIGHT == "W" && $_REQUEST["Update"] <> '' && check_bitrix_sessid()) {
     COption::SetOptionString("forum", "avatar_max_size", $_REQUEST["avatar_max_size"]);
     COption::SetOptionString("forum", "avatar_max_width", $_REQUEST["avatar_max_width"]);
     COption::SetOptionString("forum", "avatar_max_height", $_REQUEST["avatar_max_height"]);
     COption::SetOptionString("forum", "file_max_size", $_REQUEST["file_max_size"]);
     COption::SetOptionString("forum", "parser_nofollow", ($_REQUEST["parser_nofollow"] == "Y" ? "Y" : "N"));
-    COption::SetOptionString("forum", "parser_link_target", ($_REQUEST["parser_link_target"] == "_blank" ? "_blank" : "_self"));
+    COption::SetOptionString(
+        "forum",
+        "parser_link_target",
+        ($_REQUEST["parser_link_target"] == "_blank" ? "_blank" : "_self")
+    );
     COption::SetOptionInt("forum", "smile_gallery_id", $_REQUEST["smile_gallery_id"]);
 
     COption::SetOptionString("forum", "FORUM_FROM_EMAIL", $_REQUEST["FORUM_FROM_EMAIL"]);
@@ -113,9 +123,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $FORUM_RIGHT == "W" && strlen($_REQU
 //*****************************************************************************************************************
 }
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "vote_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-    array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "vote_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
-    array("DIV" => "edit3", "TAB" => GetMessage("USE_FILTER"), "ICON" => "vote_settings", "TITLE" => GetMessage("USE_FILTER")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB_SET"),
+        "ICON" => "vote_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+        "ICON" => "vote_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("USE_FILTER"),
+        "ICON" => "vote_settings",
+        "TITLE" => GetMessage("USE_FILTER")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 ?>
@@ -141,8 +166,9 @@ $tabControl->Begin();
         <td><label for="SHOW_VOTES"><?= GetMessage("FORUM_GG_SHOW_VOTE") ?></label></td>
         <td>
             <? $val = COption::GetOptionString("forum", "SHOW_VOTES", "Y"); ?>
-            <input type="checkbox" value="Y" name="SHOW_VOTES" id="SHOW_VOTES" <? if ($val == "Y") echo "checked"; ?>>
-        </td>
+            <input type="checkbox" value="Y" name="SHOW_VOTES" id="SHOW_VOTES" <? if ($val == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <? if (($val = COption::GetOptionString("forum", "SHOW_ICQ_CONTACT", "N")) == "Y"): ?>
         <tr>
@@ -192,16 +218,21 @@ $tabControl->Begin();
         <td>
             <? $val = COption::GetOptionString("forum", "USER_EDIT_OWN_POST", "Y"); ?>
             <select name="USER_EDIT_OWN_POST" id="USER_EDIT_OWN_POST">
-                <option value="Y" <? if ($val == "Y") echo "selected"; ?>><?= GetMessage("FORUM_USER_EDIT_OWN_POST_Y") ?></option>
-                <option value="N" <? if ($val != "Y") echo "selected"; ?>><?= GetMessage("FORUM_USER_EDIT_OWN_POST_N") ?></option>
+                <option value="Y" <? if ($val == "Y") {
+                    echo "selected";
+                } ?>><?= GetMessage("FORUM_USER_EDIT_OWN_POST_Y") ?></option>
+                <option value="N" <? if ($val != "Y") {
+                    echo "selected";
+                } ?>><?= GetMessage("FORUM_USER_EDIT_OWN_POST_N") ?></option>
             </select>
     </tr>
     <tr>
         <td><label for="USER_SHOW_NAME"><?= GetMessage("FORUM_USER_SHOW_NAME") ?></label></td>
         <td>
             <? $val = COption::GetOptionString("forum", "USER_SHOW_NAME", "Y"); ?>
-            <input type="checkbox" value="Y" name="USER_SHOW_NAME"
-                   id="USER_SHOW_NAME" <? if ($val == "Y") echo "checked"; ?>></td>
+            <input type="checkbox" value="Y" name="USER_SHOW_NAME" id="USER_SHOW_NAME" <? if ($val == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><label for="smile_gallery_id"><?= GetMessage("FORUM_OPTIONS_SMILE_GALLERY_ID") ?></label></td>
@@ -222,22 +253,26 @@ $tabControl->Begin();
         <td><label for="parser_nofollow"><?= GetMessage("F_PARSER_NOFOLLOW") ?>:</label></td>
         <td>
             <? $val = COption::GetOptionString("forum", "parser_nofollow", "Y"); ?>
-            <input type="checkbox" value="Y" name="parser_nofollow"
-                   id="parser_nofollow" <? if ($val == "Y") echo "checked"; ?>></td>
+            <input type="checkbox" value="Y" name="parser_nofollow" id="parser_nofollow" <? if ($val == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><label for="parser_link_target"><?= GetMessage("F_PARSER_LINK_TARGET") ?></label></td>
         <td>
             <? $val = COption::GetOptionString("forum", "parser_link_target", "_blank"); ?>
             <input type="checkbox" value="_blank" name="parser_link_target"
-                   id="parser_link_target" <? if ($val == "_blank") echo "checked"; ?>></td>
+                   id="parser_link_target" <? if ($val == "_blank") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><label for="USE_AUTOSAVE"><?= GetMessage("F_USE_AUTOSAVE") ?></label></td>
         <td>
             <? $val = COption::GetOptionString("forum", "USE_AUTOSAVE", "Y"); ?>
-            <input type="checkbox" value="Y" name="USE_AUTOSAVE"
-                   id="USE_AUTOSAVE" <? if ($val == "Y") echo "checked"; ?>></td>
+            <input type="checkbox" value="Y" name="USE_AUTOSAVE" id="USE_AUTOSAVE" <? if ($val == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage("FORUM_GG_AVATAR_S") ?>:</td>
@@ -272,16 +307,24 @@ $tabControl->Begin();
         <td>
             <? $val = COption::GetOptionString("forum", "UsePMVersion", "2"); ?>
             <select name="UsePMVersion" id="UsePMVersion" onclick="OnClickUsePMVersion(this)">
-                <option value="none" <? if ($val != "1" && $val != "2") echo "selected"; ?>><?= GetMessage("FO_USEPMVERSION") ?></option>
-                <option value="1" <? if ($val == "1") echo "selected"; ?>>1.0</option>
-                <option value="2" <? if ($val == "2") echo "selected"; ?>>2.0</option>
+                <option value="none" <? if ($val != "1" && $val != "2") {
+                    echo "selected";
+                } ?>><?= GetMessage("FO_USEPMVERSION") ?></option>
+                <option value="1" <? if ($val == "1") {
+                    echo "selected";
+                } ?>>1.0
+                </option>
+                <option value="2" <? if ($val == "2") {
+                    echo "selected";
+                } ?>>2.0
+                </option>
             </select>
     </tr>
     <tr id="tr_maxprivatemessages">
         <td><?= GetMessage("FORUM_PRIVATE_MESSAGE") ?>:</td>
         <td>
             <? $val = COption::GetOptionString("forum", "MaxPrivateMessages", 100); ?>
-            <input type="text" size="35" maxlength="255" value="<?= intVal($val) ?>" name="MaxPrivateMessages"></td>
+            <input type="text" size="35" maxlength="255" value="<?= intval($val) ?>" name="MaxPrivateMessages"></td>
     </tr>
     <tr class="heading">
         <td colspan="2"><?= GetMessage("F_SEARCH_HEADER") ?></td>
@@ -290,7 +333,7 @@ $tabControl->Begin();
         <td><?= GetMessage("F_SEARCH_COUNT") ?>:</td>
         <td>
             <? $val = COption::GetOptionString("forum", "search_message_count", 50); ?>
-            <input type="text" size="35" maxlength="255" value="<?= intVal($val) ?>" name="search_message_count"></td>
+            <input type="text" size="35" maxlength="255" value="<?= intval($val) ?>" name="search_message_count"></td>
     </tr>
     <tr class="heading">
         <td colspan="2"><?= GetMessage("F_FORUM_STATUSES") ?></td>
@@ -335,13 +378,25 @@ $tabControl->Begin();
         <td width="40%"><label for="FILTER"><?= GetMessage("FILTER") ?></label></td>
         <td width="60%">
             <? $val = COption::GetOptionString("forum", "FILTER", "Y"); ?>
-            <input type="checkbox" value="Y" name="FILTER" id="FILTER" <? if ($val == "Y") echo "checked"; ?>
-                   onclick="DisableAction(this)"></td>
+            <input type="checkbox" value="Y" name="FILTER" id="FILTER" <? if ($val == "Y") {
+                echo "checked";
+            } ?> onclick="DisableAction(this)"></td>
     </tr>
     <tr>
         <td><?= GetMessage("FILTER_ACTION") ?>:</td>
         <td>
-            <? echo SelectBoxFromArray("FILTER_ACTION", array("REFERENCE" => array(GetMessage("non"), GetMessage("del"), GetMessage("rpl")), "REFERENCE_ID" => array("non", "del", "rpl")), COption::GetOptionString("forum", "FILTER_ACTION", "rpl")) ?>
+            <? echo SelectBoxFromArray(
+                "FILTER_ACTION",
+                array(
+                    "REFERENCE" => array(
+                        GetMessage("non"),
+                        GetMessage("del"),
+                        GetMessage("rpl")
+                    ),
+                    "REFERENCE_ID" => array("non", "del", "rpl")
+                ),
+                COption::GetOptionString("forum", "FILTER_ACTION", "rpl")
+            ) ?>
         </td>
     </tr>
     <tr>
@@ -354,7 +409,9 @@ $tabControl->Begin();
             var Form = document.getElementById('FORMACTION');
             if (CheckB.checked) {
                 Form.FILTER_ACTION.disabled = false;
-                Form.FILTER_ACTION.value = '<?=CUtil::JSEscape(COption::GetOptionString("forum", "FILTER_ACTION", "rpl"))?>';
+                Form.FILTER_ACTION.value = '<?=CUtil::JSEscape(
+                    COption::GetOptionString("forum", "FILTER_ACTION", "rpl")
+                )?>';
                 Form.FILTER_RPL.disabled = false;
                 Form.FILTER_RPL.value = '<?=CUtil::JSEscape(COption::GetOptionString("forum", "FILTER_RPL", "*"))?>';
             } else {
@@ -378,8 +435,9 @@ $tabControl->Begin();
                 <tr class="heading">
                     <td align="center"><?= GetMessage("LANG") ?></td>
                     <td align="center"><?= GetMessage("DICTINARY_AND_EREG") ?></td>
-                    <td align="center"><span
-                                id="SECTION_NAME_TITLE"><?= GetMessage("TRANSCRIPTION_DICTIONARY") ?></span></td>
+                    <td align="center"><span id="SECTION_NAME_TITLE"><?= GetMessage(
+                                "TRANSCRIPTION_DICTIONARY"
+                            ) ?></span></td>
                 </tr><?
                 $db_res = CFilterDictionary::GetList();
                 $Dict = array();
@@ -391,13 +449,21 @@ $tabControl->Begin();
                 $Dict['W']["reference"][] = GetMessage("DICTIONARY_NONE");
                 $Dict['T']["reference_id"][] = "";
                 $Dict['T']["reference"][] = GetMessage("DICTIONARY_NONE");
-                $l = CLanguage::GetList($lby = "sort", $lorder = "asc");
+                $l = CLanguage::GetList();
                 while ($ar = $l->ExtractFields("l_")) {
                     ?>
                     <tr class="adm-detail-required-field">
                     <td><span class="tablefieldtext"><?= $ar["NAME"] ?> [ <?= $ar["LID"] ?> ]:</span></td>
-                    <td><?= SelectBoxFromArray("FILTER_DICT[" . $ar["LID"] . "][W]", $Dict["W"], COption::GetOptionString("forum", "FILTER_DICT_W", '', $ar["LID"])) ?></td>
-                    <td><?= SelectBoxFromArray("FILTER_DICT[" . $ar["LID"] . "][T]", $Dict["T"], COption::GetOptionString("forum", "FILTER_DICT_T", '', $ar["LID"])) ?></td>
+                    <td><?= SelectBoxFromArray(
+                            "FILTER_DICT[" . $ar["LID"] . "][W]",
+                            $Dict["W"],
+                            COption::GetOptionString("forum", "FILTER_DICT_W", '', $ar["LID"])
+                        ) ?></td>
+                    <td><?= SelectBoxFromArray(
+                            "FILTER_DICT[" . $ar["LID"] . "][T]",
+                            $Dict["T"],
+                            COption::GetOptionString("forum", "FILTER_DICT_T", '', $ar["LID"])
+                        ) ?></td>
                     </tr><?
                 }
                 ?></table>
@@ -407,7 +473,8 @@ $tabControl->Begin();
     <script language="JavaScript">
         function RestoreDefaults() {
             if (confirm('<?=CUtil::JSEscape(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                window.location = "<?=$APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?=urlencode($module_id)?>&<?=bitrix_sessid_get()?>";
+                window.location = "<?=$APPLICATION->GetCurPage(
+                )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?=urlencode($module_id)?>&<?=bitrix_sessid_get()?>";
         }
 
         function OnClickUsePMVersion(control) {

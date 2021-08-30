@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SASP_PROMT"] = "�� ������ �������� ����� ������� <b>www.assist.ru</b>.";
@@ -69,7 +70,7 @@ $MESS["SALE_ASSIST_PAYMENT_AssistIDCCPayment_DESC"] = "1 - �������
 $MESS["SALE_ASSIST_PAYMENT_EPBeelinePayment_NAME"] = "������������ ��������� ������� ������";
 $MESS["SALE_ASSIST_PAYMENT_EPBeelinePayment_DESC"] = "1 - ������������, 0 - �� ������������";
 
-$MESS["SALE_ASSIST_PAYMENT_YMPayment_NAME"] = "������������ ��������� ������� YandexMoney";
+$MESS["SALE_ASSIST_PAYMENT_YMPayment_NAME"] = "������������ ��������� ������� �Money";
 $MESS["SALE_ASSIST_PAYMENT_QIWIPayment_NAME"] = "������������ ��������� ������� QIWI";
 $MESS["SALE_ASSIST_PAYMENT_YMPayment_DESC"] = "1 - ������������, 0 - �� ������������";
 $MESS["SALE_ASSIST_PAYMENT_QIWIPayment_DESC"] = "1 - ������������, 0 - �� ������������";

@@ -120,9 +120,9 @@ class Translation
             // site settings
             if (Main\Application::isUtfMode() || defined('BX_UTF')) {
                 $encoding = 'utf-8';
-            } elseif (defined('SITE_CHARSET') && (strlen(SITE_CHARSET) > 0)) {
+            } elseif (defined('SITE_CHARSET') && (SITE_CHARSET <> '')) {
                 $encoding = SITE_CHARSET;
-            } elseif (defined('LANG_CHARSET') && (strlen(LANG_CHARSET) > 0)) {
+            } elseif (defined('LANG_CHARSET') && (LANG_CHARSET <> '')) {
                 $encoding = LANG_CHARSET;
             } else {
                 $context = Context::getCurrent();
@@ -137,14 +137,14 @@ class Translation
             if ($encoding === null) {
                 if (Configuration::getValue('default_charset') !== null) {
                     $encoding = Configuration::getValue('default_charset');
-                } elseif (defined('BX_DEFAULT_CHARSET') && (strlen(BX_DEFAULT_CHARSET) > 0)) {
+                } elseif (defined('BX_DEFAULT_CHARSET') && (BX_DEFAULT_CHARSET <> '')) {
                     $encoding = BX_DEFAULT_CHARSET;
                 } else {
                     $encoding = 'windows-1251';
                 }
             }
 
-            self::$currentEncoding = strtolower($encoding);
+            self::$currentEncoding = mb_strtolower($encoding);
         }
 
         return self::$currentEncoding;
@@ -188,10 +188,10 @@ class Translation
         $needConvert = false;
         if (self::allowConvertEncoding()) {
             if (self::getDeveloperRepositoryPath() !== null) {
-                $needConvert = (strpos($langFile, self::getDeveloperRepositoryPath()) === 0);
+                $needConvert = (stripos($langFile, self::getDeveloperRepositoryPath()) === 0);
             }
             if (!$needConvert && self::useTranslationRepository()) {
-                $needConvert = (strpos($langFile, self::getTranslationRepositoryPath()) === 0);
+                $needConvert = (stripos($langFile, self::getTranslationRepositoryPath()) === 0);
             }
         }
 
@@ -293,26 +293,31 @@ class Translation
             return $langFile;
         }
 
+        static $documentRoot;
+        if ($documentRoot === null) {
+            $documentRoot = Path::normalize(Main\Application::getDocumentRoot());
+        }
+
         if (self::useTranslationRepository() && !self::isDefaultTranslationLang($language)) {
             $modulePath = self::getTranslationRepositoryPath() . '/' . $language . '/';
         } elseif (self::getDeveloperRepositoryPath() !== null) {
             $modulePath = self::getDeveloperRepositoryPath() . '/';
         } elseif (self::isDefaultTranslationLang($language)) {
-            $modulePath = Main\Application::getDocumentRoot() . '/bitrix/modules/';
+            $modulePath = $documentRoot . '/bitrix/modules/';
         } else {
             return $langFile;
         }
 
-        if (strpos($langFile, '\\') !== false) {
+        if (mb_strpos($langFile, '\\') !== false) {
             $langFile = str_replace('\\', '/', $langFile);
         }
-        if (strpos($langFile, '//') !== false) {
+        if (mb_strpos($langFile, '//') !== false) {
             $langFile = str_replace('//', '/', $langFile);
         }
 
         // linked
         if (self::getDeveloperRepositoryPath() !== null) {
-            if (strpos($langFile, self::getDeveloperRepositoryPath()) === 0) {
+            if (mb_strpos($langFile, self::getDeveloperRepositoryPath()) === 0) {
                 $langFile = str_replace(
                     self::getDeveloperRepositoryPath() . '/',
                     $modulePath,
@@ -324,9 +329,9 @@ class Translation
         }
 
         // module lang
-        if (strpos($langFile, Main\Application::getDocumentRoot() . '/bitrix/modules/') === 0) {
+        if (strpos($langFile, $documentRoot . '/bitrix/modules/') === 0) {
             $langFile = str_replace(
-                Main\Application::getDocumentRoot() . '/bitrix/modules/',
+                $documentRoot . '/bitrix/modules/',
                 $modulePath,
                 $langFile
             );
@@ -336,7 +341,7 @@ class Translation
 
         self::loadMap();
 
-        $langPathParts = preg_split('#[/]+#', trim(str_replace(Main\Application::getDocumentRoot(), '', $langFile), '/'), 6);
+        $langPathParts = preg_split('#[/]+#', trim(str_replace($documentRoot, '', $langFile), '/'), 6);
         if (empty($langPathParts) || $langPathParts[0] !== 'bitrix') {
             return $langFile;
         }
@@ -349,7 +354,7 @@ class Translation
                 if (isset(self::$map[$moduleName][$testEntry], self::$map[$moduleName][$testEntry][$moduleName])) {
                     $testEntry = 'mobileapp/' . $moduleName;
                     $langFile = str_replace(
-                        Main\Application::getDocumentRoot() . '/bitrix/mobileapp/' . $moduleName . '/',
+                        $documentRoot . '/bitrix/mobileapp/' . $moduleName . '/',
                         $modulePath . '' . $moduleName . '/install/mobileapp/' . $moduleName . '/',
                         $langFile
                     );
@@ -362,7 +367,7 @@ class Translation
                 foreach (self::$map as $moduleName => $moduleEntries) {
                     if (isset(self::$map[$moduleName][$testEntry], self::$map[$moduleName][$testEntry][$templateName])) {
                         $langFile = str_replace(
-                            Main\Application::getDocumentRoot() . '/bitrix/templates/' . $templateName . '/',
+                            $documentRoot . '/bitrix/templates/' . $templateName . '/',
                             $modulePath . '' . $moduleName . '/install/templates/' . $templateName . '/',
                             $langFile
                         );
@@ -387,7 +392,7 @@ class Translation
                 foreach (self::$map as $moduleName => $moduleEntries) {
                     if (isset(self::$map[$moduleName][$testEntry], self::$map[$moduleName][$testEntry][$searchEntryName])) {
                         $langFile = str_replace(
-                            Main\Application::getDocumentRoot() . '/bitrix/' . $testEntry . '/bitrix/' . $searchEntryName . '/',
+                            $documentRoot . '/bitrix/' . $testEntry . '/bitrix/' . $searchEntryName . '/',
                             $modulePath . '' . $moduleName . '/install/' . $testEntry . '/bitrix/' . $searchEntryName . '/',
                             $langFile
                         );
@@ -399,12 +404,12 @@ class Translation
             // bitrix/js/[moduleName]/[smth] -> [moduleName]/install/js/[moduleName]/[smth]
             // bitrix/js/[moduleName]/[smth] -> [moduleName]/install/public/js/[moduleName]/[smth]
             case 'js':
-                $libraryNamespace = $langPathParts[2];
+                $libraryNamespace = $langPathParts[2] . '/' . $langPathParts[3];
 
                 foreach (self::$map as $moduleName => $moduleEntries) {
                     if (isset(self::$map[$moduleName][$testEntry], self::$map[$moduleName][$testEntry][$libraryNamespace])) {
                         $langFile = str_replace(
-                            Main\Application::getDocumentRoot() . '/bitrix/' . $testEntry . '/' . $libraryNamespace . '/',
+                            $documentRoot . '/bitrix/' . $testEntry . '/' . $libraryNamespace . '/',
                             $modulePath . '' . $moduleName . '/install/' . $testEntry . '/' . $libraryNamespace . '/',
                             $langFile
                         );
@@ -412,7 +417,7 @@ class Translation
                     }
                     if (isset(self::$map[$moduleName]["public/{$testEntry}"], self::$map[$moduleName]["public/{$testEntry}"][$libraryNamespace])) {
                         $langFile = str_replace(
-                            Main\Application::getDocumentRoot() . '/bitrix/' . $testEntry . '/' . $libraryNamespace . '/',
+                            $documentRoot . '/bitrix/' . $testEntry . '/' . $libraryNamespace . '/',
                             $modulePath . '' . $moduleName . '/install/public/' . $testEntry . '/' . $libraryNamespace . '/',
                             $langFile
                         );
@@ -427,7 +432,7 @@ class Translation
                 foreach (self::$map as $moduleName => $moduleEntries) {
                     if (isset(self::$map[$moduleName][$testEntry], self::$map[$moduleName][$testEntry][$searchEntryName])) {
                         $langFile = str_replace(
-                            Main\Application::getDocumentRoot() . '/bitrix/modules/' . $moduleName . '/' . $testEntry . '/',
+                            $documentRoot . '/bitrix/modules/' . $moduleName . '/' . $testEntry . '/',
                             $modulePath . '' . $moduleName . '/' . $testEntry . '/',
                             $langFile
                         );
@@ -477,8 +482,10 @@ class Translation
                         self::$map[$moduleName] = array();
                         foreach ($testForExistence as $testEntry) {
                             $testPath = $bxRoot . '/' . $moduleName . '/install/' . $testEntry;
-                            if ($testEntry === 'templates' || $testEntry === 'mobileapp' || $testEntry === 'js' || $testEntry === 'public/js') {
+                            if ($testEntry === 'templates' || $testEntry === 'mobileapp') {
                                 $testPath .= '/';
+                            } elseif ($testEntry === 'js' || $testEntry === 'public/js') {
+                                $testPath .= '/' . $moduleName . '/';
                             } elseif ($testEntry === 'payment') {
                                 $testPath = $bxRoot . '/' . $moduleName . '/' . $testEntry;
                             } else {
@@ -490,7 +497,12 @@ class Translation
                                 self::$map[$moduleName][$testEntry] = array();
                                 foreach ($testDirectory->getChildren() as $testDirectoryEntry) {
                                     if ($testDirectoryEntry->isDirectory()) {
-                                        self::$map[$moduleName][$testEntry][$testDirectoryEntry->getName()] = 1;
+                                        if ($testEntry === 'js' || $testEntry === 'public/js') {
+                                            self::$map[$moduleName][$testEntry][$moduleName . '/' . $testDirectoryEntry->getName(
+                                            )] = 1;
+                                        } else {
+                                            self::$map[$moduleName][$testEntry][$testDirectoryEntry->getName()] = 1;
+                                        }
                                     }
                                 }
                             }

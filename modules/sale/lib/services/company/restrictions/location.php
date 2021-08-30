@@ -44,11 +44,13 @@ class Location extends Base\Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if ((int)$serviceId <= 0)
+        if ((int)$serviceId <= 0) {
             return true;
+        }
 
-        if (!$params)
+        if (!$params) {
             return false;
+        }
 
         try {
             return CompanyLocationTable::checkConnectionExists(
@@ -78,17 +80,21 @@ class Location extends Base\Restriction
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return '';
+        }
 
-        if (!$props = $order->getPropertyCollection())
+        if (!$props = $order->getPropertyCollection()) {
             return '';
+        }
 
-        if (!$locationProp = $props->getDeliveryLocation())
+        if (!$locationProp = $props->getDeliveryLocation()) {
             return '';
+        }
 
-        if (!$locationCode = $locationProp->getValue())
+        if (!$locationCode = $locationProp->getValue()) {
             return '';
+        }
 
         return $locationCode;
     }
@@ -104,30 +110,35 @@ class Location extends Base\Restriction
             $arLocation = array();
 
             if (!!\CSaleLocation::isLocationProEnabled()) {
-                if (strlen($params["LOCATION"]['L']))
+                if ($params["LOCATION"]['L'] <> '') {
                     $LOCATION1 = explode(':', $params["LOCATION"]['L']);
+                }
 
-                if (strlen($params["LOCATION"]['G']))
+                if ($params["LOCATION"]['G'] <> '') {
                     $LOCATION2 = explode(':', $params["LOCATION"]['G']);
+                }
             }
 
             if (isset($LOCATION1) && is_array($LOCATION1) && count($LOCATION1) > 0) {
                 $arLocation["L"] = array();
                 $locationCount = count($LOCATION1);
 
-                for ($i = 0; $i < $locationCount; $i++)
-                    if (strlen($LOCATION1[$i]))
+                for ($i = 0; $i < $locationCount; $i++) {
+                    if ($LOCATION1[$i] <> '') {
                         $arLocation["L"][] = $LOCATION1[$i];
+                    }
+                }
             }
 
             if (isset($LOCATION2) && is_array($LOCATION2) && count($LOCATION2) > 0) {
                 $arLocation["G"] = array();
                 $locationCount = count($LOCATION2);
 
-                for ($i = 0; $i < $locationCount; $i++)
-                    if (strlen($LOCATION2[$i]))
+                for ($i = 0; $i < $locationCount; $i++) {
+                    if ($LOCATION2[$i] <> '') {
                         $arLocation["G"][] = $LOCATION2[$i];
-
+                    }
+                }
             }
 
             CompanyLocationTable::resetMultipleForOwner($companyId, $arLocation);
@@ -142,15 +153,15 @@ class Location extends Base\Restriction
      */
     public static function getParamsStructure($entityId = 0)
     {
-
         $result = array(
             "LOCATION" => array(
                 "TYPE" => "COMPANY_LOCATION_MULTI"
             )
         );
 
-        if ($entityId > 0)
+        if ($entityId > 0) {
             $result["LOCATION"]["COMPANY_ID"] = $entityId;
+        }
 
         return $result;
     }

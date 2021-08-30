@@ -75,11 +75,13 @@ class SitemapIblockTable extends Entity\DataManager
     public static function clearBySitemap($sitemapId)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $query = $connection->query("
+        $query = $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE SITEMAP_ID='" . intval($sitemapId) . "'
-");
+"
+        );
     }
 
     /**
@@ -98,17 +100,22 @@ WHERE SITEMAP_ID='" . intval($sitemapId) . "'
         if (!isset(self::$iblockCache[$fields['IBLOCK_ID']])) {
             self::$iblockCache[$fields['IBLOCK_ID']] = array();
 
-            $dbRes = self::getList(array(
-                'filter' => array(
-                    'IBLOCK_ID' => $fields['IBLOCK_ID']
-                ),
-                'select' => array('SITEMAP_ID',
-                    'SITE_ID' => 'SITEMAP.SITE_ID', 'SITEMAP_SETTINGS' => 'SITEMAP.SETTINGS',
-                    'IBLOCK_CODE' => 'IBLOCK.CODE', 'IBLOCK_XML_ID' => 'IBLOCK.XML_ID',
-                    'DETAIL_PAGE_URL' => 'IBLOCK.DETAIL_PAGE_URL',
-                    'SECTION_PAGE_URL' => 'IBLOCK.SECTION_PAGE_URL',
-                ),
-            ));
+            $dbRes = self::getList(
+                array(
+                    'filter' => array(
+                        'IBLOCK_ID' => $fields['IBLOCK_ID']
+                    ),
+                    'select' => array(
+                        'SITEMAP_ID',
+                        'SITE_ID' => 'SITEMAP.SITE_ID',
+                        'SITEMAP_SETTINGS' => 'SITEMAP.SETTINGS',
+                        'IBLOCK_CODE' => 'IBLOCK.CODE',
+                        'IBLOCK_XML_ID' => 'IBLOCK.XML_ID',
+                        'DETAIL_PAGE_URL' => 'IBLOCK.DETAIL_PAGE_URL',
+                        'SECTION_PAGE_URL' => 'IBLOCK.SECTION_PAGE_URL',
+                    ),
+                )
+            );
 
             while ($res = $dbRes->fetch()) {
                 self::$iblockCache[$fields['IBLOCK_ID']][] = $res;
@@ -116,7 +123,7 @@ WHERE SITEMAP_ID='" . intval($sitemapId) . "'
         }
 
         foreach (self::$iblockCache[$fields['IBLOCK_ID']] as $res) {
-            $sitemapSettings = unserialize($res['SITEMAP_SETTINGS']);
+            $sitemapSettings = unserialize($res['SITEMAP_SETTINGS'], ['allowed_classes' => false]);
 
             $add = false;
 
@@ -184,7 +191,12 @@ WHERE SITEMAP_ID='" . intval($sitemapId) . "'
                     break;
                 }
 
-                $dbRes = \CIBlockSection::getList(array(), array('ID' => $sectionId), false, array('ID', 'IBLOCK_SECTION_ID'));
+                $dbRes = \CIBlockSection::getList(
+                    array(),
+                    array('ID' => $sectionId),
+                    false,
+                    array('ID', 'IBLOCK_SECTION_ID')
+                );
                 $section = $dbRes->fetch();
 
                 $sectionId = $section["IBLOCK_SECTION_ID"];
@@ -241,8 +253,9 @@ class SitemapIblock
             case 'BEFOREUPDATEELEMENT':
             case 'BEFOREUPDATESECTION':
                 $ID = $arguments[0];
-                if (is_array($ID))
+                if (is_array($ID)) {
                     $ID = $ID['ID'];
+                }
 
                 if ($ID > 0) {
                     $element = $name == 'BEFOREDELETEELEMENT' || $name == 'BEFOREUPDATEELEMENT';
@@ -300,7 +313,10 @@ class SitemapIblock
                         if ($name == 'DELETEELEMENT' || $name == 'DELETESECTION') {
                             self::actionDelete(self::$beforeActions['BEFORE' . $name][intval($element)][$fields['ID']]);
                         } else {
-                            self::actionUpdate(self::$beforeActions['BEFORE' . $name][intval($element)][$fields['ID']], $element);
+                            self::actionUpdate(
+                                self::$beforeActions['BEFORE' . $name][intval($element)][$fields['ID']],
+                                $element
+                            );
                         }
                     }
 
@@ -308,7 +324,6 @@ class SitemapIblock
                 }
 
                 break;
-
         }
     }
 
@@ -354,10 +369,11 @@ class SitemapIblock
                 $sitemap['SITEMAP_FILE_IBLOCK']
             );
 
-            if ($element)
+            if ($element) {
                 $dbRes = \CIBlockElement::getByID($fields["ID"]);
-            else
+            } else {
                 $dbRes = \CIBlockSection::getByID($fields["ID"]);
+            }
 
             $newFields = $dbRes->fetch();
 
@@ -393,10 +409,11 @@ class SitemapIblock
 
 //			rename RUNTIME file to original SITEMAPFILE name, or just remove TMP file
 //			after this in original file will be added always changes
-            if ($sitemapRuntimeFile->isNotEmpty() && $sitemapRuntimeFile->isCurrentPartNotEmpty())
+            if ($sitemapRuntimeFile->isNotEmpty() && $sitemapRuntimeFile->isCurrentPartNotEmpty()) {
                 $sitemapRuntimeFile->finish();
-            else
+            } else {
                 $sitemapRuntimeFile->delete();
+            }
 
             $sitemapIndex = new SitemapIndex($sitemap['SITEMAP_FILE'], $sitemap);
             $sitemapIndex->appendIndexEntry($sitemapFile);
@@ -455,7 +472,12 @@ class SitemapIblock
                     'GLOBAL_ACTIVE' => 'Y'
                 );
 
-                $dbRes = \CIBlockSection::getList(array(), $filter, false, array('ID', 'IBLOCK_TYPE_ID', 'IBLOCK_CODE'));
+                $dbRes = \CIBlockSection::getList(
+                    array(),
+                    $filter,
+                    false,
+                    array('ID', 'IBLOCK_TYPE_ID', 'IBLOCK_CODE')
+                );
                 while ($ar = $dbRes->fetch()) {
                     $newSections[] = $ar['ID'];
                     $iblockTypeId = $ar['IBLOCK_TYPE_ID'] ? $ar['IBLOCK_TYPE_ID'] : null;
@@ -500,7 +522,9 @@ class SitemapIblock
 
         $fields['TIMESTAMP_X'] = ConvertTimeStamp(false, "FULL");
 
-        if (isset($fields['IBLOCK_SECTION']) && is_array($fields['IBLOCK_SECTION']) && count($fields['IBLOCK_SECTION']) > 0) {
+        if (isset($fields['IBLOCK_SECTION']) && is_array($fields['IBLOCK_SECTION']) && count(
+                $fields['IBLOCK_SECTION']
+            ) > 0) {
             $fields['IBLOCK_SECTION_ID'] = min($fields['IBLOCK_SECTION']);
         }
 
@@ -538,10 +562,11 @@ class SitemapIblock
                 }
 
 //				after this in original file will be added always changes
-                if ($sitemapRuntimeFile->isNotEmpty() && $sitemapRuntimeFile->isCurrentPartNotEmpty())
+                if ($sitemapRuntimeFile->isNotEmpty() && $sitemapRuntimeFile->isCurrentPartNotEmpty()) {
                     $sitemapRuntimeFile->finish();
-                else
+                } else {
                     $sitemapRuntimeFile->delete();
+                }
 
                 $sitemapIndex = new SitemapIndex($sitemap['SITEMAP_FILE'], $sitemap);
                 $sitemapIndex->appendIndexEntry($sitemapFile);
@@ -571,8 +596,9 @@ class SitemapIblock
 
     private static function checkActivity($isElement, $fields)
     {
-        if (array_key_exists("ACTIVE", $fields) && $fields["ACTIVE"] == "N")
+        if (array_key_exists("ACTIVE", $fields) && $fields["ACTIVE"] == "N") {
             return false;
+        }
 
 //		for iblock element and iblock section we check different fields
         if ($isElement) {
@@ -580,27 +606,32 @@ class SitemapIblock
             if (
                 array_key_exists("DATE_ACTIVE_FROM", $fields) && $fields["DATE_ACTIVE_FROM"] &&
                 new \DateTime($fields["DATE_ACTIVE_FROM"]) > new \DateTime($fields["TIMESTAMP_X"])
-            )
+            ) {
                 return false;
+            }
             if (
                 array_key_exists("ACTIVE_FROM", $fields) && $fields["ACTIVE_FROM"] &&
                 new \DateTime($fields["ACTIVE_FROM"]) > new \DateTime($fields["TIMESTAMP_X"])
-            )
+            ) {
                 return false;
+            }
 
             if (
                 array_key_exists("DATE_ACTIVE_TO", $fields) && $fields["DATE_ACTIVE_TO"] &&
                 new \DateTime($fields["DATE_ACTIVE_TO"]) < new \DateTime($fields["TIMESTAMP_X"])
-            )
+            ) {
                 return false;
+            }
             if (
                 array_key_exists("ACTIVE_TO", $fields) && $fields["ACTIVE_TO"] &&
                 new \DateTime($fields["ACTIVE_TO"]) < new \DateTime($fields["TIMESTAMP_X"])
-            )
+            ) {
                 return false;
+            }
         } else {
-            if (array_key_exists("GLOBAL_ACTIVE", $fields) && $fields["GLOBAL_ACTIVE"] == "N")
+            if (array_key_exists("GLOBAL_ACTIVE", $fields) && $fields["GLOBAL_ACTIVE"] == "N") {
                 return false;
+            }
         }
 
         return true;
@@ -614,23 +645,26 @@ class SitemapIblock
      * @param null $siteId - In NULL - #SERVER_NAME# will not replaced.
      * @return mixed|string
      */
-    public static function prepareUrlToReplace($url, $siteId = NULL)
+    public static function prepareUrlToReplace($url, $siteId = null)
     {
 //		REMOVE PROTOCOL - we put them later, based on user settings
         $url = str_replace('http://', '', $url);
         $url = str_replace('https://', '', $url);
 
 //		REMOVE SERVER_NAME from start position, because we put server_url later
-        if (substr($url, 0, strlen('#SERVER_NAME#')) == '#SERVER_NAME#')
-            $url = substr($url, strlen('#SERVER_NAME#'));
+        if (mb_substr($url, 0, mb_strlen('#SERVER_NAME#')) == '#SERVER_NAME#') {
+            $url = mb_substr($url, mb_strlen('#SERVER_NAME#'));
+        }
 
 //		get correct SERVER_URL
         if ($siteId) {
             $filter = array('=LID' => $siteId);
-            $dbSite = SiteTable::getList(array(
-                'filter' => $filter,
-                'select' => array('LID', 'DIR', 'SERVER_NAME'),
-            ));
+            $dbSite = SiteTable::getList(
+                array(
+                    'filter' => $filter,
+                    'select' => array('LID', 'DIR', 'SERVER_NAME'),
+                )
+            );
             $currentSite = $dbSite->fetch();
             $serverName = $currentSite['SERVER_NAME'];
             $url = str_replace('#SERVER_NAME#', $serverName, $url);

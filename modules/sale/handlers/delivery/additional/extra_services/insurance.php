@@ -17,15 +17,16 @@ class Insurance extends Base
         $this->params["TYPE"] = "Y/N";
     }
 
-    public function getClassTitle()
+    public static function getClassTitle()
     {
         return Loc::getMessage('SALE_DLVRS_ADD_ESI_TITLE');
     }
 
     public function getCostShipment(Shipment $shipment = null)
     {
-        if ($this->value != "Y")
+        if ($this->value != "Y") {
             return 0;
+        }
 
         return $this->getPriceShipment($shipment);
     }
@@ -38,8 +39,9 @@ class Insurance extends Base
         foreach ($shipment->getShipmentItemCollection() as $shipmentItem) {
             $basketItem = $shipmentItem->getBasketItem();
 
-            if ($basketItem)
+            if ($basketItem) {
                 $result += $basketItem->getPrice() * $basketItem->getQuantity();
+            }
         }
 
         return $result;
@@ -71,11 +73,13 @@ class Insurance extends Base
 
     public function getPriceShipment(Shipment $shipment = null)
     {
-        if (!isset($this->params["FEE"]))
+        if (!isset($this->params["FEE"])) {
             return 0;
+        }
 
-        if (!$shipment)
+        if (!$shipment) {
             return 0;
+        }
 
         $shipmentPrice = $this->getShipmentProductsPrice($shipment);
 

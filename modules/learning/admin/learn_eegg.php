@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');    // first system's prolog
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/learning/prolog.php');    // init module
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/learning/include.php');    // module's prolog
@@ -21,15 +22,18 @@ try {
     ->Init();                // init filter, list
 
     // save inline edited items
-    if ($oRE->IsNeedSaveInlineEditedItems())
+    if ($oRE->IsNeedSaveInlineEditedItems()) {
         $oRE->SaveInlineEditedItems();
+    }
 
     // process group or single actions on list's item(s)
-    if ($oRE->IsNeedProcessActionsOnList())
+    if ($oRE->IsNeedProcessActionsOnList()) {
         $oRE->ProcessActionsOnList();
+    }
 
-    if (isset($_REQUEST['return_url']) && (strlen($_REQUEST['return_url']) > 0) && check_bitrix_sessid())
+    if (isset($_REQUEST['return_url']) && ($_REQUEST['return_url'] <> '') && check_bitrix_sessid()) {
         LocalRedirect($_REQUEST['return_url']);
+    }
 
 
     $oRE->FetchData()                    // get data for list
@@ -43,8 +47,9 @@ try {
     $strCAdminMessage = GetMessage('LEARNING_ERROR');
 
     $errmsg = $e->GetMessage();
-    if (strlen($errmsg) > 0)
+    if ($errmsg <> '') {
         $strCAdminMessage .= ' (' . $e->GetMessage() . ')';
+    }
 }
 
 $APPLICATION->SetTitle($title);
@@ -57,8 +62,9 @@ if ($wasError) {
     if ($needShowAuthForm) {
         $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'), false);
     } else {
-        if ($strCAdminMessage !== false)
+        if ($strCAdminMessage !== false) {
             CAdminMessage::ShowMessage($strCAdminMessage);
+        }
 
         $aContext = array(
             array(
@@ -71,8 +77,9 @@ if ($wasError) {
         $context = new CAdminContextMenu($aContext);
         $context->Show();
     }
-} else
-    echo $html;        // output
+} else {
+    echo $html;
+}        // output
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
 
@@ -93,8 +100,9 @@ class CLearnRenderAdminExceptionsList
     {
         global $USER;
 
-        if (!$USER->IsAdmin())
+        if (!$USER->IsAdmin()) {
             throw new Exception();
+        }
 
         // Removes all global variables with prefix "str_"
         ClearVars();
@@ -105,8 +113,9 @@ class CLearnRenderAdminExceptionsList
     {
         global $USER;
 
-        if (!$USER->IsAdmin())
+        if (!$USER->IsAdmin()) {
             throw new Exception();
+        }
 
         return ($this);
     }
@@ -118,35 +127,47 @@ class CLearnRenderAdminExceptionsList
         $this->oList = new CAdminList($this->tableID, $oSort);        // list initialization
 
         $arHeaders = array(
-            array('id' => 'DATE_REGISTERED',
+            array(
+                'id' => 'DATE_REGISTERED',
                 'content' => 'DATE_REGISTERED',
                 'sort' => 'DATE_REGISTERED',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'CODE',
+            array(
+                'id' => 'CODE',
                 'content' => 'CODE',
                 'sort' => 'CODE',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'MESSAGE',
+            array(
+                'id' => 'MESSAGE',
                 'content' => 'MESSAGE',
                 'sort' => 'MESSAGE',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'FFILE',
+            array(
+                'id' => 'FFILE',
                 'content' => 'FFILE',
                 'sort' => 'FFILE',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'LINE',
+            array(
+                'id' => 'LINE',
                 'content' => 'LINE',
                 'sort' => 'LINE',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'BACKTRACE',
+            array(
+                'id' => 'BACKTRACE',
                 'content' => 'BACKTRACE',
                 'sort' => 'BACKTRACE',
-                'default' => true)
+                'default' => true
+            )
         );
 
         // list's header
@@ -169,10 +190,11 @@ class CLearnRenderAdminExceptionsList
 
     public function IsNeedProcessActionsOnList()
     {
-        if ($this->oList->GroupAction() === false)
+        if ($this->oList->GroupAction() === false) {
             return (false);
-        else
+        } else {
             return (true);
+        }
     }
 
     public function ProcessActionsOnList()
@@ -202,10 +224,15 @@ class CLearnRenderAdminExceptionsList
         // list's footer
         $this->oList->AddFooter(
             array(
-                array('title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'),
-                    'value' => $this->rsData->SelectedRowsCount()),
-                array('counter' => true,
-                    'title' => GetMessage('MAIN_ADMIN_LIST_CHECKED'), 'value' => '0')
+                array(
+                    'title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'),
+                    'value' => $this->rsData->SelectedRowsCount()
+                ),
+                array(
+                    'counter' => true,
+                    'title' => GetMessage('MAIN_ADMIN_LIST_CHECKED'),
+                    'value' => '0'
+                )
             )
         );
 
@@ -223,9 +250,10 @@ class CLearnRenderAdminExceptionsList
                 foreach ($arItem['args'] as $arArg) {
                     $argsCnt++;
                     $dots = '';
-                    if (strlen($arArg) > 100)
+                    if (mb_strlen($arArg) > 100) {
                         $dots = '...';
-                    echo '[' . $argsCnt . ']: ' . substr(serialize($arArg), 0, 100) . $dots . "\n";
+                    }
+                    echo '[' . $argsCnt . ']: ' . mb_substr(serialize($arArg), 0, 100) . $dots . "\n";
                 }
                 echo "\n";
             }
@@ -295,8 +323,9 @@ class CLearnRenderAdminExceptionsList
 
     public function SaveInlineEditedItems()
     {
-        if (!$this->IsNeedSaveInlineEditedItems())
+        if (!$this->IsNeedSaveInlineEditedItems()) {
             return ($this);
+        }
 
         // nothing to do
         return ($this);

@@ -75,7 +75,6 @@ class TransportIm implements Transport\iBase
 
     public function start()
     {
-
     }
 
     public function send(Message\Adapter $message)
@@ -89,6 +88,5 @@ class TransportIm implements Transport\iBase
 
     public function end()
     {
-
     }
 }

@@ -40,7 +40,7 @@ class ParametersTable
             ),
             'SEF_MODE' => array(
                 'data_type' => 'boolean',
-                'values' => array(self::SEF_MODE, self::NOT_SEF_MODE),
+                'values' => array(self::NOT_SEF_MODE, self::SEF_MODE),
             ),
             'SEF_FOLDER' => array(
                 'data_type' => 'string',
@@ -61,8 +61,9 @@ class ParametersTable
 
     public static function deleteBySiteId($siteId)
     {
-        if (empty($siteId))
+        if (empty($siteId)) {
             throw new \Bitrix\Main\ArgumentNullException("siteId");
+        }
 
         $result = new \Bitrix\Main\Entity\DeleteResult();
 
@@ -83,8 +84,9 @@ class ParametersTable
 
     public static function deleteByFilter($filter)
     {
-        if (empty($filter))
+        if (empty($filter)) {
             throw new \Bitrix\Main\ArgumentNullException("filter");
+        }
 
         $result = new \Bitrix\Main\Entity\DeleteResult();
 
@@ -94,8 +96,9 @@ class ParametersTable
                 "filter" => $filter,
             )
         );
-        while ($ar = $dbResult->fetch())
+        while ($ar = $dbResult->fetch()) {
             static::delete($ar["ID"]);
+        }
 
         return $result;
     }

@@ -13,7 +13,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/a
 
 class CMpNotifications
 {
-    function OnAdminInformerInsertItemsHandlerMP()
+    public static function OnAdminInformerInsertItemsHandlerMP()
     {
         global $USER;
         if (LICENSE_KEY == "DEMO") {
@@ -24,16 +24,30 @@ class CMpNotifications
         }
         $daysCheck = intval(COption::GetOptionString('main', 'update_autocheck', '1'));
         if ($daysCheck > 0) {
-            $arModulesResult = unserialize(COption::GetOptionString("main", "last_mp_modules_result"));
+            $arModulesResult = unserialize(
+                COption::GetOptionString("main", "last_mp_modules_result"),
+                ['allowed_classes' => false]
+            );
             if (!is_array($arModulesResult)) {
                 $arModulesResult = array("check_date" => 0);
             }
 
             if ($arModulesResult["check_date"] + 86400 * $daysCheck < time()) {
                 $arInstalledModules = self::getClientInstalledModules();
-                $arModulesUpdates = ($arInstalledModules ? self::checkUpdates($arInstalledModules, 2, $daysCheck) : array());
-                $arDateEndModules = ($arInstalledModules ? self::checkModulesEndDate($arInstalledModules, $daysCheck) : array());
-                $arNewPartnersModules = ($arInstalledModules ? self::checkUpdates($arInstalledModules, 1, $daysCheck) : array());
+                $arModulesUpdates = ($arInstalledModules ? self::checkUpdates(
+                    $arInstalledModules,
+                    2,
+                    $daysCheck
+                ) : array());
+                $arDateEndModules = ($arInstalledModules ? self::checkModulesEndDate(
+                    $arInstalledModules,
+                    $daysCheck
+                ) : array());
+                $arNewPartnersModules = ($arInstalledModules ? self::checkUpdates(
+                    $arInstalledModules,
+                    1,
+                    $daysCheck
+                ) : array());
                 $arModulesResult = array(
                     "check_date" => time(),
                     'update_module' => $arModulesUpdates,
@@ -74,7 +88,9 @@ class CMpNotifications
                 $curDateTo = $curDateTo->add(strval($daysCheck) . " days");
 
                 for ($i = 0, $cnt = count($arUpdateList["MODULE"]); $i < $cnt; $i++) {
-                    if (strlen($arUpdateList["MODULE"][$i]['@']['DATE_TO']) > 0 && Date::isCorrect($arUpdateList["MODULE"][$i]['@']['DATE_TO'])) {
+                    if ($arUpdateList["MODULE"][$i]['@']['DATE_TO'] <> '' && Date::isCorrect(
+                            $arUpdateList["MODULE"][$i]['@']['DATE_TO']
+                        )) {
                         $dateTo = new Date($arUpdateList["MODULE"][$i]['@']['DATE_TO']);
                         $ID = $arUpdateList["MODULE"][$i]["@"]["ID"];
                         if ($dateTo >= $curDateFrom && $dateTo < $curDateTo) {
@@ -113,7 +129,7 @@ class CMpNotifications
         $arResult = Array();
         $arResultModules = array();
 
-        if (strlen($strError_tmp) <= 0) {
+        if ($strError_tmp == '') {
             CUpdateClientPartner::__ParseServerData($content, $arResult, $strError_tmp);
             if (is_array($arResult['DATA']['#']['MODULE']) && count($arResult['DATA']['#']['MODULE']) > 0) {
                 foreach ($arResult['DATA']['#']['MODULE'] as $arModule) {
@@ -156,11 +172,13 @@ class CMpNotifications
                     GetMessage('TOP_PANEL_AI_MODULE_UPDATE_BUTTON_VIEW') .
                     "</a>",
                 'ALERT' => true,
-                'HTML' => GetMessage($arNotifierText['HTML'], array("#NAME#" => $arModule["NAME"], "#PARTNER#" => $arModule["PARTNER"])) . self::addJsToInformer(),
+                'HTML' => GetMessage(
+                        $arNotifierText['HTML'],
+                        array("#NAME#" => $arModule["NAME"], "#PARTNER#" => $arModule["PARTNER"])
+                    ) . self::addJsToInformer(),
             );
             CAdminInformer::AddItem($arParams);
         }
-
     }
 
     //get installed mp modules
@@ -169,10 +187,10 @@ class CMpNotifications
         $strError_tmp = "";
         $arRequestedModules = array();
         $arClientModules = CUpdateClientPartner::GetCurrentModules($strError_tmp);
-        if (strlen($strError_tmp) <= 0) {
+        if ($strError_tmp == '') {
             if (count($arClientModules) > 0) {
                 foreach ($arClientModules as $key => $value) {
-                    if (strpos($key, ".") !== false) {
+                    if (mb_strpos($key, ".") !== false) {
                         $arRequestedModules[] = $key;
                     }
                 }
@@ -185,15 +203,35 @@ class CMpNotifications
     //check notification's type to add
     public static function addMpNotifications($arModulesResult)
     {
-        $serverName = (CMain::IsHTTPS() ? "https" : "http") . "://" . ((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
-        if (count($arModulesResult['update_module']) <= 0 && count($arModulesResult['end_update']) <= 0 && ($arModulesResult['new_module']) <= 0) {
+        $serverName = (CMain::IsHTTPS() ? "https" : "http") . "://" . ((defined(
+                    "SITE_SERVER_NAME"
+                ) && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+        if (count($arModulesResult['update_module']) <= 0 && count(
+                $arModulesResult['end_update']
+            ) <= 0 && ($arModulesResult['new_module']) <= 0) {
             return false;
         }
         if (count($arModulesResult['update_module']) > 0) {
-            self::addNotificationsToInformer($arModulesResult['update_module'], array('TITLE' => 'TOP_PANEL_AI_MODULE_UPDATE', 'HTML' => 'TOP_PANEL_AI_MODULE_UPDATE_DESC'), 'update_module', $serverName);
+            self::addNotificationsToInformer(
+                $arModulesResult['update_module'],
+                array(
+                    'TITLE' => 'TOP_PANEL_AI_MODULE_UPDATE',
+                    'HTML' => 'TOP_PANEL_AI_MODULE_UPDATE_DESC'
+                ),
+                'update_module',
+                $serverName
+            );
         }
         if (count($arModulesResult['end_update']) > 0) {
-            self::addNotificationsToInformer($arModulesResult['end_update'], array('TITLE' => 'TOP_PANEL_AI_MODULE_END_UPDATE', 'HTML' => 'TOP_PANEL_AI_MODULE_END_UPDATE_DESC'), 'end_update', $serverName);
+            self::addNotificationsToInformer(
+                $arModulesResult['end_update'],
+                array(
+                    'TITLE' => 'TOP_PANEL_AI_MODULE_END_UPDATE',
+                    'HTML' => 'TOP_PANEL_AI_MODULE_END_UPDATE_DESC'
+                ),
+                'end_update',
+                $serverName
+            );
         }
         if (count($arModulesResult['new_module']) > 0) {
             self::addNotificationsPartnersNewModulesToInformer($arModulesResult['new_module'], $serverName);
@@ -216,7 +254,10 @@ class CMpNotifications
                     GetMessage('TOP_PANEL_AI_MODULE_UPDATE_BUTTON_HIDE') .
                     "</a>",
                 'ALERT' => true,
-                'HTML' => GetMessage('TOP_PANEL_AI_NEW_MODULE_DESC', array("#PARTNER#" => $arPartnerModules[0]['PARTNER'])),
+                'HTML' => GetMessage(
+                    'TOP_PANEL_AI_NEW_MODULE_DESC',
+                    array("#PARTNER#" => $arPartnerModules[0]['PARTNER'])
+                ),
             );
             foreach ($arPartnerModules as $arModule) {
                 $arParams['HTML'] .= '<a href="' . $serverName . '/bitrix/admin/update_system_market.php?module=' . $arModule['ID'] . '" target="_blank">' . $arModule['NAME'] . '</a><br>';

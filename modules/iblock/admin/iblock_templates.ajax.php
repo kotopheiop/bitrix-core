@@ -1,4 +1,5 @@
 <?php
+
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
@@ -24,7 +25,10 @@ if (check_bitrix_sessid()) {
             "DESCRIPTION" => $_POST["DESCRIPTION"],
         );
     } elseif ($_REQUEST["ENTITY_TYPE"] === "S") {
-        $ipropTemplates = new \Bitrix\Iblock\InheritedProperty\SectionTemplates($_REQUEST["IBLOCK_ID"], $_REQUEST["ENTITY_ID"]);
+        $ipropTemplates = new \Bitrix\Iblock\InheritedProperty\SectionTemplates(
+            $_REQUEST["IBLOCK_ID"],
+            $_REQUEST["ENTITY_ID"]
+        );
         $arFields = array(
             "IBLOCK_ID" => $_REQUEST["IBLOCK_ID"],
             "IBLOCK_SECTION_ID" => $_REQUEST["IBLOCK_SECTION_ID"],
@@ -33,19 +37,24 @@ if (check_bitrix_sessid()) {
             "DESCRIPTION" => $_POST["DESCRIPTION"],
         );
         foreach ($_POST as $key => $value) {
-            if (substr($key, 0, 3) === "UF_")
+            if (mb_substr($key, 0, 3) === "UF_") {
                 $arFields[$key] = $value;
+            }
         }
     } elseif ($_REQUEST["ENTITY_TYPE"] === "E") {
-        $ipropTemplates = new \Bitrix\Iblock\InheritedProperty\ElementTemplates($_REQUEST["IBLOCK_ID"], $_REQUEST["ENTITY_ID"]);
+        $ipropTemplates = new \Bitrix\Iblock\InheritedProperty\ElementTemplates(
+            $_REQUEST["IBLOCK_ID"],
+            $_REQUEST["ENTITY_ID"]
+        );
 
         $section_id = 0;
         if (isset($_POST["IBLOCK_ELEMENT_SECTION_ID"]) && (int)$_POST["IBLOCK_ELEMENT_SECTION_ID"] > 0) {
             $section_id = (int)$_POST["IBLOCK_ELEMENT_SECTION_ID"];
         } elseif (!empty($_POST["IBLOCK_SECTION"]) && is_array($_POST["IBLOCK_SECTION"])) {
             $postSections = array_filter($_POST["IBLOCK_SECTION"], "strlen");
-            if (!empty($postSections))
+            if (!empty($postSections)) {
                 $section_id = min($postSections);
+            }
             unset($postSections);
         }
 
@@ -100,14 +109,19 @@ if (check_bitrix_sessid()) {
                     array("ID", "NAME")
                 );
                 while ($section = $sectionList->Fetch()) {
-                    if (!$firstSection)
+                    if (!$firstSection) {
                         $firstSection = $section["ID"];
+                    }
 
                     if ($section_id == $section["ID"]) {
                         $inSelect = true;
-                        $html .= '<option value="' . htmlspecialcharsbx($section["ID"]) . '" selected>' . htmlspecialcharsEx($section["NAME"]) . '</option>';
+                        $html .= '<option value="' . htmlspecialcharsbx(
+                                $section["ID"]
+                            ) . '" selected>' . htmlspecialcharsEx($section["NAME"]) . '</option>';
                     } else {
-                        $html .= '<option value="' . htmlspecialcharsbx($section["ID"]) . '">' . htmlspecialcharsEx($section["NAME"]) . '</option>';
+                        $html .= '<option value="' . htmlspecialcharsbx($section["ID"]) . '">' . htmlspecialcharsEx(
+                                $section["NAME"]
+                            ) . '</option>';
                     }
                 }
             }
@@ -132,7 +146,9 @@ if (check_bitrix_sessid()) {
             if ($arIBlock["CANONICAL_PAGE_URL"]) {
                 $html .= GetMessage("IB_TA_CANONICAL_PAGE_URL") . "<br>";
                 $page_url = CIBlock::ReplaceDetailUrl($arIBlock["CANONICAL_PAGE_URL"], $arFields, true, "E");
-                $html .= '<a href="' . htmlspecialcharsbx($page_url) . '" target="_blank">' . htmlspecialcharsEx($page_url) . '</a>';
+                $html .= '<a href="' . htmlspecialcharsbx($page_url) . '" target="_blank">' . htmlspecialcharsEx(
+                        $page_url
+                    ) . '</a>';
             } else {
                 $page_url = CIBlock::ReplaceDetailUrl($arIBlock["DETAIL_PAGE_URL"], $arFields, true, "E");
                 $html .= htmlspecialcharsEx($page_url);

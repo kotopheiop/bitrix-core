@@ -29,7 +29,7 @@ class Token
     {
         $this->type = $type;
         $this->text = $text;
-        $this->upper = strtoupper($this->text);
+        $this->upper = mb_strtoupper($this->text);
     }
 
     /**
@@ -44,7 +44,7 @@ class Token
     function setText($text)
     {
         $this->text = $text;
-        $this->upper = strtoupper($this->text);
+        $this->upper = mb_strtoupper($this->text);
     }
 
     /**
@@ -59,7 +59,7 @@ class Token
     function appendText($text)
     {
         $this->text .= $text;
-        $this->upper = strtoupper($this->text);
+        $this->upper = mb_strtoupper($this->text);
     }
 }
 
@@ -201,10 +201,11 @@ class Tokenizer
         while (isset($this->tokens[$this->index])) {
             /** @var Token $token */
             $token = $this->tokens[$this->index];
-            if ($token->type == Token::T_WHITESPACE || $token->type == Token::T_COMMENT)
+            if ($token->type == Token::T_WHITESPACE || $token->type == Token::T_COMMENT) {
                 $this->index++;
-            else
+            } else {
                 break;
+            }
         }
     }
 
@@ -264,7 +265,8 @@ class Tokenizer
         $this->tokens = array();
         $tokenCount = 0;
         $chars = '(),.:=;/';
-        $rawTokens = preg_split("/(
+        $rawTokens = preg_split(
+            "/(
 			[ \\t\\n\\r]+                   # WHITESPACE
 			|\\\\+                          # BACKSLASHES
 			|\"                             # DOUBLE QUOTE
@@ -274,12 +276,17 @@ class Tokenizer
 			|\\/\\*.*?\\*\\/                # COMMENTARY
 			|--.*?\\n                       # COMMENTARY
 			|[" . preg_quote($chars, "/") . "]  # CHARACTER
-		)/xs", $sql, -1, PREG_SPLIT_DELIM_CAPTURE);
+		)/xs",
+            $sql,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
+        );
         $isInSingleQuote = false;
         $isInDoubleQuote = false;
         foreach ($rawTokens as $i => $rawToken) {
-            if ($rawToken === "")
+            if ($rawToken === "") {
                 continue;
+            }
 
             /** @var Token $prevToken */
             $prevToken = $this->tokens[$tokenCount - 1];
@@ -289,7 +296,7 @@ class Tokenizer
                 if (
                     $rawToken === "'"
                     && preg_match("/(\\\\)*'\$/", $prevToken->text, $match)
-                    && (strlen($match[0]) % 2) === 1
+                    && (mb_strlen($match[0]) % 2) === 1
                 ) {
                     $isInSingleQuote = false;
                 }
@@ -298,7 +305,7 @@ class Tokenizer
                 if (
                     $rawToken === "\""
                     && preg_match("/(\\\\)*\"\$/", $prevToken->text, $match)
-                    && (strlen($match[0]) % 2) === 1
+                    && (mb_strlen($match[0]) % 2) === 1
                 ) {
                     $isInDoubleQuote = false;
                 }
@@ -311,7 +318,7 @@ class Tokenizer
                 || ($rawToken[0] === "-" && $rawToken[1] === '-')
             ) {
                 $this->tokens[$tokenCount++] = new Token(Token::T_COMMENT, $rawToken);
-            } elseif (strlen($rawToken) == 1 && strpos($chars, $rawToken) !== false) {
+            } elseif (mb_strlen($rawToken) == 1 && mb_strpos($chars, $rawToken) !== false) {
                 $this->tokens[$tokenCount++] = new Token(Token::T_CHAR, $rawToken);
             } elseif ($rawToken === "\"") {
                 $this->tokens[$tokenCount++] = new Token(Token::T_DOUBLE_QUOTE, $rawToken);
@@ -358,11 +365,13 @@ class Tokenizer
         $level = 0;
         /** @var Token $token */
         foreach ($this->tokens as $token) {
-            if ($token->text === ')')
+            if ($token->text === ')') {
                 $level--;
+            }
             $token->level = $level;
-            if ($token->text === '(')
+            if ($token->text === '(') {
                 $level++;
+            }
         }
     }
 }

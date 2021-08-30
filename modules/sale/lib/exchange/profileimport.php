@@ -130,24 +130,28 @@ class ProfileImport extends UserImportBase
                     $propertyByConfigValue = $property[$propertyId];
                     if ($profile->profileGetId() <= 0) {
                         if (!empty($propertyByConfigValue)) {
-                            $profileId = \CSaleOrderUserProps::Add(array(
-                                "NAME" => $fields["AGENT_NAME"],
-                                "USER_ID" => $profile->getUserId(),
-                                "PERSON_TYPE_ID" => $profile->getPersonalTypeId(),
-                                "XML_ID" => $fields["XML_ID"],
-                                "VERSION_1C" => $fields["VERSION_1C"]
-                            ));
+                            $profileId = \CSaleOrderUserProps::Add(
+                                array(
+                                    "NAME" => $fields["AGENT_NAME"],
+                                    "USER_ID" => $profile->getUserId(),
+                                    "PERSON_TYPE_ID" => $profile->getPersonalTypeId(),
+                                    "XML_ID" => $fields["XML_ID"],
+                                    "VERSION_1C" => $fields["VERSION_1C"]
+                                )
+                            );
 
                             $profile->setField("USER_PROFILE_ID", $profileId);
                         }
                     }
 
-                    \CSaleOrderUserPropsValue::Add(array(
-                        "USER_PROPS_ID" => $profile->profileGetId(),
-                        "ORDER_PROPS_ID" => $propertyId,
-                        "NAME" => $filedsProperty["NAME"],
-                        "VALUE" => $propertyByConfigValue
-                    ));
+                    \CSaleOrderUserPropsValue::Add(
+                        array(
+                            "USER_PROPS_ID" => $profile->profileGetId(),
+                            "ORDER_PROPS_ID" => $propertyId,
+                            "NAME" => $filedsProperty["NAME"],
+                            "VALUE" => $propertyByConfigValue
+                        )
+                    );
                 }
             }
         }
@@ -183,7 +187,10 @@ class ProfileImport extends UserImportBase
 
             $profileFields = static::getFieldsUserProfile($profile->profileGetId());
             foreach ($profileFields as $fieldsProfile) {
-                $fieldsProfileByProperty[$fieldsProfile["ORDER_PROPS_ID"]] = array("ID" => $fieldsProfile["ID"], "VALUE" => $fieldsProfile["VALUE"]);
+                $fieldsProfileByProperty[$fieldsProfile["ORDER_PROPS_ID"]] = array(
+                    "ID" => $fieldsProfile["ID"],
+                    "VALUE" => $fieldsProfile["VALUE"]
+                );
             }
 
             $propertyOrders = static::getPropertyOrdersByPersonalTypeId($profile->getPersonalTypeId());
@@ -244,14 +251,16 @@ class ProfileImport extends UserImportBase
     {
         $result = array();
 
-        $r = \CSaleOrderUserProps::GetList(array(),
+        $r = \CSaleOrderUserProps::GetList(
+            array(),
             array("XML_ID" => $fields["XML_ID"]),
             false,
             false,
             array("ID", "NAME", "USER_ID", "PERSON_TYPE_ID", "XML_ID", "VERSION_1C")
         );
-        if ($ar = $r->Fetch())
+        if ($ar = $r->Fetch()) {
             $result = $ar;
+        }
 
         return $result;
     }
@@ -264,8 +273,9 @@ class ProfileImport extends UserImportBase
     {
         $result = array();
 
-        if (intval($profileId) <= 0)
+        if (intval($profileId) <= 0) {
             return false;
+        }
 
         $r = \CSaleOrderUserPropsValue::GetList(array(), array("USER_PROPS_ID" => $profileId));
         while ($ar = $r->Fetch()) {
@@ -305,20 +315,22 @@ class ProfileImport extends UserImportBase
                 $result['PERSON_TYPE_ID'] = $this->resolvePersonTypeId($fields);
 
                 $user = static::getUserByCode($fields['XML_ID']);
-                if (!empty($user))
+                if (!empty($user)) {
                     $result['USER_ID'] = $user['ID'];
-                else
+                } else {
                     $result['USER_ID'] = $this->registerUser($fields, $arErrors);
+                }
 
                 $result['USER_PROFILE_ID'] = null;
                 $result['USER_PROFILE_VERSION'] = null;
                 $result['USER_PROPS'] = null;
             }
 
-            if (count($arErrors) > 0)
+            if (count($arErrors) > 0) {
                 return $result;
-            else
+            } else {
                 $profiles[$fields['XML_ID']] = $result;
+            }
         }
 
         return $profiles[$fields['XML_ID']];

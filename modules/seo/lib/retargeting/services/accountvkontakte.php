@@ -19,24 +19,33 @@ class AccountVkontakte extends Account
 
     public function getList()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.account.list',
-            'parameters' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.account.list',
+                'parameters' => array()
+            )
+        );
         $data = $response->getData();
-        $data = array_values(array_filter($data, function ($item) {
-            return ($item['account_type'] == 'general'); // only "general" is supported
-        }));
+        $data = array_values(
+            array_filter(
+                $data,
+                function ($item) {
+                    return ($item['account_type'] == 'general'); // only "general" is supported
+                }
+            )
+        );
         $response->setData($data);
         return $response;
     }
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.profile',
-            'parameters' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.profile',
+                'parameters' => array()
+            )
+        );
 
         if ($response->isSuccess()) {
             $data = $response->fetch();

@@ -7,8 +7,9 @@ ClearVars();
 
 $message = null;
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R")
+if ($MOD_RIGHT < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
@@ -41,7 +42,7 @@ if ($ms) {
     $ID = 0;
 }
 
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $MOD_RIGHT == "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT == "W" && check_bitrix_sessid()) {
     $ICON = $_FILES['ICON'];
     $ICON['old_file'] = $str_ICON;
     $ICON['del'] = $remove_icon;
@@ -69,15 +70,18 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $M
     }
 
     if (!$result->isSuccess()) {
-        $message = new CAdminMessage(array(
-            'MESSAGE' => GetMessage("MAIL_MSERVICE_EDT_ERROR"),
-            'DETAILS' => join('<br>', $result->getErrorMessages())
-        ));
+        $message = new CAdminMessage(
+            array(
+                'MESSAGE' => GetMessage("MAIL_MSERVICE_EDT_ERROR"),
+                'DETAILS' => join('<br>', $result->getErrorMessages())
+            )
+        );
     } else {
-        if (strlen($save) > 0)
+        if ($save <> '') {
             LocalRedirect("mail_mailservice_admin.php?lang=" . LANG);
-        else
+        } else {
             LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID);
+        }
     }
 }
 
@@ -86,7 +90,9 @@ if ($message) {
     $str_ICON = null;
 }
 
-$sDocTitle = ($ID > 0) ? preg_replace("'#ID#'i", $ID, GetMessage("MAIL_MSERVICE_EDT_TITLE_1")) : GetMessage("MAIL_MSERVICE_EDT_TITLE_2");
+$sDocTitle = ($ID > 0) ? preg_replace("'#ID#'i", $ID, GetMessage("MAIL_MSERVICE_EDT_TITLE_1")) : GetMessage(
+    "MAIL_MSERVICE_EDT_TITLE_2"
+);
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
@@ -110,7 +116,10 @@ if ($ID > 0) {
         $aMenu[] = array(
             "TEXT" => GetMessage("MAIL_MSERVICE_EDT_DELETE"),
             "ICON" => "btn_delete",
-            "LINK" => "javascript:if(confirm('" . GetMessage("MAIL_MSERVICE_EDT_DELETE_CONFIRM") . "'))window.location='mail_mailservice_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "MAIL_MSERVICE_EDT_DELETE_CONFIRM"
+                ) . "'))window.location='mail_mailservice_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -119,14 +128,21 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIL_MSERVICE_EDT_TAB"), "ICON" => "mail_mailbox_edit", "TITLE" => $sDocTitle),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIL_MSERVICE_EDT_TAB"),
+        "ICON" => "mail_mailbox_edit",
+        "TITLE" => $sDocTitle
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 
 ?>
 
-<? if ($message) echo $message->Show(); ?>
+<? if ($message) {
+    echo $message->Show();
+} ?>
 <form method="POST" action="<?= $APPLICATION->GetCurPage(); ?>?lang=<?= LANG; ?>&ID=<?= $ID; ?>" name="form1"
       enctype="multipart/form-data">
     <?= bitrix_sessid_post(); ?>
@@ -144,9 +160,13 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
         <td width="40%"><?= GetMessage("MAIL_MSERVICE_EDT_SITE_ID"); ?></td>
         <td width="60%">
             <select name="SITE_ID">
-                <? $result = Bitrix\Main\SiteTable::getList(array('filter' => array('ACTIVE' => 'Y'), 'order' => array('SORT' => 'ASC'))); ?>
+                <? $result = Bitrix\Main\SiteTable::getList(
+                    array('filter' => array('ACTIVE' => 'Y'), 'order' => array('SORT' => 'ASC'))
+                ); ?>
                 <? while (($site = $result->fetch()) !== false): ?>
-                    <option value="<?= $site['LID'] ?>" <? if ($str_SITE_ID == $site['LID']) echo 'selected'; ?>><?= htmlspecialcharsbx($site['NAME']) ?></option>
+                    <option value="<?= $site['LID'] ?>" <? if ($str_SITE_ID == $site['LID']) {
+                        echo 'selected';
+                    } ?>><?= htmlspecialcharsbx($site['NAME']) ?></option>
                 <? endwhile ?>
             </select>
         </td>
@@ -209,8 +229,12 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
         <td>
             <select name="ENCRYPTION"<? if (!$bCanUseTLS) { ?> disabled<? } ?>>
                 <option value=""></option>
-                <option value="Y"<? if ($str_ENCRYPTION == "Y") { ?> selected="selected"<? } ?>><?= GetMessage('MAIN_YES'); ?></option>
-                <option value="N"<? if ($str_ENCRYPTION == "N") { ?> selected="selected"<? } ?>><?= GetMessage('MAIN_NO'); ?></option>
+                <option value="Y"<? if ($str_ENCRYPTION == "Y") { ?> selected="selected"<? } ?>><?= GetMessage(
+                        'MAIN_YES'
+                    ); ?></option>
+                <option value="N"<? if ($str_ENCRYPTION == "N") { ?> selected="selected"<? } ?>><?= GetMessage(
+                        'MAIN_NO'
+                    ); ?></option>
             </select>
         </td>
     </tr>
@@ -265,7 +289,9 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
     </script>
 
     <? $tabControl->EndTab(); ?>
-    <? $tabControl->Buttons(array("disabled" => $MOD_RIGHT < "W", "back_url" => "mail_mailservice_admin.php?lang=" . LANG)); ?>
+    <? $tabControl->Buttons(
+        array("disabled" => $MOD_RIGHT < "W", "back_url" => "mail_mailservice_admin.php?lang=" . LANG)
+    ); ?>
     <? $tabControl->End(); ?>
 </form>
 <? $tabControl->ShowWarnings("form1", $message); ?>

@@ -15,7 +15,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -31,14 +33,15 @@ $err_mess = "File: " . __FILE__ . "<br>Line: ";
  ****************************************************************************/
 if (
     !isset($find_type) ||
-    strlen($find_type) < 0 ||
+    mb_strlen($find_type) < 0 ||
     !in_array($find_type, Array("C", "K", "S", "M", "F", "SR", "D"))
-)
+) {
     $find_type = "C";
+}
 
 
-$sTableID = "t_dict_list_" . strtolower($find_type);
-$oSort = new CAdminSorting($sTableID, "SORT", "asc");// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+$sTableID = "t_dict_list_" . mb_strtolower($find_type);
+$oSort = new CAdminSorting($sTableID, "s_c_sort", "asc");// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 $lAdmin = new CAdminList($sTableID, $oSort);// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
@@ -106,16 +109,16 @@ $arFilter = Array(
 
 if ($bAdmin == "Y" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
-
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $arFields["C_SORT"] = intval($arFields["C_SORT"]);
 
-        if (strlen(trim($arFields["NAME"])) > 0) {
+        if (trim($arFields["NAME"]) <> '') {
             $arUpdate = array(
                 'C_SORT' => $arFields['C_SORT'],
                 'NAME' => $arFields['NAME']
@@ -123,7 +126,6 @@ if ($bAdmin == "Y" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï
 
             if (!CTicketDictionary::Update($ID, $arUpdate)) {
                 $lAdmin->AddUpdateError(str_replace("#ID#", $ID, GetMessage("SUP_ERROR_SAVE")), $ID);
-
             }
         } else {
             $lAdmin->AddUpdateError(str_replace("#ID#", $ID, GetMessage("SUP_FORGOT_NAME")), $ID);
@@ -135,14 +137,16 @@ if ($bAdmin == "Y" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï
 if ($bAdmin == "Y" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $isFiltered = null;
-        $rsData = CTicketDictionary::GetList($by, $order, $arFilter, $isFiltered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CTicketDictionary::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
@@ -159,10 +163,13 @@ if ($find_type == "C" ||
     $find_type == "K" ||
     $find_type == "SR" ||
     $find_type == "NOT_REF" ||
-    strlen($find_type) <= 0) $show_responsible_column = "Y";
+    $find_type == '') {
+    $show_responsible_column = "Y";
+}
 
+global $by, $order;
 
-$rsData = CTicketDictionary::GetList($by, $order, $arFilter, $is_filtered);
+$rsData = CTicketDictionary::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -178,8 +185,14 @@ $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => true, "sort" 
 $arHeaders[] = Array("id" => "C_SORT", "content" => GetMessage("SUP_SORT"), "default" => true, "sort" => "s_c_sort");
 $arHeaders[] = Array("id" => "C_SITE", "content" => GetMessage("SUP_SITE"), "default" => true,);
 $arHeaders[] = Array("id" => "NAME", "content" => GetMessage("SUP_NAME"), "default" => true, "sort" => "s_name");
-if ($show_responsible_column == "Y")
-    $arHeaders[] = Array("id" => "RESPONSIBLE_USER_ID", "content" => GetMessage("SUP_RESPONSIBLE"), "default" => true, "sort" => "s_responsible");
+if ($show_responsible_column == "Y") {
+    $arHeaders[] = Array(
+        "id" => "RESPONSIBLE_USER_ID",
+        "content" => GetMessage("SUP_RESPONSIBLE"),
+        "default" => true,
+        "sort" => "s_responsible"
+    );
+}
 
 $lAdmin->AddHeaders($arHeaders);
 
@@ -188,7 +201,6 @@ $arRows = array();
 $arSiteArrayForAllDict = CTicketDictionary::GetSiteArrayForAllDictionaries();
 $arRespUserIDs = array();
 while ($arRes = $rsData->Fetch()) {
-
     if (intval($arRes["RESPONSIBLE_USER_ID"]) > 0) {
         $arRespUserIDs[] = intval($arRes["RESPONSIBLE_USER_ID"]);
     }
@@ -201,7 +213,9 @@ while ($arRes = $rsData->Fetch()) {
         $arrSITE = $arSiteArrayForAllDict[$arRes["ID"]];
         foreach ($arrSITE as $sid) {
             $sidS = htmlspecialcharsbx($sid);
-            $str_SITE .= ($str_SITE == "" ? "" : " / ") . '<a title="' . GetMessage("MAIN_ADMIN_MENU_EDIT") . '" href="/bitrix/admin/site_edit.php?LID=' . $sidS . '&lang=' . LANG . '">' . $sidS . '</a>';
+            $str_SITE .= ($str_SITE == "" ? "" : " / ") . '<a title="' . GetMessage(
+                    "MAIN_ADMIN_MENU_EDIT"
+                ) . '" href="/bitrix/admin/site_edit.php?LID=' . $sidS . '&lang=' . LANG . '">' . $sidS . '</a>';
         }
     }
 
@@ -215,7 +229,9 @@ while ($arRes = $rsData->Fetch()) {
         "ICON" => "edit",
         "DEFAULT" => "Y",
         "TEXT" => GetMessage("SUP_EDIT"),
-        "ACTION" => $lAdmin->ActionRedirect("ticket_dict_edit.php?find_type=" . $arRes["C_TYPE"] . "&ID=" . $arRes["ID"] . "&lang=" . LANG)
+        "ACTION" => $lAdmin->ActionRedirect(
+            "ticket_dict_edit.php?find_type=" . $arRes["C_TYPE"] . "&ID=" . $arRes["ID"] . "&lang=" . LANG
+        )
     );
 
     if ($bAdmin == "Y") {
@@ -224,7 +240,11 @@ while ($arRes = $rsData->Fetch()) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("SUP_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_TDIC_CONF') . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "delete", "find_type=" . $arRes["C_TYPE"]),
+            "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_TDIC_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes["ID"],
+                    "delete",
+                    "find_type=" . $arRes["C_TYPE"]
+                ),
         );
     }
 
@@ -235,9 +255,12 @@ while ($arRes = $rsData->Fetch()) {
 $arRespUsersProp = array();
 $arRespUserIDs = array_unique($arRespUserIDs);
 $strUsers = implode("|", $arRespUserIDs);
-$f = "ID";
-$o = "asc";
-$rs = CUser::GetList($f, $o, array("ID" => $strUsers), array("FIELDS" => array("NAME", "LAST_NAME", "LOGIN", "ID")));
+$rs = CUser::GetList(
+    'id',
+    'asc',
+    array("ID" => $strUsers),
+    array("FIELDS" => array("NAME", "LAST_NAME", "LOGIN", "ID"))
+);
 while ($ar = $rs->Fetch()) {
     $arRespUsersProp[$ar["ID"]] = $ar;
 }
@@ -247,7 +270,9 @@ foreach ($arRows as $k => $v) {
     $rUserID = intval($v["arFields"]["RESPONSIBLE_USER_ID"]);
     if ($rUserID > 0 && array_key_exists($rUserID, $arRespUsersProp)):
         $arUserPr = $arRespUsersProp[$rUserID];
-        $str = '[<a title="' . GetMessage("SUP_USER_PROFILE") . '" href="/bitrix/admin/user_edit.php?lang=' . LANG . '&ID=' . $rUserID . '">' .
+        $str = '[<a title="' . GetMessage(
+                "SUP_USER_PROFILE"
+            ) . '" href="/bitrix/admin/user_edit.php?lang=' . LANG . '&ID=' . $rUserID . '">' .
             $rUserID . '</a>] (' . $arUserPr["LOGIN"] . ') ' . $arUserPr["NAME"] . "  " . $arUserPr["LAST_NAME"];
 
     endif;
@@ -263,7 +288,8 @@ $lAdmin->AddFooter(
 );
 
 if ($bAdmin == "Y") {
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
         )
     );
@@ -327,17 +353,27 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td nowrap>
                 <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>">
                 <select name="find_type_ex">
-                    <option value="name"<? if ($find_type_ex == "name") echo " selected" ?>><?= GetMessage("SUP_F_NAME") ?></option>
-                    <option value="descr"<? if ($find_type_ex == "descr") echo " selected" ?>><?= GetMessage("SUP_F_DESCR") ?></option>
+                    <option value="name"<? if ($find_type_ex == "name") echo " selected" ?>><?= GetMessage(
+                            "SUP_F_NAME"
+                        ) ?></option>
+                    <option value="descr"<? if ($find_type_ex == "descr") echo " selected" ?>><?= GetMessage(
+                            "SUP_F_DESCR"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
 
         <tr>
             <td><?= GetMessage("SUP_F_ID") ?>:</td>
-            <td><input type="text" name="find_id" size="47"
-                       value="<?= htmlspecialcharsbx($find_id) ?>"><?= InputType("checkbox", "find_id_exact_match", "Y", $find_id_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+            <td><input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($find_id) ?>"><?= InputType(
+                    "checkbox",
+                    "find_id_exact_match",
+                    "Y",
+                    $find_id_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage("SUP_EXACT_MATCH") . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="top">
             <td valign="top"><?= GetMessage("SUP_F_SITE") ?>:<br><img src="/bitrix/images/support/mouse.gif" width="44"
@@ -345,31 +381,62 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td><?
                 $ref = array();
                 $ref_id = array();
-                $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+                $rs = CSite::GetList();
                 while ($ar = $rs->Fetch()) {
                     $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
                     $ref_id[] = $ar["ID"];
                 }
-                echo SelectBoxMFromArray("find_site[]", array("reference" => $ref, "reference_id" => $ref_id), $find_site, "", false, "3");
+                echo SelectBoxMFromArray(
+                    "find_site[]",
+                    array("reference" => $ref, "reference_id" => $ref_id),
+                    $find_site,
+                    "",
+                    false,
+                    "3"
+                );
                 ?></td>
         </tr>
         <tr>
             <td><?= GetMessage("SUP_F_NAME") ?>:</td>
             <td><input type="text" name="find_name" size="47"
-                       value="<?= htmlspecialcharsbx($find_name) ?>"><?= InputType("checkbox", "find_name_exact_match", "Y", $find_name_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<?= htmlspecialcharsbx($find_name) ?>"><?= InputType(
+                    "checkbox",
+                    "find_name_exact_match",
+                    "Y",
+                    $find_name_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "SUP_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><?= GetMessage("SUP_F_DESCR") ?>:</td>
             <td><input type="text" name="find_descr" size="47"
-                       value="<?= htmlspecialcharsbx($find_descr) ?>"><?= InputType("checkbox", "find_descr_exact_match", "Y", $find_descr_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<?= htmlspecialcharsbx($find_descr) ?>"><?= InputType(
+                    "checkbox",
+                    "find_descr_exact_match",
+                    "Y",
+                    $find_descr_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "SUP_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><?= GetMessage("SUP_F_SID") ?>:</td>
-            <td><input type="text" name="find_sid" size="47"
-                       value="<?= htmlspecialcharsbx($find_sid) ?>"><?= InputType("checkbox", "find_sid_exact_match", "Y", $find_sid_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+            <td><input type="text" name="find_sid" size="47" value="<?= htmlspecialcharsbx($find_sid) ?>"><?= InputType(
+                    "checkbox",
+                    "find_sid_exact_match",
+                    "Y",
+                    $find_sid_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage("SUP_EXACT_MATCH") . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td nowrap valign="top"><?= GetMessage("SUP_F_RESPONSIBLE") ?>:</td>
@@ -384,20 +451,43 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                     $ref_id[] = $zr["REFERENCE_ID"];
                 }
                 $arr = array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id);
-                echo SelectBoxFromArray("find_responsible_id", $arr, htmlspecialcharsbx($find_responsible_id), GetMessage("SUP_ALL"));
+                echo SelectBoxFromArray(
+                    "find_responsible_id",
+                    $arr,
+                    htmlspecialcharsbx($find_responsible_id),
+                    GetMessage("SUP_ALL")
+                );
                 ?><br><input type="text" name="find_responsible" size="47"
-                             value="<?= htmlspecialcharsbx($find_responsible) ?>"><?= InputType("checkbox", "find_responsible_exact_match", "Y", $find_responsible_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                             value="<?= htmlspecialcharsbx($find_responsible) ?>"><?= InputType(
+                    "checkbox",
+                    "find_responsible_exact_match",
+                    "Y",
+                    $find_responsible_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "SUP_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="center">
             <td nowrap><?= GetMessage("SUP_F_DEFAULT") ?>:</td>
             <td nowrap><?
-                $arr = array("reference" => array(GetMessage("SUP_YES"), GetMessage("SUP_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("SUP_YES"), GetMessage("SUP_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_default", $arr, htmlspecialcharsbx($find_default), GetMessage("SUP_ALL"));
                 ?></td>
         </tr>
         <?
-        $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . "?find_type=" . $find_type, "form" => "form1"));
+        $oFilter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage() . "?find_type=" . $find_type,
+                "form" => "form1"
+            )
+        );
         $oFilter->End();
         ?>
     </form>

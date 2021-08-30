@@ -36,22 +36,26 @@ abstract class BaseFile extends Base
             return $result;
         }
 
-        $res = Requests\ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId,
-                '=REQUEST.DELIVERY_ID' => $this->deliveryService->getId()
+        $res = Requests\ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId,
+                    '=REQUEST.DELIVERY_ID' => $this->deliveryService->getId()
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
+        if (!$row || $row['EXTERNAL_ID'] == '') {
             $result->addError(
                 new Main\Error(
                     Loc::getMessage(
                         'SALE_DLVRS_ADD_DREQ_RBASEF_03',
                         array('#SHIPMENT_LINK#' => Requests\Helper::getShipmentEditLink($shipmentId))
-                    )));
+                    )
+                )
+            );
 
             return $result;
         }
@@ -70,8 +74,9 @@ abstract class BaseFile extends Base
         $result = new Requests\ResultFile();
         $httpRes = false;
 
-        if (@$this->httpClient->query($this->type, $this->getUrl()))
+        if (@$this->httpClient->query($this->type, $this->getUrl())) {
             $httpRes = $this->httpClient->getResult();
+        }
 
         $errors = $this->httpClient->getError();
 
@@ -92,14 +97,15 @@ abstract class BaseFile extends Base
             $status = $this->httpClient->getStatus();
 
             if ($status != 200) {
-                if ($status == 403)
+                if ($status == 403) {
                     $errorMsg = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASEF_04');
-                elseif ($status == 404)
+                } elseif ($status == 404) {
                     $errorMsg = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASEF_05');
-                elseif ($status == 500)
+                } elseif ($status == 500) {
                     $errorMsg = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASEF_06');
-                else
+                } else {
                     $errorMsg = 'Http status: ' . $status;
+                }
 
                 $result->addError(new Main\Error($errorMsg, 'STATUS_' . $status));
             }
@@ -109,7 +115,7 @@ abstract class BaseFile extends Base
             $headers = $this->httpClient->getHeaders();
             $fileName = $headers->getFilename();
 
-            if (strlen($fileName) > 0) {
+            if ($fileName <> '') {
                 $ext = '';
                 $contentType = $headers->getContentType();
 
@@ -119,7 +125,7 @@ abstract class BaseFile extends Base
                     $ext = 'pdf';
                 }
 
-                if (strlen($ext) > 0) {
+                if ($ext <> '') {
                     $fileName .= '.' . $ext;
                 }
 

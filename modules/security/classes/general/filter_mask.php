@@ -24,8 +24,9 @@ class CSecurityFilterMask
                 $i = 10;
                 foreach ($arMasks as $arMask) {
                     $site_id = trim($arMask["SITE_ID"]);
-                    if ($site_id == "NOT_REF")
+                    if ($site_id == "NOT_REF") {
                         $site_id = "";
+                    }
 
                     $mask = trim($arMask["MASK"]);
                     if ($mask && !array_key_exists($mask, $added)) {
@@ -35,8 +36,9 @@ class CSecurityFilterMask
                             "LIKE_MASK" => str_replace($arLikeSearch, $arLikeReplace, $mask),
                             "PREG_MASK" => str_replace($arPregSearch, $arPregReplace, $mask),
                         );
-                        if ($site_id)
+                        if ($site_id) {
                             $arMask["SITE_ID"] = $site_id;
+                        }
 
                         $DB->Add("b_sec_filter_mask", $arMask);
                         $i += 10;
@@ -44,9 +46,9 @@ class CSecurityFilterMask
                     }
                 }
 
-                if (CACHED_b_sec_filter_mask !== false)
+                if (CACHED_b_sec_filter_mask !== false) {
                     $CACHE_MANAGER->CleanDir("b_sec_filter_mask");
-
+                }
             }
         }
 
@@ -70,7 +72,7 @@ class CSecurityFilterMask
             return true;
         }
 
-        if (CACHED_b_sec_filter_mask !== false) {
+        if (CACHED_b_sec_filter_mask !== false && is_object($CACHE_MANAGER)) {
             $cache_id = "b_sec_filter_mask";
             if ($CACHE_MANAGER->Read(CACHED_b_sec_filter_mask, $cache_id, "b_sec_filter_mask")) {
                 $arMasks = $CACHE_MANAGER->Get($cache_id);
@@ -107,7 +109,6 @@ class CSecurityFilterMask
                     }
                 }
             }
-
         } else {
             $sql = "
 				SELECT m.*
@@ -123,8 +124,9 @@ class CSecurityFilterMask
             }
 
             $rs = $DB->Query($sql);
-            if ($rs->Fetch())
+            if ($rs->Fetch()) {
                 $bFound = true;
+            }
         }
 
         return $bFound;

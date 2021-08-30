@@ -1,4 +1,5 @@
 <?php
+
 $security_default_option = array(
     "ipcheck_allow_self_block" => "N",
     "ipcheck_disable_file" => "",

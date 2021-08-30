@@ -47,10 +47,12 @@ class EmailUsers extends \Bitrix\Main\UI\Selector\EntityBase
             !empty($lastUserList)
             || !empty($selectedUserList)
         ) {
-            $usersList = \CSocNetLogDestination::getUsers(array(
-                'id' => array_merge($lastUserList, $selectedUserList),
-                'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
-            ));
+            $usersList = \CSocNetLogDestination::getUsers(
+                array(
+                    'id' => array_merge($lastUserList, $selectedUserList),
+                    'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
+                )
+            );
 
             $crmInstalled = ModuleManager::isModuleInstalled('crm');
 
@@ -87,12 +89,14 @@ class EmailUsers extends \Bitrix\Main\UI\Selector\EntityBase
                 $finderDestSelect = array(
                     'CODE_USER_ID'
                 );
-                $res = \Bitrix\Main\FinderDestTable::getList(array(
-                    'order' => array(),
-                    'filter' => $finderDestFilter,
-                    'group' => array("CODE_USER_ID"),
-                    'select' => $finderDestSelect
-                ));
+                $res = \Bitrix\Main\FinderDestTable::getList(
+                    array(
+                        'order' => array(),
+                        'filter' => $finderDestFilter,
+                        'group' => array("CODE_USER_ID"),
+                        'select' => $finderDestSelect
+                    )
+                );
                 while ($userFields = $res->fetch()) {
                     if (!empty($userFields)) {
                         $mySelectedEmailUserIdList[] = 'U' . $userFields['CODE_USER_ID'];

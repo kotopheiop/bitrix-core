@@ -27,7 +27,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Socialservices
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Contact_Query query()
+ * @method static EO_Contact_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Contact_Result getById($id)
+ * @method static EO_Contact_Result getList(array $parameters = array())
+ * @method static EO_Contact_Entity getEntity()
+ * @method static \Bitrix\Socialservices\EO_Contact createObject($setDefaultValues = true)
+ * @method static \Bitrix\Socialservices\EO_Contact_Collection createCollection()
+ * @method static \Bitrix\Socialservices\EO_Contact wakeUpObject($row)
+ * @method static \Bitrix\Socialservices\EO_Contact_Collection wakeUpCollection($rows)
+ */
 class ContactTable extends Main\Entity\DataManager
 {
     const NOTIFY = 'Y';
@@ -168,18 +181,20 @@ class ContactTable extends Main\Entity\DataManager
             }
         }
 
-        $dbRes = UserTable::getList(array(
-            'filter' => array(
-                '=EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID,
-                '=XML_ID' => array_unique(
-                    array_merge(
-                        array_keys($contactsList),
-                        array_keys($possibleContactsList)
-                    )
+        $dbRes = UserTable::getList(
+            array(
+                'filter' => array(
+                    '=EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID,
+                    '=XML_ID' => array_unique(
+                        array_merge(
+                            array_keys($contactsList),
+                            array_keys($possibleContactsList)
+                        )
+                    ),
                 ),
-            ),
-            'select' => array('ID', 'USER_ID', 'XML_ID')
-        ));
+                'select' => array('ID', 'USER_ID', 'XML_ID')
+            )
+        );
 
         while ($owner = $dbRes->fetch()) {
             if (
@@ -205,12 +220,14 @@ class ContactTable extends Main\Entity\DataManager
         }
 
         $existedContacts = array();
-        $dbRes = ContactTable::getList(array(
-            'filter' => array(
-                '=USER_ID' => $owner["USER_ID"],
-            ),
-            'select' => array('ID', 'CONTACT_XML_ID')
-        ));
+        $dbRes = ContactTable::getList(
+            array(
+                'filter' => array(
+                    '=USER_ID' => $owner["USER_ID"],
+                ),
+                'select' => array('ID', 'CONTACT_XML_ID')
+            )
+        );
         while ($existedContact = $dbRes->fetch()) {
             $existedContacts[$existedContact['CONTACT_XML_ID']] = $existedContact['ID'];
         }
@@ -223,7 +240,9 @@ class ContactTable extends Main\Entity\DataManager
                 "CONTACT_LAST_NAME" => $contact["LAST_NAME"],
                 "CONTACT_PHOTO" => $contact["PHOTO"],
                 "NOTIFY" => $contact["NOTIFY"],
-                "LAST_AUTHORIZE" => DateTime::createFromUserTime(\CRestUtil::unConvertDateTime($contact['LAST_AUTHORIZE'])),
+                "LAST_AUTHORIZE" => DateTime::createFromUserTime(
+                    \CRestUtil::unConvertDateTime($contact['LAST_AUTHORIZE'])
+                ),
             );
 
             $contactId = false;
@@ -257,7 +276,9 @@ class ContactTable extends Main\Entity\DataManager
                         'CONTACT_PROFILE_ID' => $profile['PROFILE_ID'],
                         'CONTACT_PORTAL' => $profile['PORTAL'],
                         'CONNECT_TYPE' => $profile['TYPE'],
-                        'LAST_AUTHORIZE' => DateTime::createFromUserTime(\CRestUtil::unConvertDateTime($profile['LAST_AUTHORIZE'])),
+                        'LAST_AUTHORIZE' => DateTime::createFromUserTime(
+                            \CRestUtil::unConvertDateTime($profile['LAST_AUTHORIZE'])
+                        ),
                     );
 
                     $r = ContactConnectTable::add($connectFields);
@@ -286,13 +307,15 @@ class ContactTable extends Main\Entity\DataManager
         }
 
         $existedContacts = array();
-        $dbRes = UserLinkTable::getList(array(
-            'filter' => array(
-                '=SOCSERV_USER_ID' => $owner["ID"],
-                '=SOCSERV_USER.EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID,
-            ),
-            'select' => array('ID', 'LINK_UID')
-        ));
+        $dbRes = UserLinkTable::getList(
+            array(
+                'filter' => array(
+                    '=SOCSERV_USER_ID' => $owner["ID"],
+                    '=SOCSERV_USER.EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID,
+                ),
+                'select' => array('ID', 'LINK_UID')
+            )
+        );
         while ($existedContact = $dbRes->fetch()) {
             $existedContacts[$existedContact['LINK_UID']] = $existedContact['ID'];
         }
@@ -328,13 +351,17 @@ class ContactTable extends Main\Entity\DataManager
                 }
 
                 foreach ($contact["profile"] as $profile) {
-                    $result = ContactConnectTable::add(array(
-                        'LINK_ID' => $linkId,
-                        'CONTACT_PROFILE_ID' => $profile['PROFILE_ID'],
-                        'CONTACT_PORTAL' => $profile['PORTAL'],
-                        'CONNECT_TYPE' => $profile['TYPE'],
-                        'LAST_AUTHORIZE' => DateTime::createFromUserTime(\CRestUtil::unConvertDateTime($profile['LAST_AUTHORIZE'])),
-                    ));
+                    $result = ContactConnectTable::add(
+                        array(
+                            'LINK_ID' => $linkId,
+                            'CONTACT_PROFILE_ID' => $profile['PROFILE_ID'],
+                            'CONTACT_PORTAL' => $profile['PORTAL'],
+                            'CONNECT_TYPE' => $profile['TYPE'],
+                            'LAST_AUTHORIZE' => DateTime::createFromUserTime(
+                                \CRestUtil::unConvertDateTime($profile['LAST_AUTHORIZE'])
+                            ),
+                        )
+                    );
                 }
             }
         }
@@ -360,16 +387,19 @@ class ContactTable extends Main\Entity\DataManager
 
             if (!isset($contactInfo["CONNECT"])) {
                 $contactInfo["CONNECT"] = array();
-                $dbRes = ContactConnectTable::getList(array(
-                    "order" => array("LAST_AUTHORIZE" => "ASC"),
-                    "filter" => array(
-                        "=CONTACT_ID" => $contactInfo["ID"],
-                    ),
-                    "limit" => 1,
-                    "select" => array(
-                        "CONTACT_PROFILE_ID", "CONNECT_TYPE"
+                $dbRes = ContactConnectTable::getList(
+                    array(
+                        "order" => array("LAST_AUTHORIZE" => "ASC"),
+                        "filter" => array(
+                            "=CONTACT_ID" => $contactInfo["ID"],
+                        ),
+                        "limit" => 1,
+                        "select" => array(
+                            "CONTACT_PROFILE_ID",
+                            "CONNECT_TYPE"
+                        )
                     )
-                ));
+                );
                 while ($connect = $dbRes->fetch()) {
                     $contactInfo["CONNECT"][] = $connect;
                 }
@@ -384,10 +414,15 @@ class ContactTable extends Main\Entity\DataManager
                     $attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
 
                     $attachParams = array(
-                        "NAME" => \CUser::FormatName(\CSite::GetNameFormat(), array(
-                            "NAME" => $contactInfo["CONTACT_NAME"],
-                            "LAST_NAME" => $contactInfo["CONTACT_LAST_NAME"]
-                        ), false, false),
+                        "NAME" => \CUser::FormatName(
+                            \CSite::GetNameFormat(),
+                            array(
+                                "NAME" => $contactInfo["CONTACT_NAME"],
+                                "LAST_NAME" => $contactInfo["CONTACT_LAST_NAME"]
+                            ),
+                            false,
+                            false
+                        ),
                     );
                     if ($contactInfo["CONTACT_PHOTO"]) {
                         $attachParams["AVATAR"] = $contactInfo["CONTACT_PHOTO"];
@@ -430,14 +465,28 @@ class ContactTable extends Main\Entity\DataManager
             $count = 0;
             foreach (static::$notifyStack as $contactInfo) {
                 if (++$count > static::NOTIFY_CONTACT_COUNT) {
-                    $attach->AddHtml('<a href="' . str_replace("#USER_ID#", $userId, Option::get("intranet", "path_user", "/company/persona/user/#USER_ID#/")) . '">' . Loc::getMessage("SS_JOIN_NOTIFY_MORE", array("#NUM#" => count(static::$notifyStack) - $count + 1)) . '</a>');
+                    $attach->AddHtml(
+                        '<a href="' . str_replace(
+                            "#USER_ID#",
+                            $userId,
+                            Option::get("intranet", "path_user", "/company/persona/user/#USER_ID#/")
+                        ) . '">' . Loc::getMessage(
+                            "SS_JOIN_NOTIFY_MORE",
+                            array("#NUM#" => count(static::$notifyStack) - $count + 1)
+                        ) . '</a>'
+                    );
                     break;
                 } else {
                     $attachParams = array(
-                        "NAME" => \CUser::FormatName(\CSite::GetNameFormat(), array(
-                            "NAME" => $contactInfo["CONTACT_NAME"],
-                            "LAST_NAME" => $contactInfo["CONTACT_LAST_NAME"]
-                        ), false, false),
+                        "NAME" => \CUser::FormatName(
+                            \CSite::GetNameFormat(),
+                            array(
+                                "NAME" => $contactInfo["CONTACT_NAME"],
+                                "LAST_NAME" => $contactInfo["CONTACT_LAST_NAME"]
+                            ),
+                            false,
+                            false
+                        ),
                     );
                     if ($contactInfo["CONTACT_PHOTO"]) {
                         $attachParams["AVATAR"] = $contactInfo["CONTACT_PHOTO"];
@@ -488,22 +537,27 @@ class ContactTable extends Main\Entity\DataManager
             $dateLimit = new DateTime();
             $dateLimit->add(static::POSSIBLE_LAST_AUTHORIZE_LIMIT);
 
-            $contactList = ContactConnectTable::getList(array(
-                'order' => array('LAST_AUTHORIZE' => 'DESC'),
-                'filter' => array(
-                    '!=LINK_ID' => '',
-                    '=CONNECT_TYPE' => ContactConnectTable::TYPE_PORTAL,
-                    '>=LAST_AUTHORIZE' => $dateLimit,
-                    '=LINK.USER_ID' => $userId,
-                    '!=LINK.ID' => $alreadyShown,
-                ),
-                'count_total' => true,
-                'group' => array('LINK_ID'),
-                'limit' => static::NOTIFY_POSSIBLE_COUNT,
-                'select' => array(
-                    'LINK_ID', 'LINK_NAME' => 'LINK.LINK_NAME', 'LINK_LAST_NAME' => 'LINK.LINK_LAST_NAME', 'LINK_PICTURE' => 'LINK.LINK_PICTURE',
-                ),
-            ));
+            $contactList = ContactConnectTable::getList(
+                array(
+                    'order' => array('LAST_AUTHORIZE' => 'DESC'),
+                    'filter' => array(
+                        '!=LINK_ID' => '',
+                        '=CONNECT_TYPE' => ContactConnectTable::TYPE_PORTAL,
+                        '>=LAST_AUTHORIZE' => $dateLimit,
+                        '=LINK.USER_ID' => $userId,
+                        '!=LINK.ID' => $alreadyShown,
+                    ),
+                    'count_total' => true,
+                    'group' => array('LINK_ID'),
+                    'limit' => static::NOTIFY_POSSIBLE_COUNT,
+                    'select' => array(
+                        'LINK_ID',
+                        'LINK_NAME' => 'LINK.LINK_NAME',
+                        'LINK_LAST_NAME' => 'LINK.LINK_LAST_NAME',
+                        'LINK_PICTURE' => 'LINK.LINK_PICTURE',
+                    ),
+                )
+            );
 
             /*
             $contactList = UserLinkTable::getList(array(
@@ -541,27 +595,35 @@ class ContactTable extends Main\Entity\DataManager
 
                     // get all link portals, authorized during last week
                     $contactInfo["CONNECT"] = array();
-                    $dbRes = ContactConnectTable::getList(array(
-                        "order" => array("LAST_AUTHORIZE" => "DESC"),
-                        "filter" => array(
-                            "=LINK_ID" => $contactInfo["LINK_ID"],
-                            ">=LAST_AUTHORIZE" => $dateLimit,
-                        ),
-                        "limit" => 1,
-                        "select" => array(
-                            "CONTACT_PROFILE_ID", "CONNECT_TYPE"
+                    $dbRes = ContactConnectTable::getList(
+                        array(
+                            "order" => array("LAST_AUTHORIZE" => "DESC"),
+                            "filter" => array(
+                                "=LINK_ID" => $contactInfo["LINK_ID"],
+                                ">=LAST_AUTHORIZE" => $dateLimit,
+                            ),
+                            "limit" => 1,
+                            "select" => array(
+                                "CONTACT_PROFILE_ID",
+                                "CONNECT_TYPE"
+                            )
                         )
-                    ));
+                    );
                     while ($connect = $dbRes->fetch()) {
                         $contactInfo["CONNECT"][] = $connect;
                     }
 
                     if (count($contactInfo["CONNECT"]) > 0) {
                         $attachParams = array(
-                            "NAME" => \CUser::FormatName(\CSite::GetNameFormat(), array(
-                                "NAME" => $contactInfo["LINK_NAME"],
-                                "LAST_NAME" => $contactInfo["LINK_LAST_NAME"]
-                            ), false, false),
+                            "NAME" => \CUser::FormatName(
+                                \CSite::GetNameFormat(),
+                                array(
+                                    "NAME" => $contactInfo["LINK_NAME"],
+                                    "LAST_NAME" => $contactInfo["LINK_LAST_NAME"]
+                                ),
+                                false,
+                                false
+                            ),
                         );
                         if ($contactInfo["LINK_PICTURE"]) {
                             $attachParams["AVATAR"] = $contactInfo["LINK_PICTURE"];
@@ -589,7 +651,6 @@ class ContactTable extends Main\Entity\DataManager
                 );
 
                 \CIMNotify::Add($messageFields);
-
             }
 
             $alreadyShown[static::POSSIBLE_RESET_TIME_KEY] = $ts;

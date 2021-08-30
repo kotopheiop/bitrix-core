@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/options.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/learning/options.php");
@@ -6,15 +7,18 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/learning/o
 $APPLICATION->AddHeadScript('/bitrix/js/learning/rights_edit.js');
 
 // Ensure, that data in database converted to 11.5.0 version of module
-if (!CModule::IncludeModule('learning'))
+if (!CModule::IncludeModule('learning')) {
     return (false);
+}
 
 $LEARNING_RIGHT = 'A';
-if (CLearnAccess::IsLoggedUserCanAccessModuleSettings())
+if (CLearnAccess::IsLoggedUserCanAccessModuleSettings()) {
     $LEARNING_RIGHT = 'W';
+}
 
-if ($LEARNING_RIGHT < "W")
+if ($LEARNING_RIGHT < "W") {
     return;
+}
 
 $oAccess = CLearnAccess::GetInstance($USER->GetID());
 
@@ -27,25 +31,27 @@ $arAllOptions =
     );
 
 //Restore defaults
-if ($LEARNING_RIGHT == "W" && $_SERVER["REQUEST_METHOD"] == "GET" && strlen($RestoreDefaults) > 0 && check_bitrix_sessid()) {
+if ($LEARNING_RIGHT == "W" && $_SERVER["REQUEST_METHOD"] == "GET" && $RestoreDefaults <> '' && check_bitrix_sessid()) {
     COption::RemoveOption("learning");
 }
 
 //Save options
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIGHT == "W" && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $Update <> '' && $LEARNING_RIGHT == "W" && check_bitrix_sessid()) {
     // Work with permissions
     if (CLearnAccess::IsLoggedUserCanAccessModuleSettings() && isset($_POST['BASE_RIGHTS'])) {
         // Process permissions
         $arAccessSymbols = array();
         $arTaskIds = array();
         foreach ($_POST['BASE_RIGHTS'] as $key => $arData) {
-            if (isset($arData['GROUP_CODE']))
+            if (isset($arData['GROUP_CODE'])) {
                 $arAccessSymbols[] = $arData['GROUP_CODE'];
-            elseif (isset($arData['TASK_ID']))
+            } elseif (isset($arData['TASK_ID'])) {
                 $arTaskIds[] = $arData['TASK_ID'];
+            }
         }
-        if (count($arAccessSymbols) !== count($arTaskIds))
+        if (count($arAccessSymbols) !== count($arTaskIds)) {
             throw new LearnException('', LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $arPermPairs = array_combine($arAccessSymbols, $arTaskIds);
 
@@ -58,8 +64,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
     for ($i = 0; $i < count($arAllOptions); $i++) {
         $name = $arAllOptions[$i][0];
         $val = $$name;
-        if ($arAllOptions[$i][3][0] == "checkbox" && $val != "Y")
+        if ($arAllOptions[$i][3][0] == "checkbox" && $val != "Y") {
             $val = "N";
+        }
         COption::SetOptionString("learning", $name, $val, $arAllOptions[$i][1]);
     }
 
@@ -76,17 +83,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
     "L" - Lesson,
     */
     $affectedRows = 0;
-    $dbSites = CSite::GetList(($b = ""), ($o = ""), array("ACTIVE" => "Y"));
+    $dbSites = CSite::GetList('', '', array("ACTIVE" => "Y"));
     while ($arSite = $dbSites->Fetch()) {
         //BXClearCache(True, "/".$arSite["LID"]."/blog/");
 
         foreach ($arType as $type) {
-
-            if (IntVal($arPaths[$arSite["LID"]][$type]) > 0) {
-                if (strlen(${"SITE_PATH_" . $arSite["LID"] . "_" . $type}) > 0) {
-                    if ($arPaths[$arSite["LID"]][$type]["PATH"] != ${"SITE_PATH_" . $arSite["LID"] . "_" . $type})
+            if (intval($arPaths[$arSite["LID"]][$type]) > 0) {
+                if (${"SITE_PATH_" . $arSite["LID"] . "_" . $type} <> '') {
+                    if ($arPaths[$arSite["LID"]][$type]["PATH"] != ${"SITE_PATH_" . $arSite["LID"] . "_" . $type}) {
                         $affectedRows++;
-                    CSitePath::Update($arPaths[$arSite["LID"]][$type]["ID"], array("PATH" => ${"SITE_PATH_" . $arSite["LID"] . "_" . $type}, "TYPE" => $type));
+                    }
+                    CSitePath::Update(
+                        $arPaths[$arSite["LID"]][$type]["ID"],
+                        array("PATH" => ${"SITE_PATH_" . $arSite["LID"] . "_" . $type}, "TYPE" => $type)
+                    );
                 } else {
                     CSitePath::Delete($arPaths[$arSite["LID"]][$type]["ID"]);
                     $affectedRows++;
@@ -103,16 +113,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
             }
         }
         unset($arPaths[$arSite["LID"]]);
-
     }
 
     if ($affectedRows && IsModuleInstalled('search') && CModule::IncludeModule("search")) {
         CSearch::ReindexModule("learning");
     }
 
-    foreach ($arPaths as $key)
-        foreach ($key as $val)
+    foreach ($arPaths as $key) {
+        foreach ($key as $val) {
             CSitePath::Delete($val);
+        }
+    }
 }
 ?>
 
@@ -120,8 +131,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
           action="<? echo $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx($mid) ?>&amp;lang=<? echo LANG ?>">
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("LEARNING_TAB_SET"), "ICON" => "learning_settings", "TITLE" => GetMessage("LEARNING_TAB_SET_ALT")),
-            array("DIV" => "edit2", "TAB" => GetMessage("LEARNING_TAB_RIGHTS"), "ICON" => "learning_settings", "TITLE" => GetMessage("LEARNING_TAB_RIGHTS_ALT")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("LEARNING_TAB_SET"),
+                "ICON" => "learning_settings",
+                "TITLE" => GetMessage("LEARNING_TAB_SET_ALT")
+            ),
+            array(
+                "DIV" => "edit2",
+                "TAB" => GetMessage("LEARNING_TAB_RIGHTS"),
+                "ICON" => "learning_settings",
+                "TITLE" => GetMessage("LEARNING_TAB_RIGHTS_ALT")
+            ),
         );
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
         $tabControl->Begin();
@@ -134,18 +155,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
             $type = $Option[3];
             ?>
             <tr>
-                <td width="40%"><? echo $Option[1] ?><?php if ($type[0] != "checkbox") echo ':'; ?></td>
+                <td width="40%"><? echo $Option[1] ?><?php if ($type[0] != "checkbox") {
+                        echo ':';
+                    } ?></td>
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                               value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>"
                                name="<? echo htmlspecialcharsbx($Option[0]) ?>">
                     <? elseif ($type[0] == "textarea"):?>
                         <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                                $val
+                            ) ?></textarea>
                     <?endif ?>
 
                 </td>
@@ -158,15 +185,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
         <?
         $arPaths = array();
         $dbPaths = CSitePath::GetList();
-        while ($arPath = $dbPaths->Fetch())
+        while ($arPath = $dbPaths->Fetch()) {
             $arPaths[$arPath["SITE_ID"]][$arPath["TYPE"]] = $arPath["PATH"];
+        }
 
-        $dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+        $dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
         while ($arSite = $dbSites->Fetch()) {
             ?>
             <tr>
-                <td valign="top" colspan="2"
-                    align="center"><?= str_replace("#SITE#", $arSite["LID"], GetMessage("LEARNING_SITE_PATH_SITE")) ?>:
+                <td valign="top" colspan="2" align="center"><?= str_replace(
+                        "#SITE#",
+                        $arSite["LID"],
+                        GetMessage("LEARNING_SITE_PATH_SITE")
+                    ) ?>:
                 </td>
             </tr>
             <tr>
@@ -222,7 +253,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && $LEARNING_RIG
         <script language="JavaScript">
             function RestoreDefaults() {
                 if (confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                    window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid)?>&<?=bitrix_sessid_get()?>";
+                    window.location = "<?echo $APPLICATION->GetCurPage(
+                    )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid)?>&<?=bitrix_sessid_get()?>";
             }
         </script>
         <div align="left">

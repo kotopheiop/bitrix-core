@@ -18,13 +18,17 @@ if ($params['imageUrl']) {
     ) {
         LocalRedirect($params['pdfUrl']);
     } else {
-        $APPLICATION->IncludeComponent('bitrix:pdf.viewer', '', [
-            'PATH' => $params['pdfUrl'],
-            'IFRAME' => 'Y',
-            'WIDTH' => 1000,
-            'HEIGHT' => 1200,
-            'PRINT' => 'Y'
-        ]);
+        $APPLICATION->IncludeComponent(
+            'bitrix:pdf.viewer',
+            '',
+            [
+                'PATH' => $params['pdfUrl'],
+                'IFRAME' => 'Y',
+                'WIDTH' => 1000,
+                'HEIGHT' => 1200,
+                'PRINT' => 'Y'
+            ]
+        );
     }
 } else {
     \CJSCore::init(["loader", "documentpreview", "sidepanel"]);

@@ -142,11 +142,16 @@ class Basket extends Base
     {
         $result = [];
 
-        if (isset($fields['ORDER']['ID']))
+        if (isset($fields['ORDER']['ID'])) {
             $result['ORDER']['ID'] = (int)$fields['ORDER']['ID'];
+        }
 
-        if (isset($fields['ORDER']['BASKET']['ITEMS']))
-            $result['ORDER']['BASKET']['ITEMS'] = $this->internalizeFieldsCollectionWithExcludeFields($fields['ORDER']['BASKET']['ITEMS'], new \Bitrix\Sale\Rest\Entity\Basket());
+        if (isset($fields['ORDER']['BASKET']['ITEMS'])) {
+            $result['ORDER']['BASKET']['ITEMS'] = $this->internalizeFieldsCollectionWithExcludeFields(
+                $fields['ORDER']['BASKET']['ITEMS'],
+                new \Bitrix\Sale\Rest\Entity\Basket()
+            );
+        }
 
         return $result;
     }
@@ -157,8 +162,9 @@ class Basket extends Base
 
         $result = parent::externalizeFields($fields);
 
-        if (isset($fields['PROPERTIES']))
+        if (isset($fields['PROPERTIES'])) {
             $result['PROPERTIES'] = $basketProperties->externalizeListFields($fields['PROPERTIES']);
+        }
 
         return $result;
     }

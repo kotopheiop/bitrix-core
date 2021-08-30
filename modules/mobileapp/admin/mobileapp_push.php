@@ -68,7 +68,6 @@ for ($i = 0; $i < $fieldsCount; $i++) {
             "default" => true,
         );
     }
-
 }
 
 $data["ITEMS"] = $appTable->getList()->fetchAll();
@@ -93,7 +92,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("MOBILEAPP_REMOVE_APP"),
-                "ACTION" => "if(confirm('" . GetMessage('MOBILEAPP_REMOVE_APP_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+                "ACTION" => "if(confirm('" . GetMessage(
+                        'MOBILEAPP_REMOVE_APP_CONFIRM'
+                    ) . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
             )
         );
 

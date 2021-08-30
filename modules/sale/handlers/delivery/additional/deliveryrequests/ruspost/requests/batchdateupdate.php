@@ -30,8 +30,11 @@ class BatchDateUpdate extends Base
     {
         $result = new Requests\Result();
 
-        if (!empty($rawData['error-code']))
-            $result->addError(new Main\Error(Reference::getErrorDescription($rawData['error-code'], '/1.0/batch/{name}/checkin')));
+        if (!empty($rawData['error-code'])) {
+            $result->addError(
+                new Main\Error(Reference::getErrorDescription($rawData['error-code'], '/1.0/batch/{name}/checkin'))
+            );
+        }
 
         return $result;
     }
@@ -69,15 +72,17 @@ class BatchDateUpdate extends Base
             return $result;
         }
 
-        $res = Requests\RequestTable::getList(array(
-            'filter' => array(
-                '=ID' => $requestId
+        $res = Requests\RequestTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $requestId
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
+        if (!$row || $row['EXTERNAL_ID'] == '') {
             $result->addError(new Main\Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCDU_05')));
             return $result;
         }

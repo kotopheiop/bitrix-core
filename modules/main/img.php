@@ -13,8 +13,8 @@
 function iso2uni($isoline)
 {
     $uniline = "";
-    for ($i = 0, $n = strlen($isoline); $i < $n; $i++) {
-        $thischar = substr($isoline, $i, 1);
+    for ($i = 0, $n = mb_strlen($isoline); $i < $n; $i++) {
+        $thischar = mb_substr($isoline, $i, 1);
         $charcode = ord($thischar);
         $uniline .= ($charcode > 175) ? "&#" . (1040 + ($charcode - 176)) . ";" : $thischar;
     }
@@ -68,7 +68,7 @@ function ShowImageHeader($ImageHandle)
 function GetArrSaveDecColor($arr)
 {
     $arrSaveDecColor = array();
-    while (list($key, $scolor) = each($arr)) {
+    foreach ($arr as $key => $scolor) {
         $arrSaveDecColor[$key] = hexdec($scolor);
     }
     asort($arrSaveDecColor);
@@ -82,15 +82,14 @@ function GetNextRGB($base_color, $total)
     $tsc = count($arrSaveColor);
     if ($total > $tsc) {
         return GetBNextRGB($base_color, $total);
-    } elseif (strlen($base_color) <= 0) {
+    } elseif ($base_color == '') {
         $res = "1288A0";
     } else {
         $index = 0;
         $step = round($tsc / $total);
         $dec = hexdec($base_color);
         $arrSaveDecColor = GetArrSaveDecColor($arrSaveColor);
-        reset($arrSaveDecColor);
-        while (list($key, $sdcolor) = each($arrSaveDecColor)) {
+        foreach ($arrSaveDecColor as $key => $sdcolor) {
             if ($dec <= $sdcolor) {
                 $index = $key;
                 break;
@@ -134,7 +133,7 @@ function EchoGraphData($arrayX, $MinX, $MaxX, $arrayY, $MinY, $MaxY, $arrX, $arr
 {
     echo "<pre>";
     echo "--------------------------------------\n";
-    while (list($key, $value) = each($arrX)) {
+    foreach ($arrX as $key => $value) {
         echo date("d.m.Y", $value) . " = " . $arrY[$key] . "\n";
     }
     echo "--------------------------------------\n";
@@ -264,11 +263,13 @@ function GetArrayY($arrY, &$MinY, &$MaxY, $max_grid = 15, $first_null = "Y", $in
  ******************************************************************************/
 function ReColor($colorString)
 {
-    if (!is_string($colorString))
+    if (!is_string($colorString)) {
         return 0;
+    }
 
-    if (!preg_match('/^#{0,1}([0-9a-z]{2})([0-9a-z]{2})([0-9a-z]{2})$/i', $colorString, $match))
+    if (!preg_match('/^#{0,1}([0-9a-z]{2})([0-9a-z]{2})([0-9a-z]{2})$/i', $colorString, $match)) {
         return 0;
+    }
 
     return array(
         hexdec($match[1]),
@@ -277,9 +278,20 @@ function ReColor($colorString)
     );
 }
 
-function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgColor = "FFFFFF", $gColor = 'B1B1B1', $Color = "000000", $dD = 15, $FontWidth = 2, $arrTTF_FONT = false)
-{
-    global $xA, $yA, $xPixelLength, $yPixelLength, $APPLICATION;
+function DrawCoordinatGrid(
+    $arrayX,
+    $arrayY,
+    $width,
+    $height,
+    $ImageHandle,
+    $bgColor = "FFFFFF",
+    $gColor = 'B1B1B1',
+    $Color = "000000",
+    $dD = 15,
+    $FontWidth = 2,
+    $arrTTF_FONT = false
+) {
+    global $xA, $yA, $xPixelLength, $yPixelLength;
 
     /******************************************************************************
      * $k - array performance font size to pixel format
@@ -307,8 +319,13 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
 
     $max_len = 0;
 
-    $bUseTTFY = is_array($arrTTF_FONT["Y"]) && function_exists("ImageTTFText");
-    $bUseTTFX = is_array($arrTTF_FONT["X"]) && function_exists("ImageTTFText");
+    $bUseTTFY = false;
+    $bUseTTFX = false;
+
+    if (is_array($arrTTF_FONT) && function_exists("ImageTTFText")) {
+        $bUseTTFY = is_array($arrTTF_FONT["Y"] ?? null);
+        $bUseTTFX = is_array($arrTTF_FONT["X"] ?? null);
+    }
 
     $ttf_font_y = "";
     $ttf_size_y = $ttf_shift_y = $ttf_base_y = 0;
@@ -318,15 +335,18 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
         $ttf_size_y = $arrTTF_FONT["Y"]["FONT_SIZE"];
         $ttf_shift_y = $arrTTF_FONT["Y"]["FONT_SHIFT"];
         $ttf_base_y = 0;
-        if (isset($arrTTF_FONT["Y"]["FONT_BASE"])) $ttf_base_y = $arrTTF_FONT["Y"]["FONT_BASE"];
+        if (isset($arrTTF_FONT["Y"]["FONT_BASE"])) {
+            $ttf_base_y = $arrTTF_FONT["Y"]["FONT_BASE"];
+        }
         $dlataX = 0;
         foreach ($arrayY as $value) {
             $bbox = imagettfbbox($ttf_size_y, 0, $ttf_font_y, $value);
             $dlataX = max($dlataX, abs($bbox[2] - $bbox[0]) + 1);
         }
     } else {
-        foreach ($arrayY as $value)
-            $max_len = max($max_len, strlen($value));
+        foreach ($arrayY as $value) {
+            $max_len = max($max_len, mb_strlen($value));
+        }
         $dlataX = $max_len * ImageFontWidth($FontWidth);
     }
 
@@ -341,7 +361,7 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
 
     ImageFill($ImageHandle, 0, 0, $colorFFFFFF);
 
-    $bForBarDiagram = is_array($arrTTF_FONT) && ($arrTTF_FONT["type"] == "bar");
+    $bForBarDiagram = is_array($arrTTF_FONT) && (($arrTTF_FONT["type"] ?? '') == "bar");
     if ($bForBarDiagram) {
         $arResult["XBUCKETS"] = array();
     }
@@ -413,11 +433,12 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
         ImageSetStyle($ImageHandle, $style);
         ImageLine($ImageHandle, ceil($xP0), ceil($yP0), ceil($xP0), ceil($yP1), IMG_COLOR_STYLED);
 
-        if ($bForBarDiagram)
+        if ($bForBarDiagram) {
             $arResult["XBUCKETS"][$i] = array(ceil($xP0) + 1, ceil($xP0 + $dX) - 1);
+        }
 
         $captionX = $arrayX[$i];
-        $xCaption = $xP0 - strlen($captionX) * $k[$FontWidth] + ($dX * $bForBarDiagram / 2);
+        $xCaption = $xP0 - mb_strlen($captionX) * $k[$FontWidth] + ($dX * $bForBarDiagram / 2);
         $yCaption = $yP0;
 
         if ($bUseTTFX) {
@@ -425,9 +446,18 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
             $ttf_width_x = abs($bbox[2] - $bbox[0]) + 1;
             $xCaption = $xP0 - $ttf_width_x / 2 + ($dX * $bForBarDiagram / 2);
             $yCaption = $yP0 + $dD + $ttf_shift_x - $ttf_base_x;
-            $captionX = $APPLICATION->ConvertCharset($captionX, LANG_CHARSET, "UTF-8");
+            $captionX = \Bitrix\Main\Text\Encoding::convertEncoding($captionX, LANG_CHARSET, "UTF-8");
             ImageTTFText($ImageHandle, $ttf_size_x, 0, $xCaption, $yCaption, $color000000, $ttf_font_x, $captionX);
-        } else ImageString($ImageHandle, $FontWidth, $xCaption, $yCaption + ImageFontHeight($FontWidth) / 2, $captionX, $color000000);
+        } else {
+            ImageString(
+                $ImageHandle,
+                $FontWidth,
+                $xCaption,
+                $yCaption + ImageFontHeight($FontWidth) / 2,
+                $captionX,
+                $color000000
+            );
+        }
 
         $xP0 += $dX;
         $i++;
@@ -466,11 +496,29 @@ function DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle, $bgC
             $yCaption = $yM1 - $k[$FontWidth] * 3;
 
             if ($bUseTTFY) {
-                $captionY = $APPLICATION->ConvertCharset($captionY, LANG_CHARSET, "UTF-8");
+                $captionY = \Bitrix\Main\Text\Encoding::convertEncoding($captionY, LANG_CHARSET, "UTF-8");
                 $bbox = imagettfbbox($ttf_size_y, 0, $ttf_font_y, $captionY);
                 $yCaption = $yM1 + ($ttf_shift_y - $ttf_base_y) / 2;
-                ImageTTFText($ImageHandle, $ttf_size_y, 0, $xCaption - abs($bbox[2] - $bbox[0]) - 1, $yCaption, $color000000, $ttf_font_y, $captionY);
-            } else ImageString($ImageHandle, $FontWidth, $xCaption - strlen($captionY) * ImageFontWidth($FontWidth), $yCaption, $captionY, $color000000);
+                ImageTTFText(
+                    $ImageHandle,
+                    $ttf_size_y,
+                    0,
+                    $xCaption - abs($bbox[2] - $bbox[0]) - 1,
+                    $yCaption,
+                    $color000000,
+                    $ttf_font_y,
+                    $captionY
+                );
+            } else {
+                ImageString(
+                    $ImageHandle,
+                    $FontWidth,
+                    $xCaption - mb_strlen($captionY) * ImageFontWidth($FontWidth),
+                    $yCaption,
+                    $captionY,
+                    $color000000
+                );
+            }
         }
         $yM0 -= $dY;
         $yM1 -= $dY;
@@ -493,8 +541,9 @@ function Bar_Diagram($ImageHandle, $arData, $MinY, $MaxY, $gridInfo)
     $max_y = 0;
     foreach ($arData as $arRecs) {
         $y = max($arRecs["DATA"]);
-        if ($y > $max_y)
+        if ($y > $max_y) {
             $max_y = $y;
+        }
     }
     $scale = ($gridInfo["VIEWPORT"][1] - $gridInfo["VIEWPORT"][3]) / ($MaxY - $MinY);
 
@@ -514,12 +563,14 @@ function Bar_Diagram($ImageHandle, $arData, $MinY, $MaxY, $gridInfo)
                 $y1 = round($Y * $scale);
 
                 if ($y1 > 0) {
-                    imagefilledrectangle($ImageHandle,
+                    imagefilledrectangle(
+                        $ImageHandle,
                         $x1,
                         $gridInfo["VIEWPORT"][1] - $y1,
                         $x1 + $bar_width,
                         $gridInfo["VIEWPORT"][1] - 1,
-                        $color);
+                        $color
+                    );
                 }
             }
         }
@@ -527,8 +578,19 @@ function Bar_Diagram($ImageHandle, $arData, $MinY, $MaxY, $gridInfo)
     }
 }
 
-function Graf($arrayX, $arrayY, $ImageHandle, $MinX, $MaxX, $MinY, $MaxY, $Color = 'FF0000', $dashed = "N", $thikness = 2, $antialiase = true)
-{
+function Graf(
+    $arrayX,
+    $arrayY,
+    $ImageHandle,
+    $MinX,
+    $MaxX,
+    $MinY,
+    $MaxY,
+    $Color = 'FF0000',
+    $dashed = "N",
+    $thikness = 2,
+    $antialiase = true
+) {
     global $xA, $yA, $xPixelLength, $yPixelLength;
 
     if (sizeof($arrayX) != sizeof($arrayY)) {
@@ -587,7 +649,8 @@ function Graf($arrayX, $arrayY, $ImageHandle, $MinX, $MaxX, $MinY, $MaxY, $Color
             }
         } elseif ($dashed == "Y") {
             $style = array(
-                $color, $color,
+                $color,
+                $color,
                 IMG_COLOR_TRANSPARENT,
                 IMG_COLOR_TRANSPARENT,
                 IMG_COLOR_TRANSPARENT
@@ -690,10 +753,20 @@ function Circular_Diagram($ImageHandle, $arr, $background_color, $diameter, $cen
                     $degree2 -= 180;
                     $degree2 = $degree2 < 0 ? 360 + $degree2 : $degree2;
                     $color = $i == $h ? $sector["IMAGE_COLOR"] : $sector["IMAGE_DARK"];
-                    if ($difference == 360)
+                    if ($difference == 360) {
                         imageellipse($ImageHandle, $centerX, $centerY - $i, $diameterX, $diameterY, $color);
-                    else
-                        imagearc($ImageHandle, $centerX, $centerY - $i, $diameterX, $diameterY, $degree1, $degree2, $color);
+                    } else {
+                        imagearc(
+                            $ImageHandle,
+                            $centerX,
+                            $centerY - $i,
+                            $diameterX,
+                            $diameterY,
+                            $degree1,
+                            $degree2,
+                            $color
+                        );
+                    }
                 }
             }
             $i--;
@@ -706,10 +779,20 @@ function Circular_Diagram($ImageHandle, $arr, $background_color, $diameter, $cen
                 $degree2 -= 180;
                 $degree2 = $degree2 < 0 ? 360 + $degree2 : $degree2;
                 $color = $i == $h ? $sector["IMAGE_COLOR"] : $sector["IMAGE_DARK"];
-                if ($difference == 360)
+                if ($difference == 360) {
                     imagefilledellipse($ImageHandle, $centerX, $centerY - $i, $diameterX, $diameterY, $color);
-                else {
-                    imagefilledarc($ImageHandle, $centerX, $centerY - $i, $diameterX, $diameterY, $degree1, $degree2, $color, IMG_ARC_PIE);
+                } else {
+                    imagefilledarc(
+                        $ImageHandle,
+                        $centerX,
+                        $centerY - $i,
+                        $diameterX,
+                        $diameterY,
+                        $degree1,
+                        $degree2,
+                        $color,
+                        IMG_ARC_PIE
+                    );
                 }
             }
         }
@@ -720,7 +803,18 @@ function Circular_Diagram($ImageHandle, $arr, $background_color, $diameter, $cen
     }
     if ($antialiase) {
         /** @noinspection PhpUndefinedVariableInspection */
-        imagecopyresampled($ImageHandle_Saved, $ImageHandle, 0, 0, 0, 0, $diameter_saved, $diameter_saved, $diameter, $diameter);
+        imagecopyresampled(
+            $ImageHandle_Saved,
+            $ImageHandle,
+            0,
+            0,
+            0,
+            0,
+            $diameter_saved,
+            $diameter_saved,
+            $diameter,
+            $diameter
+        );
     }
 }
 
@@ -728,7 +822,9 @@ function Clean_Circular_Diagram($ImageHandle, $background_color, $diameter, $cen
 {
     $dec = ReColor($background_color);
     $color = ImageColorAllocate($ImageHandle, $dec[0], $dec[1], $dec[2]);
-    for ($i = 0; $i <= $diameter; $i++) imagearc($ImageHandle, $centerX, $centerY, $diameter + $i, $diameter + $i, 0, 360, $color);
+    for ($i = 0; $i <= $diameter; $i++) {
+        imagearc($ImageHandle, $centerX, $centerY, $diameter + $i, $diameter + $i, 0, 360, $color);
+    }
 }
 
 function _a_set_pixel($im, $x, $y, $filled, $fgcolors)
@@ -825,8 +921,9 @@ function _a_draw_line($im, $x1, $y1, $x2, $y2, $fgcolors, $dashed = "N", $dash =
             }
         }
         $yf = $yf + $grad;
-        if ($dashed == "Y")
+        if ($dashed == "Y") {
             ++$kk;
+        }
     }
 }
 
@@ -868,20 +965,36 @@ function _a_draw_ellipse($im, $x1, $y1, $x2, $y2, $fgcolors, $half = false)
         $iy = ceil($cy + $y);
         $f = $iy - $cy - $y;
         if (!$exch) {
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy - 1, $f, $fgcolors);
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
+            }
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy - 1, $f, $fgcolors);
+            }
         } else {
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy - 1, $ix, $f, $fgcolors);
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
+            }
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy - 1, $ix, $f, $fgcolors);
+            }
         }
         $iy = floor($cy - $y);
         $f = $cy - $y - $iy;
         if (!$exch) {
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy + 1, $f, $fgcolors);
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy + 1, $f, $fgcolors);
+            }
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
+            }
         } else {
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy + 1, $ix, $f, $fgcolors);
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy + 1, $ix, $f, $fgcolors);
+            }
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
+            }
         }
     }
     $t = $b * $b / sqrt($a * $a + $b * $b);
@@ -895,20 +1008,36 @@ function _a_draw_ellipse($im, $x1, $y1, $x2, $y2, $fgcolors, $half = false)
         $ix = floor($cx - $x);
         $f = $cx - $x - $ix;
         if (!$exch) {
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix + 1, $iy, $f, $fgcolors);
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
+            }
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix + 1, $iy, $f, $fgcolors);
+            }
         } else {
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix + 1, $f, $fgcolors);
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
+            }
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix + 1, $f, $fgcolors);
+            }
         }
         $ix = ceil($cx + $x);
         $f = $ix - $cx - $x;
         if (!$exch) {
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
-            if (!$half || $iy > $cx) _a_set_pixel($im, $ix - 1, $iy, $f, $fgcolors);
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix, $iy, 1 - $f, $fgcolors);
+            }
+            if (!$half || $iy > $cx) {
+                _a_set_pixel($im, $ix - 1, $iy, $f, $fgcolors);
+            }
         } else {
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
-            if (!$half || $ix > $cx) _a_set_pixel($im, $iy, $ix - 1, $f, $fgcolors);
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix, 1 - $f, $fgcolors);
+            }
+            if (!$half || $ix > $cx) {
+                _a_set_pixel($im, $iy, $ix - 1, $f, $fgcolors);
+            }
         }
     }
 }

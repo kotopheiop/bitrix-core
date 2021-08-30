@@ -30,12 +30,14 @@ $sourceContent = false;
 $sourceTitle = "";
 
 if ($logId > 0) {
-    $logRecord = LogTable::getList(array(
-        "filter" => array(
-            "ID" => $logId,
-            "TYPE" => \Bitrix\Main\Composite\Debug\Logger::TYPE_CACHE_REWRITING
+    $logRecord = LogTable::getList(
+        array(
+            "filter" => array(
+                "ID" => $logId,
+                "TYPE" => \Bitrix\Main\Composite\Debug\Logger::TYPE_CACHE_REWRITING
+            )
         )
-    ))->fetch();
+    )->fetch();
 
     if ($logRecord && count($logRecord["MESSAGE"])) {
         $sourceContent = $logRecord["MESSAGE"];
@@ -44,17 +46,19 @@ if ($logId > 0) {
     } else {
         $error = Loc::getMessage("MAIN_COMPOSITE_DIFF_LOG_NOT_FOUND");
     }
-} else if ($pageId > 0) {
-    $page = PageTable::getRowById($pageId);
-    if ($page) {
-        $cache = Page::createFromCacheKey($page["CACHE_KEY"]);
-        $sourceContent = $cache->read();
-        $sourceTitle = $page["TITLE"] . " (" . Loc::getMessage("MAIN_COMPOSITE_DIFF_CURRENT_VERSION") . ")";
-        if (!$sourceContent) {
-            $error = Loc::getMessage("MAIN_COMPOSITE_DIFF_CONTENT_NOT_FOUND");
+} else {
+    if ($pageId > 0) {
+        $page = PageTable::getRowById($pageId);
+        if ($page) {
+            $cache = Page::createFromCacheKey($page["CACHE_KEY"]);
+            $sourceContent = $cache->read();
+            $sourceTitle = $page["TITLE"] . " (" . Loc::getMessage("MAIN_COMPOSITE_DIFF_CURRENT_VERSION") . ")";
+            if (!$sourceContent) {
+                $error = Loc::getMessage("MAIN_COMPOSITE_DIFF_CONTENT_NOT_FOUND");
+            }
+        } else {
+            $error = Loc::getMessage("MAIN_COMPOSITE_DIFF_PAGE_NOT_FOUND");
         }
-    } else {
-        $error = Loc::getMessage("MAIN_COMPOSITE_DIFF_PAGE_NOT_FOUND");
     }
 }
 

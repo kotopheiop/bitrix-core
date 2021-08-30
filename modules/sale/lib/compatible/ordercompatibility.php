@@ -136,8 +136,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
         $orderFields = static::clearFields($orderFields);
         foreach (static::getFieldsFromOtherEntities() as $wrongField) {
-            if (array_key_exists($wrongField, $fields))
+            if (array_key_exists($wrongField, $fields)) {
                 unset($orderFields[$wrongField]);
+            }
         }
 
         $orderFields = static::convertDateFields($orderFields, static::getOrderDateFields());
@@ -159,8 +160,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
             unset($orderFields['TAX_VALUE']);
             $order->setField('DATE_UPDATE', new Main\Type\DateTime());
         } else {
-            if (!$adminSection)
+            if (!$adminSection) {
                 unset($orderFields['SUM_PAID']);
+            }
 
             $order->setField('DATE_INSERT', new Main\Type\DateTime());
             $order->setField('DATE_UPDATE', new Main\Type\DateTime());
@@ -205,7 +207,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         if (isset($fields['CANCELED'])) {
             if ($order->getId() > 0 && $order->getField('CANCELED') != $fields['CANCELED']) {
                 if (!(\CSaleOrder::CanUserCancelOrder($order->getId(), $USER->GetUserGroupArray(), $USER->GetID()))) {
-                    $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_CANCEL_NO_PERMISSION'), 'SALE_COMPATIBLE_ORDER_CANCEL_NO_PERMISSION'));
+                    $result->addError(
+                        new Sale\ResultError(
+                            Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_CANCEL_NO_PERMISSION'),
+                            'SALE_COMPATIBLE_ORDER_CANCEL_NO_PERMISSION'
+                        )
+                    );
                     return $result;
                 }
 
@@ -224,7 +231,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         return $result;
                     }
                 }
-
             }
         }
 
@@ -271,7 +277,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
             /** @var Sale\Order $orderClassName */
             $orderClassName = $registry->getOrderClassName();
             if (($res = $orderClassName::getList($filter)) && ($res->fetch())) {
-                $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ACCOUNT_NUMBER_ALREADY_EXISTS'), 'SALE_COMPATIBLE_ORDER_ACCOUNT_NUMBER_ALREADY_EXISTS'));
+                $result->addError(
+                    new Sale\ResultError(
+                        Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ACCOUNT_NUMBER_ALREADY_EXISTS'),
+                        'SALE_COMPATIBLE_ORDER_ACCOUNT_NUMBER_ALREADY_EXISTS'
+                    )
+                );
             }
         }
 
@@ -307,7 +318,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
         $shipment = null;
         $deliveryId = null;
-        $deliveryCode = isset($fields['DELIVERY_ID']) && strval(trim($fields['DELIVERY_ID'])) != '' ? trim($fields['DELIVERY_ID']) : null;
+        $deliveryCode = isset($fields['DELIVERY_ID']) && strval(trim($fields['DELIVERY_ID'])) != '' ? trim(
+            $fields['DELIVERY_ID']
+        ) : null;
 
         if (strval(trim($deliveryCode)) != '') {
             $deliveryId = \CSaleDelivery::getIdByCode($deliveryCode);
@@ -319,8 +332,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
             if (count($shipmentCollection) == 2 && $shipmentCollection->isExistsSystemShipment()) {
                 /** @var Sale\Shipment $shipment */
                 foreach ($shipmentCollection as $shipment) {
-                    if ($shipment->isSystem())
+                    if ($shipment->isSystem()) {
                         continue;
+                    }
 
                     if ($deliveryId > 0 && $deliveryId != $shipment->getDeliveryId()) {
                         /** @var Sale\Result $r */
@@ -328,18 +342,24 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         if ($r->isSuccess()) {
                             /** @var Services\Base $deliveryService */
                             $deliveryService = Sale\Delivery\Services\Manager::getObjectById($deliveryId);
-                            if ($deliveryService->isProfile())
+                            if ($deliveryService->isProfile()) {
                                 $fields['DELIVERY_NAME'] = $deliveryService->getNameWithParent();
-                            else
+                            } else {
                                 $fields['DELIVERY_NAME'] = $deliveryService->getName();
+                            }
                         } else {
                             $result->addErrors($r->getErrors());
                         }
-                    } elseif (intval($deliveryId) == 0 && array_key_exists('DELIVERY_ID', $fields) || (intval($deliveryId) !== intval($deliveryCode))) {
+                    } elseif (intval($deliveryId) == 0 && array_key_exists('DELIVERY_ID', $fields) || (intval(
+                                $deliveryId
+                            ) !== intval($deliveryCode))) {
                         unset($fields['DELIVERY_ID']);
                     }
 
-                    if (array_key_exists('PRICE_DELIVERY', $fields) && (float)$fields['PRICE_DELIVERY'] != $shipment->getField('PRICE_DELIVERY')) {
+                    if (array_key_exists(
+                            'PRICE_DELIVERY',
+                            $fields
+                        ) && (float)$fields['PRICE_DELIVERY'] != $shipment->getField('PRICE_DELIVERY')) {
                         $fields['BASE_PRICE_DELIVERY'] = (float)$fields['PRICE_DELIVERY'];
                         $fields['CUSTOM_PRICE_DELIVERY'] = "Y";
 
@@ -356,9 +376,16 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     }
 
                     /** @var Sale\Result $r */
-                    $r = $shipment->setFields(static::clearFields($shipmentFields, static::getShipmentAvailableFields()));
+                    $r = $shipment->setFields(
+                        static::clearFields($shipmentFields, static::getShipmentAvailableFields())
+                    );
                     if ($r->isSuccess()) {
-                        static::fillOrderFieldsFromEntity($order, $shipment, $fields, static::getShipmentFieldsToConvert());
+                        static::fillOrderFieldsFromEntity(
+                            $order,
+                            $shipment,
+                            $fields,
+                            static::getShipmentFieldsToConvert()
+                        );
                     } else {
                         $result->addErrors($r->getErrors());
                     }
@@ -370,7 +397,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     unset($fields['DELIVERY_ID']);
                 }
             }
-
         } else {
             if (intval($deliveryId) == 0) {
                 $deliveryId = \Bitrix\Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
@@ -410,7 +436,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 $result->addErrors($r->getErrors());
                 return $result;
             }
-
         }
 
         /** @var Sale\Result $r */
@@ -422,8 +447,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
         if ($basket) {
             /** @var Sale\Shipment $shipment */
             foreach ($shipmentCollection as $shipment) {
-                if ($shipment->isSystem())
+                if ($shipment->isSystem()) {
                     continue;
+                }
 
                 /** @var Sale\ShipmentItemCollection $shipmentItemCollection */
                 if (!$shipmentItemCollection = $shipment->getShipmentItemCollection()) {
@@ -432,13 +458,16 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                 if (!empty($fields['BARCODE_LIST']) && is_array($fields['BARCODE_LIST'])) {
                     /** @var Sale\Result $r */
-                    $r = static::fillShipmentItemCollectionFromRequest($shipmentItemCollection, $fields['BARCODE_LIST'], $basket);
+                    $r = static::fillShipmentItemCollectionFromRequest(
+                        $shipmentItemCollection,
+                        $fields['BARCODE_LIST'],
+                        $basket
+                    );
                     if (!$r->isSuccess()) {
                         $result->addErrors($r->getErrors());
                         return $result;
                     }
                 }
-
             }
         }
         return $result;
@@ -450,8 +479,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
      * @param array $requestFields
      * @param array $allowFields
      */
-    private static function fillOrderFieldsFromEntity(Sale\Order $order, Sale\Internals\CollectableEntity $entity, array $requestFields, array $allowFields)
-    {
+    private static function fillOrderFieldsFromEntity(
+        Sale\Order $order,
+        Sale\Internals\CollectableEntity $entity,
+        array $requestFields,
+        array $allowFields
+    ) {
         $dateFields = static::getEntityDateFields($entity);
         foreach ($allowFields as $checkField) {
             $checkOrderField = $order->getField($checkField);
@@ -466,7 +499,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
             if (!empty($requestFields[$checkField]) && $checkOrderField != trim($requestFields[$checkField])) {
                 $setValue = $entity->getField($checkField);
                 if ($isDate) {
-                    $setValue = static::convertDateField($checkField, $requestFields[$checkField], static::getEntityDateFields($entity));
+                    $setValue = static::convertDateField(
+                        $checkField,
+                        $requestFields[$checkField],
+                        static::getEntityDateFields($entity)
+                    );
                 }
 
                 if (in_array($checkField, static::getAvailableFields())) {
@@ -483,19 +520,21 @@ class OrderCompatibility extends Internals\EntityCompatibility
      * @return null|Sale\Shipment
      * @internal
      */
-    public static function createShipmentFromRequest(Sale\ShipmentCollection $shipmentCollection, $deliveryId, array $requestFields)
-    {
-
+    public static function createShipmentFromRequest(
+        Sale\ShipmentCollection $shipmentCollection,
+        $deliveryId,
+        array $requestFields
+    ) {
         $shipment = null;
 
         if (intval($deliveryId) > 0 && $service = Sale\Delivery\Services\Manager::getObjectById($deliveryId)) {
-
             $shipment = $shipmentCollection->createItem($service);
 
-            if ($service->isProfile())
+            if ($service->isProfile()) {
                 $serviceName = $service->getNameWithParent();
-            else
+            } else {
                 $serviceName = $service->getName();
+            }
             $shipment->setField('DELIVERY_NAME', $serviceName);
 
 
@@ -512,9 +551,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                 $shipment->setFieldNoDemand('PRICE_DELIVERY', $priceDelivery);
 
-                if (isset($requestFields['PRICE_DELIVERY']) && $requestFields['PRICE_DELIVERY'] < $requestFields['DELIVERY_PRICE'])
+                if (isset($requestFields['PRICE_DELIVERY']) && $requestFields['PRICE_DELIVERY'] < $requestFields['DELIVERY_PRICE']) {
                     $shipment->setFieldNoDemand('PRICE_DELIVERY', $requestFields['PRICE_DELIVERY']);
-            } elseif (array_key_exists("PRICE_DELIVERY", $requestFields) && floatval($requestFields['PRICE_DELIVERY']) >= 0) {
+                }
+            } elseif (array_key_exists("PRICE_DELIVERY", $requestFields) && floatval(
+                    $requestFields['PRICE_DELIVERY']
+                ) >= 0) {
                 $shipment->setFieldNoDemand('PRICE_DELIVERY', floatval($requestFields['PRICE_DELIVERY']));
                 $shipment->setFieldNoDemand('BASE_PRICE_DELIVERY', floatval($requestFields['PRICE_DELIVERY']));
                 $shipment->setFieldNoDemand('CURRENCY', $requestFields['CURRENCY']);
@@ -546,8 +588,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
         if ($countShipments <= 2 && $shipmentCollection->isExistsSystemShipment()) {
             /** @var Sale\Shipment $shipment */
             foreach ($shipmentCollection as $shipment) {
-                if ($shipment->isSystem())
+                if ($shipment->isSystem()) {
                     continue;
+                }
 
                 $baseShipment = $shipment;
             }
@@ -641,7 +684,10 @@ class OrderCompatibility extends Internals\EntityCompatibility
             $isPayFromUserBudget = $fields['ONLY_FULL_PAY_FROM_ACCOUNT'];
         }
 
-        if ($isPayFromUserBudget === null && array_key_exists('PAY_CURRENT_ACCOUNT', $fields) && $fields['PAY_CURRENT_ACCOUNT'] !== null) {
+        if ($isPayFromUserBudget === null && array_key_exists(
+                'PAY_CURRENT_ACCOUNT',
+                $fields
+            ) && $fields['PAY_CURRENT_ACCOUNT'] !== null) {
             $isPayFromUserBudget = ($fields['PAY_CURRENT_ACCOUNT'] != "Y");
         }
 
@@ -665,14 +711,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
         if ((($countPayments == 0 && $order->getId() == 0)
             || ($countPayments == 2 && $paymentCollection->isExistsInnerPayment())
             || ($countPayments == 1 && !$paymentCollection->isExistsInnerPayment()))) {
-
             $needSum = $order->getPrice() - $order->getSumPaid();
 
             if ($countPayments <= 1) {
-
                 if ($order->getId() == 0) {
-                    if (!isset($fields["PAY_SYSTEM_ID"]))
+                    if (!isset($fields["PAY_SYSTEM_ID"])) {
                         $fields["PAY_SYSTEM_ID"] = static::getDefaultPaySystemId($order->getPersonTypeId());
+                    }
 
 
                     /** @var Sale\PaySystem\Service $service */
@@ -690,8 +735,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                     /** @var Sale\Payment $payment */
                     foreach ($paymentCollection as $payment) {
-                        if ($payment->isInner())
+                        if ($payment->isInner()) {
                             continue;
+                        }
 
                         $paymentOuter = $payment;
                     }
@@ -707,10 +753,7 @@ class OrderCompatibility extends Internals\EntityCompatibility
                             $order->setFieldNoDemand('PAY_SYSTEM_ID', intval($fields["PAY_SYSTEM_ID"]));
                         }
                     }
-
                 }
-
-
             }
 
             if (isset($fields['PAYED'])) {
@@ -724,8 +767,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
                             $paidFlag = 'Y';
                         }
 
-                        if ($payment->isInner())
+                        if ($payment->isInner()) {
                             continue;
+                        }
 
                         $paymentOuter = $payment;
                     }
@@ -785,8 +829,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                                 $payment->setField('SUM', $order->getPrice());
                             }
                         }
-
-
                     }
 
                     unset($fields['PAYED']);
@@ -827,10 +869,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     }
 
                     if ($payment === null) {
-                        if ($paymentOuter !== null)
+                        if ($paymentOuter !== null) {
                             $payment = $paymentOuter;
-                        else
+                        } else {
                             $payment = $paymentInner;
+                        }
                     }
 
                     if ($payment === null) {
@@ -840,7 +883,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     $paymentFields = static::convertDateFields($fields, static::getPaymentDateFields());
 
 
-                    if (!empty($paymentFields['PAY_SYSTEM_ID']) && $paymentFields['PAY_SYSTEM_ID'] != $payment->getPaymentSystemId()) {
+                    if (!empty($paymentFields['PAY_SYSTEM_ID']) && $paymentFields['PAY_SYSTEM_ID'] != $payment->getPaymentSystemId(
+                        )) {
                         if ($payment->isInner()) {
                             unset($paymentFields['PAY_SYSTEM_ID']);
                         } else {
@@ -860,8 +904,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     /** @var Sale\Result $r */
                     $r = $payment->setFields($paymentFields);
                     if ($r->isSuccess()) {
-
-                        static::fillOrderFieldsFromEntity($order, $payment, $fields, static::getPaymentFieldsToConvert());
+                        static::fillOrderFieldsFromEntity(
+                            $order,
+                            $payment,
+                            $fields,
+                            static::getPaymentFieldsToConvert()
+                        );
                     } else {
                         $result->addErrors($r->getErrors());
                     }
@@ -878,8 +926,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
             /** @var Sale\Payment $payment */
             foreach ($paymentCollection as $payment) {
                 $calcSum += $payment->getSum();
-                if ($payment->isInner())
+                if ($payment->isInner()) {
                     continue;
+                }
 
                 $paymentOuter = $payment;
             }
@@ -890,15 +939,27 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 }
             }
 
-            if (!$paymentOuter)
+            if (!$paymentOuter) {
                 return $result;
+            }
 
             $fieldsFromOrder = array(
-                'PS_STATUS', 'PS_STATUS_CODE', 'PS_STATUS_DESCRIPTION',
-                'PS_STATUS_MESSAGE', 'PS_SUM', 'PS_CURRENCY', 'PS_RESPONSE_DATE',
-                'PAY_VOUCHER_NUM', 'PAY_VOUCHER_DATE', 'DATE_PAY_BEFORE',
-                'DATE_BILL', 'PAY_SYSTEM_NAME', 'PAY_SYSTEM_ID',
-                'DATE_PAYED', 'EMP_PAYED_ID', 'CURRENCY'
+                'PS_STATUS',
+                'PS_STATUS_CODE',
+                'PS_STATUS_DESCRIPTION',
+                'PS_STATUS_MESSAGE',
+                'PS_SUM',
+                'PS_CURRENCY',
+                'PS_RESPONSE_DATE',
+                'PAY_VOUCHER_NUM',
+                'PAY_VOUCHER_DATE',
+                'DATE_PAY_BEFORE',
+                'DATE_BILL',
+                'PAY_SYSTEM_NAME',
+                'PAY_SYSTEM_ID',
+                'DATE_PAYED',
+                'EMP_PAYED_ID',
+                'CURRENCY'
             );
 
             foreach ($fieldsFromOrder as $fieldName) {
@@ -907,18 +968,21 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         case 'DATE_BILL':
                         case 'DATE_PAY_BEFORE':
                         case 'PS_RESPONSE_DATE':
-                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '')
+                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '') {
                                 continue 2;
+                            }
                             $value = new Main\Type\DateTime($fields[$fieldName]);
                             break;
                         case 'PAY_VOUCHER_DATE':
-                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '')
+                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '') {
                                 continue 2;
+                            }
                             $value = new Main\Type\Date($fields[$fieldName]);
                             break;
                         case 'DATE_PAYED':
-                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '')
+                            if (!isset($fields[$fieldName]) || strval($fields[$fieldName]) == '') {
                                 continue 2;
+                            }
                             $fieldName = 'DATE_PAID';
                             $value = new Main\Type\DateTime($fields['DATE_PAYED']);
                             break;
@@ -935,12 +999,14 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         $order->setFieldNoDemand('PAY_SYSTEM_ID', $value);
 
                         /** @var Sale\PaySystem\Service $paysystem */
-                        if ($paysystem = Sale\PaySystem\Manager::getObjectById($value))
+                        if ($paysystem = Sale\PaySystem\Manager::getObjectById($value)) {
                             $paymentOuter->setFieldNoDemand('PAY_SYSTEM_NAME', $paysystem->getField('NAME'));
+                        }
                     }
 
-                    if ($fieldName == "DATE_PAID")
+                    if ($fieldName == "DATE_PAID") {
                         $fieldName = 'DATE_PAYED';
+                    }
 
                     if (in_array($fieldName, $this->getAvailableFields())) {
                         $order->setFieldNoDemand($fieldName, $value);
@@ -950,8 +1016,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 }
             }
 
-            if (isset($fields['PAY_SYSTEM_PRICE']))
+            if (isset($fields['PAY_SYSTEM_PRICE'])) {
                 $paymentOuter->setField('PRICE_COD', $fields['PAY_SYSTEM_PRICE']);
+            }
 
             if (!empty($rawFields)) {
                 $this->parseRawFields(static::ENTITY_PAYMENT, $rawFields);
@@ -976,10 +1043,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                     /** @var Sale\Payment $payment */
                     foreach ($paymentCollection as $payment) {
-                        if ($payment->isPaid() || $payment->isInner())
+                        if ($payment->isPaid() || $payment->isInner()) {
                             continue;
+                        }
 
-                        if (Sale\PriceMaths::roundPrecision($payment->getSum()) === Sale\PriceMaths::roundPrecision($deltaSumPaid)) {
+                        if (Sale\PriceMaths::roundPrecision($payment->getSum()) === Sale\PriceMaths::roundPrecision(
+                                $deltaSumPaid
+                            )) {
                             $paidPayment = true;
                             /** @var Sale\Result $r */
                             $r = $payment->setPaid("Y");
@@ -1037,12 +1107,14 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $personTypeId = intval($personTypeId);
 
         static $defaultPaySystemId = array();
-        if (isset($defaultPaySystemId[$personTypeId]))
+        if (isset($defaultPaySystemId[$personTypeId])) {
             return $defaultPaySystemId[$personTypeId];
+        }
 
         $defaultPaySystemId[$personTypeId] = intval(Main\Config\Option::get('sale', '1C_IMPORT_DEFAULT_PS', 0));
-        if (isset($defaultPaySystemId[$personTypeId]) && ($defaultPaySystemId[$personTypeId] > 0))
+        if (isset($defaultPaySystemId[$personTypeId]) && ($defaultPaySystemId[$personTypeId] > 0)) {
             return $defaultPaySystemId[$personTypeId];
+        }
 
         if ($personTypeId > 0) {
             $dbPaySystem = Sale\PaySystem\Manager::getList(
@@ -1057,11 +1129,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     'limit' => 1
                 )
             );
-            if ($paySystem = $dbPaySystem->fetch())
+            if ($paySystem = $dbPaySystem->fetch()) {
                 $defaultPaySystemId[$personTypeId] = intval($paySystem['ID']);
+            }
 
-            if (isset($defaultPaySystemId[$personTypeId]) && ($defaultPaySystemId[$personTypeId] > 0))
+            if (isset($defaultPaySystemId[$personTypeId]) && ($defaultPaySystemId[$personTypeId] > 0)) {
                 return $defaultPaySystemId[$personTypeId];
+            }
         }
 
         $dbPaySystem = Sale\PaySystem\Manager::getList(
@@ -1075,8 +1149,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 'limit' => 1
             )
         );
-        if ($paySystem = $dbPaySystem->fetch())
+        if ($paySystem = $dbPaySystem->fetch()) {
             $defaultPaySystemId[$personTypeId] = intval($paySystem['ID']);
+        }
 
         return $defaultPaySystemId[$personTypeId];
     }
@@ -1146,8 +1221,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
             /** @var Sale\Shipment $shipment */
             foreach ($shipmentCollection as $shipment) {
-                if ($shipment->isSystem())
+                if ($shipment->isSystem()) {
                     continue;
+                }
 
                 /** @var Sale\ShipmentItemCollection $shipmentItemCollection */
                 if (!$shipmentItemCollection = $shipment->getShipmentItemCollection()) {
@@ -1190,13 +1266,15 @@ class OrderCompatibility extends Internals\EntityCompatibility
      * @internal
      *
      */
-    public static function fillShipmentItemCollectionFromRequest(Sale\ShipmentItemCollection $shipmentItemCollection, array $storeData, Sale\Basket $basket = null)
-    {
+    public static function fillShipmentItemCollectionFromRequest(
+        Sale\ShipmentItemCollection $shipmentItemCollection,
+        array $storeData,
+        Sale\Basket $basket = null
+    ) {
         $result = new Sale\Result();
 
 
         if ($basket === null) {
-
             /** @var Sale\Shipment $shipment */
             if (!$shipment = $shipmentItemCollection->getShipment()) {
                 throw new Main\ObjectNotFoundException('Entity "Shipment" not found');
@@ -1246,11 +1324,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
             foreach ($storeData as $basketId => $barcodeDataList) {
                 if ((intval($basketId) != $basketId)
-                    || ($basketItem->getId() != $basketId))
+                    || ($basketItem->getId() != $basketId)) {
                     continue;
+                }
 
                 foreach ($barcodeDataList as $barcodeData) {
-
                     /** @var Sale\BasketItem $basketItem */
                     if (!$basketItem = $basket->getItemById($basketId)) {
                         throw new Main\ObjectNotFoundException('Entity "BasketItem" not found');
@@ -1287,7 +1365,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         );
 
                         if (!empty($barcodeList[$basketId]) && !empty($barcodeList[$basketId][$barcodeData['STORE_ID']])) {
-
                             foreach ($barcodeList[$basketId][$barcodeData['STORE_ID']] as $existBarcodeData) {
                                 if ($existBarcodeData['BARCODE'] == $barcodeData['BARCODE'] && !empty($existBarcodeData['ID'])) {
                                     if ($shipmentItemStoreCollection->getItemById($existBarcodeData['ID'])) {
@@ -1309,7 +1386,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         );
 
                         /** @var Sale\ShipmentItemStore $shipmentItemStore */
-                        $shipmentItemStore = $shipmentItemStoreCollection->getItemByBarcode($saveBarcodeData['BARCODE']);
+                        $shipmentItemStore = $shipmentItemStoreCollection->getItemByBarcode(
+                            $saveBarcodeData['BARCODE']
+                        );
 
                         if (!$shipmentItemStore) {
                             $barcodeFields['STORE_ID'] = intval($barcodeData['STORE_ID']);
@@ -1353,8 +1432,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
             /** @var Sale\Shipment $shipment */
             foreach ($shipmentCollection as $shipment) {
-                if ($shipment->isSystem())
+                if ($shipment->isSystem()) {
                     continue;
+                }
 
                 /** @var Sale\Result $r */
                 $r = $shipment->setField('ALLOW_DELIVERY', $value === true ? 'Y' : 'N');
@@ -1399,7 +1479,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $id = (int)$id;
 
         if ($id <= 0) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -1506,7 +1591,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 }
 
                 if (intval($fUserId) <= 0) {
-                    $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_FUSERID_NOT_FOUND'), "SALE_COMPATIBLE_ORDER_FUSERID_NOT_FOUND"));
+                    $result->addError(
+                        new Sale\ResultError(
+                            Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_FUSERID_NOT_FOUND'),
+                            "SALE_COMPATIBLE_ORDER_FUSERID_NOT_FOUND"
+                        )
+                    );
                     return $result;
                 }
 
@@ -1555,7 +1645,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 if ($orderCompatibility->isExistPrice() && $oldPrice == $order->getPrice()) {
                     $order->setFieldNoDemand('PRICE', $orderCompatibility->externalPrice);
                 }
-
             }
 
             /** @var Sale\Result $r */
@@ -1598,7 +1687,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 $result->addErrors($r->getErrors());
                 return $result;
             }
-
         } catch (Sale\UserMessageException $e) {
             $result->addError(new Sale\ResultError($e->getMessage(), $e->getCode()));
             return $result;
@@ -1609,11 +1697,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Result $r */
         $r = $order->save();
         if ($r->isSuccess()) {
-            if ($orderData = $r->getData())
+            if ($orderData = $r->getData()) {
                 $result->setData($orderData);
+            }
 
-            if ($orderId = $r->getId())
+            if ($orderId = $r->getId()) {
                 $result->setId($orderId);
+            }
 
             /** @var Sale\Result $r */
             $r = $orderCompatibility->saveRawFields($order, static::ENTITY_ORDER);
@@ -1641,9 +1731,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 }
             }
 
-            $result->setData(array(
-                'OLD_FIELDS' => $oldFields
-            ));
+            $result->setData(
+                array(
+                    'OLD_FIELDS' => $oldFields
+                )
+            );
         }
 
         return $result;
@@ -1665,7 +1757,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Order $orderClassName */
         $orderClassName = $registry->getOrderClassName();
         if (!$order = $orderClassName::load($orderId)) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -1676,8 +1773,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
         /** @var Sale\Shipment $shipment */
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             if ($value == "Y") {
                 /** @var Sale\Result $r */
@@ -1741,7 +1839,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         }
 
         if (intval($orderId) <= 0) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -1749,7 +1852,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Order $orderClassName */
         $orderClassName = $registry->getOrderClassName();
         if (!$order = $orderClassName::load($orderId)) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -1780,7 +1888,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     $paidFormUserBudget = $payBudgetData['PAID_FROM_BUDGET'];
                 }
             }
-
         }
 
 
@@ -1795,11 +1902,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                     $values = static::convertDateFields($values, static::getPaymentDateFields());
                     $fields = static::clearFields($values, $payment->getAvailableFields());
-
                 }
 
-                if ($values['PAID'] == "N" && !$payment->isPaid())
+                if ($values['PAID'] == "N" && !$payment->isPaid()) {
                     continue;
+                }
 
                 if ($withdraw && $values['PAID'] == "N" && $payment->isInner()) {
                     /** @var Sale\Result $r */
@@ -1816,12 +1923,16 @@ class OrderCompatibility extends Internals\EntityCompatibility
                     }
 
                     if ($payment->isInner() && !$oldPaid && $payment->isPaid()) {
-                        Sale\Internals\UserBudgetPool::addPoolItem($order, ($payment->getSum() * -1), Sale\Internals\UserBudgetPool::BUDGET_TYPE_ORDER_UNPAY, $payment);
+                        Sale\Internals\UserBudgetPool::addPoolItem(
+                            $order,
+                            ($payment->getSum() * -1),
+                            Sale\Internals\UserBudgetPool::BUDGET_TYPE_ORDER_UNPAY,
+                            $payment
+                        );
                         if (!$r->isSuccess()) {
                             $result->addErrors($r->getErrors());
                         }
                     }
-
                 }
 
                 if (isset($fields['PAID'])) {
@@ -1873,13 +1984,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
             throw new Main\ObjectNotFoundException('Entity "PaymentCollection" not found');
         }
 
-        if (count($paymentCollection) > 2)
+        if (count($paymentCollection) > 2) {
             return $result;
+        }
 
         $needSum = $order->getPrice() - $order->getSumPaid();
 
         if ($needSum > 0) {
-
             /** @var Sale\Payment $payment */
             foreach ($paymentCollection as $payment) {
                 if (!$payment->isInner()) {
@@ -1928,13 +2039,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 }
 
                 $payment = $paymentInner;
-
             } else {
                 $payment = $paymentOuter;
             }
 
             if ($pay) {
-
                 if ($payment === null) {
                     $paySystemId = static::getDefaultPaySystemId($order->getPersonTypeId());
 
@@ -1959,10 +2068,15 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 $service = Sale\PaySystem\Manager::getObjectById($operationPayment->getPaymentSystemId());
                 if ($service) {
                     $r = $service->creditNoDemand($operationPayment);
-                    if (!$r->isSuccess())
+                    if (!$r->isSuccess()) {
                         $result->addErrors($r->getErrors());
+                    }
                 } else {
-                    $result->addError(new Main\Entity\EntityError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_PAYSYSTEM_NOT_FOUND')));
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Main\Localization\Loc::getMessage('SALE_COMPATIBLE_PAYSYSTEM_NOT_FOUND')
+                        )
+                    );
                     return $result;
                 }
             }
@@ -1989,14 +2103,18 @@ class OrderCompatibility extends Internals\EntityCompatibility
                         $service = Sale\PaySystem\Manager::getObjectById($operationPayment->getPaymentSystemId());
                         if ($service) {
                             $r = $service->creditNoDemand($operationPayment);
-                            if (!$r->isSuccess())
+                            if (!$r->isSuccess()) {
                                 $result->addErrors($r->getErrors());
+                            }
                         } else {
-                            $result->addError(new Main\Entity\EntityError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_PAYSYSTEM_NOT_FOUND')));
+                            $result->addError(
+                                new Main\Entity\EntityError(
+                                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_PAYSYSTEM_NOT_FOUND')
+                                )
+                            );
                             return $result;
                         }
                     }
-
                 } else {
                     $result->addErrors($r->getErrors());
                 }
@@ -2005,7 +2123,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
             if (!$r->isSuccess()) {
                 $result->addErrors($r->getErrors());
             }
-
         }
 
         $result->setData(array('PAID_FROM_BUDGET' => $paidFormUserBudget));
@@ -2027,7 +2144,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $result = new Sale\Result();
 
         if (intval($orderId) <= 0) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -2035,7 +2157,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Order $orderClassName */
         $orderClassName = $registry->getOrderClassName();
         if (!$order = $orderClassName::load($orderId)) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -2062,21 +2189,25 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $paymentCollection = $order->getPaymentCollection();
         /** @var Sale\Payment $payment */
         foreach ($paymentCollection as $payment) {
-            if ($payment->isPaid())
+            if ($payment->isPaid()) {
                 $payment->setReturn('Y');
+            }
         }
 
         $shipmentCollection = $order->getShipmentCollection();
         /** @var Sale\Shipment $shipment */
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
-            if ($shipment->isShipped())
+            if ($shipment->isShipped()) {
                 $shipment->setField('DEDUCTED', 'N');
+            }
 
-            if ($shipment->isAllowDelivery())
+            if ($shipment->isAllowDelivery()) {
                 $shipment->disallowDelivery();
+            }
         }
 
         $r = $order->setField('CANCELED', 'Y');
@@ -2105,7 +2236,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $result = new Sale\Result();
 
         if (intval($id) <= 0) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'),
+                    'SALE_COMPATIBLE_ORDER_ID_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
@@ -2113,24 +2249,33 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Order $orderClassName */
         $orderClassName = $registry->getOrderClassName();
         if (!$order = $orderClassName::load($id)) {
-            $result->addError(new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_ORDER_ENTITY_NOT_FOUND'), 'SALE_ORDER_ENTITY_NOT_FOUND'));
+            $result->addError(
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_ORDER_ENTITY_NOT_FOUND'),
+                    'SALE_ORDER_ENTITY_NOT_FOUND'
+                )
+            );
             return $result;
         }
 
-        /** @var Sale\PaymentCollection $paymentCollection */
-        if ($paymentCollection = $order->getPaymentCollection()) {
-            /** @var Sale\Payment $payment */
-            foreach ($paymentCollection as $payment) {
-                if ($payment->isPaid()) {
-                    $payment->setPaid('N');
-                }
+        /** @var Sale\Payment $payment */
+        foreach ($order->getPaymentCollection() as $payment) {
+            if ($payment->isPaid()) {
+                $payment->setPaid('N');
             }
-            /** @var Sale\Result $r */
-            $r = $order->save();
-            if (!$r->isSuccess()) {
-                $result->addErrors($r->getErrors());
-                return $result;
+        }
+
+        /** @var Sale\Shipment $shipment */
+        foreach ($order->getShipmentCollection() as $shipment) {
+            if ($shipment->isShipped()) {
+                $shipment->setField('DEDUCTED', 'N');
             }
+        }
+
+        $r = $order->save();
+        if (!$r->isSuccess()) {
+            $result->addErrors($r->getErrors());
+            return $result;
         }
 
         try {
@@ -2156,11 +2301,13 @@ class OrderCompatibility extends Internals\EntityCompatibility
     public static function canPayWithUserBudget($needSum, $userId, $currency, $fullPay = true)
     {
         $budget = Sale\Internals\UserBudgetPool::getUserBudget($userId, $currency);
-        if ($fullPay === false && $budget > 0)
+        if ($fullPay === false && $budget > 0) {
             return true;
+        }
 
-        if ($fullPay === true && $budget >= $needSum)
+        if ($fullPay === true && $budget >= $needSum) {
             return true;
+        }
 
         return false;
     }
@@ -2174,7 +2321,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
      */
     public static function createShipmentFromShipmentSystem(Sale\ShipmentCollection $shipmentCollection)
     {
-
         $shipment = null;
 
         /** @var Sale\Shipment $systemShipment */
@@ -2208,8 +2354,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
     {
         /** @var Sale\Shipment $shipment */
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             if ($shipment->getDeliveryId() == $deliveryId) {
                 return $shipment;
@@ -2238,10 +2385,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
                     $valueItem->setField('VALUE', $setValue);
                 }
-
             }
         }
-
     }
 
     /**
@@ -2318,7 +2463,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
 //			'COMPLETE_ORDERS' => 'PROPERTY.ORDER_PROPS_ID',
 
         );
-        return array_merge($fields,
+        return array_merge(
+            $fields,
             static::getAliasPaymentFields(),
             static::getAliasShipmentFields(),
             static::getAliasBasketFields()
@@ -2399,56 +2545,58 @@ class OrderCompatibility extends Internals\EntityCompatibility
     {
         $fields = array_keys(static::getEntity()->getScalarFields());
 
-        return array_merge($fields, array(
-            'DATE_INSERT_FORMAT',
-            'DATE_UPDATE_SHORT',
-            'DATE_STATUS_SHORT',
-            'DATE_CANCELED_SHORT',
-            'BY_RECOMMENDATION',
+        return array_merge(
+            $fields,
+            array(
+                'DATE_INSERT_FORMAT',
+                'DATE_UPDATE_SHORT',
+                'DATE_STATUS_SHORT',
+                'DATE_CANCELED_SHORT',
+                'BY_RECOMMENDATION',
 
-            'LOCK_STATUS',
-            'LOCK_USER_NAME',
-            'DATE_INSERT_FORMAT',
+                'LOCK_STATUS',
+                'LOCK_USER_NAME',
+                'DATE_INSERT_FORMAT',
 
-            "RESPONSIBLE_ID",
-            "RESPONSIBLE_LOGIN",
-            "RESPONSIBLE_NAME",
-            "RESPONSIBLE_LAST_NAME",
-            "RESPONSIBLE_SECOND_NAME",
-            "RESPONSIBLE_EMAIL",
-            "RESPONSIBLE_WORK_POSITION",
-            "RESPONSIBLE_PERSONAL_PHOTO",
-            "RESPONSIBLE_GROUP_ID",
+                "RESPONSIBLE_ID",
+                "RESPONSIBLE_LOGIN",
+                "RESPONSIBLE_NAME",
+                "RESPONSIBLE_LAST_NAME",
+                "RESPONSIBLE_SECOND_NAME",
+                "RESPONSIBLE_EMAIL",
+                "RESPONSIBLE_WORK_POSITION",
+                "RESPONSIBLE_PERSONAL_PHOTO",
+                "RESPONSIBLE_GROUP_ID",
 
-            "PAY_SYSTEM_ID",
-            "DELIVERY_ID",
-            "DEDUCTED",
-            "RESERVED",
-            "PRICE_DELIVERY",
-            "ALLOW_DELIVERY",
-            "DATE_ALLOW_DELIVERY",
-            "EMP_ALLOW_DELIVERY_ID",
-            "DELIVERY_DOC_NUM",
-            "DELIVERY_DOC_DATE",
-            "PAYED",
-            "DATE_PAYED",
-            "EMP_PAYED_ID",
-            "STATUS_ID",
-            "DATE_STATUS",
-            "EMP_STATUS_ID",
-            "DATE_INSERT_FORMAT",
-            "USER_LOGIN",
-            "USER_NAME",
-            "USER_LAST_NAME",
-            "USER_EMAIL",
-            "DATE_PAY_BEFORE",
-            "DATE_BILL",
-            "ACCOUNT_NUMBER",
-            "TRACKING_NUMBER",
+                "PAY_SYSTEM_ID",
+                "DELIVERY_ID",
+                "DEDUCTED",
+                "RESERVED",
+                "PRICE_DELIVERY",
+                "ALLOW_DELIVERY",
+                "DATE_ALLOW_DELIVERY",
+                "EMP_ALLOW_DELIVERY_ID",
+                "DELIVERY_DOC_NUM",
+                "DELIVERY_DOC_DATE",
+                "PAYED",
+                "DATE_PAYED",
+                "EMP_PAYED_ID",
+                "STATUS_ID",
+                "DATE_STATUS",
+                "EMP_STATUS_ID",
+                "DATE_INSERT_FORMAT",
+                "USER_LOGIN",
+                "USER_NAME",
+                "USER_LAST_NAME",
+                "USER_EMAIL",
+                "DATE_PAY_BEFORE",
+                "DATE_BILL",
+                "ACCOUNT_NUMBER",
+                "TRACKING_NUMBER",
 
 
-        ));
-
+            )
+        );
     }
 
     /**
@@ -2461,7 +2609,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
         /** @var Sale\Order $orderClassName */
         $orderClassName = $registry->getOrderClassName();
 
-        return array_merge($orderClassName::getAvailableFields(),
+        return array_merge(
+            $orderClassName::getAvailableFields(),
             array('PRICE_DELIVERY', "PAY_VOUCHER_DATE", "PAY_VOUCHER_NUM", "DATE_ALLOW_DELIVERY", "DATE_PAYED")
         );
     }
@@ -2690,9 +2839,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
      */
     public function resetOrderPrice(Sale\Basket $basket, array $requestFields)
     {
-
-        if (empty($requestFields['BASKET_ITEMS']))
+        if (empty($requestFields['BASKET_ITEMS'])) {
             return false;
+        }
 
         $resetPrice = false;
         $resetPriceDelivery = false;
@@ -2706,17 +2855,18 @@ class OrderCompatibility extends Internals\EntityCompatibility
         }
 
         foreach ($requestFields['BASKET_ITEMS'] as $basketData) {
-            if (!isset($basketData['ID']) || intval($basketData['ID']) <= 0)
+            if (!isset($basketData['ID']) || intval($basketData['ID']) <= 0) {
                 continue;
+            }
 
             /** @var Sale\BasketItem $basketItem */
-            if (!$basketItem = $basket->getItemById($basketData['ID']))
+            if (!$basketItem = $basket->getItemById($basketData['ID'])) {
                 continue;
+            }
 
             if ($resetPriceDelivery === false) {
                 if ($order->getId() == 0 || isset($basketData['PRICE'])
                     && floatval($basketData['PRICE']) != $basketItem->getPrice()) {
-
                     $order->resetData(array('PRICE'));
                     $resetPrice = true;
                 }
@@ -2733,8 +2883,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 //				}
 //			}
 
-            if ($resetPriceDelivery && $resetPrice)
+            if ($resetPriceDelivery && $resetPrice) {
                 return true;
+            }
         }
 
 
@@ -2751,28 +2902,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
     {
         $result = new Sale\Result();
 
-        $paymentSystemId = false;
-        $deliveryId = false;
-
-        /** @var Sale\PaymentCollection $paymentCollection */
-        if ($paymentCollection = $order->getPaymentCollection()) {
-            /** @var Sale\Payment $payment */
-            if ($payment = $paymentCollection->rewind()) {
-                $paymentSystemId = $payment->getPaymentSystemId();
-            }
-        }
-
-        /** @var Sale\ShipmentCollection $shipe */
-        if ($shipmentCollection = $order->getShipmentCollection()) {
-            /** @var Sale\Shipment $shipment */
-            foreach ($shipmentCollection as $shipment) {
-                if ($shipment->getDeliveryId() > 0) {
-                    $deliveryId = $shipment->getDeliveryId();
-                    break;
-                }
-            }
-        }
-
         $fields = array(
             "SITE_ID" => $order->getSiteId(),
             "LID" => $order->getSiteId(),
@@ -2780,9 +2909,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
             "PRICE" => $order->getPrice(),
             "CURRENCY" => $order->getCurrency(),
             "USER_ID" => $order->getUserId(),
-            "PAY_SYSTEM_ID" => $paymentSystemId,
+            "PAY_SYSTEM_ID" => (int)$order->getField('PAY_SYSTEM_ID'),
             "PRICE_DELIVERY" => $order->getDeliveryPrice(),
-            "DELIVERY_ID" => $deliveryId,
+            "DELIVERY_ID" => (int)$order->getField('DELIVERY_ID'),
             "DISCOUNT_VALUE" => $order->getDiscountPrice(),
             "TAX_VALUE" => $order->getTaxValue(),
             "TRACKING_NUMBER" => $order->getField('TRACKING_NUMBER'),
@@ -2798,10 +2927,12 @@ class OrderCompatibility extends Internals\EntityCompatibility
             $orderFields = static::convertDateFieldsToOldFormat($orderFields);
         }
 
-        $result->setData(array(
-            'FIELDS' => $fields,
-            'ORDER_FIELDS' => $orderFields,
-        ));
+        $result->setData(
+            array(
+                'FIELDS' => $fields,
+                'ORDER_FIELDS' => $orderFields,
+            )
+        );
 
         return $result;
     }
@@ -2816,7 +2947,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
         $fields = $order->getFieldValues();
 
         //getWeight
-        $fields = array_merge($fields,
+        $fields = array_merge(
+            $fields,
             array(
                 'ORDER_WEIGHT' => 0,
                 'BASKET_ITEMS' => array(),
@@ -2825,7 +2957,8 @@ class OrderCompatibility extends Internals\EntityCompatibility
                 'TAX_LIST' => array(),
                 'VAT_RATE' => $order->getVatRate(),
                 'VAT_SUM' => $order->getVatSum(),
-            ));
+            )
+        );
 
         /** @var Sale\Basket $basket */
         if ($basket = $order->getBasket()) {
@@ -2850,23 +2983,29 @@ class OrderCompatibility extends Internals\EntityCompatibility
         }
 
 
-        if ($propProfileName = $propertyCollection->getProfileName())
+        if ($propProfileName = $propertyCollection->getProfileName()) {
             $fields['PROFILE_NAME'] = $propProfileName->getValue();
+        }
 
-        if ($propPayerName = $propertyCollection->getPayerName())
+        if ($propPayerName = $propertyCollection->getPayerName()) {
             $fields['PAYER_NAME'] = $propPayerName->getValue();
+        }
 
-        if ($propUserEmail = $propertyCollection->getUserEmail())
+        if ($propUserEmail = $propertyCollection->getUserEmail()) {
             $fields['USER_EMAIL'] = $propUserEmail->getValue();
+        }
 
-        if ($propDeliveryLocationZip = $propertyCollection->getDeliveryLocationZip())
+        if ($propDeliveryLocationZip = $propertyCollection->getDeliveryLocationZip()) {
             $fields['DELIVERY_LOCATION_ZIP'] = $propDeliveryLocationZip->getValue();
+        }
 
-        if ($propDeliveryLocation = $propertyCollection->getDeliveryLocation())
+        if ($propDeliveryLocation = $propertyCollection->getDeliveryLocation()) {
             $fields['DELIVERY_LOCATION'] = $propDeliveryLocation->getValue();
+        }
 
-        if ($propTaxLocation = $propertyCollection->getTaxLocation())
+        if ($propTaxLocation = $propertyCollection->getTaxLocation()) {
             $fields['TAX_LOCATION'] = $propTaxLocation->getValue();
+        }
 
         $fields['DISCOUNT_LIST'] = DiscountCompatibility::getOldDiscountResult();
 
@@ -2896,14 +3035,14 @@ class OrderCompatibility extends Internals\EntityCompatibility
         static $propIndex = 0;
 
         $propIDTmp = false;
-        if (strpos($key, "PROPERTY_ID_") === 0) {
+        if (mb_strpos($key, "PROPERTY_ID_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = intval(substr($key, strlen("PROPERTY_ID_")));
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_ID_")));
 
             $this->query->addFilter('=' . $propRuntimeName . '.ORDER_PROPS_ID', $propIDTmp);
             if (isset($locationPropInfo['ID'][$propIDTmp])) {
@@ -2913,15 +3052,14 @@ class OrderCompatibility extends Internals\EntityCompatibility
             }
 
             $output = 'PROPERTY_ID_' . $propIDTmp;
-
-        } elseif (strpos($key, "PROPERTY_ORDER_PROPS_ID_") === 0) {
+        } elseif (mb_strpos($key, "PROPERTY_ORDER_PROPS_ID_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = intval(substr($key, strlen("PROPERTY_ORDER_PROPS_ID_")));
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_ORDER_PROPS_ID_")));
 
             $this->query->addFilter('=' . $propRuntimeName . '.ORDER_PROPS_ID', $propIDTmp);
             if (isset($locationPropInfo['ID'][$propIDTmp])) {
@@ -2931,27 +3069,27 @@ class OrderCompatibility extends Internals\EntityCompatibility
             }
 
             $output = 'PROPERTY_ORDER_PROPS_ID_' . $propIDTmp;
-        } elseif (strpos($key, "PROPERTY_NAME_") === 0) {
+        } elseif (mb_strpos($key, "PROPERTY_NAME_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = intval(substr($key, strlen("PROPERTY_NAME_")));
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_NAME_")));
 
             $this->addQueryAlias('PROPERTY_NAME_' . $propIDTmp, $propRuntimeName . '.NAME');
             $this->query->addFilter('=' . $propRuntimeName . '.ORDER_PROPS_ID', $propIDTmp);
 
             $output = 'PROPERTY_NAME_' . $propIDTmp;
-        } elseif (strpos($key, "PROPERTY_VALUE_") === 0) {
+        } elseif (mb_strpos($key, "PROPERTY_VALUE_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = intval(substr($key, strlen("PROPERTY_VALUE_")));
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_VALUE_")));
 
             if (isset($locationPropInfo['ID'][$propIDTmp])) {
                 $this->addQueryAlias('PROPERTY_ID_' . $propIDTmp, 'LOCATION.ID');
@@ -2960,26 +3098,30 @@ class OrderCompatibility extends Internals\EntityCompatibility
             }
 
             $output = 'PROPERTY_ID_' . $propIDTmp;
-        } elseif (strpos($key, "PROPERTY_CODE_") === 0) {
+        } elseif (mb_strpos($key, "PROPERTY_CODE_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = intval(substr($key, strlen("PROPERTY_CODE_")));
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_CODE_")));
             $this->addQueryAlias('PROPERTY_CODE_' . $propIDTmp, $propRuntimeName . '.CODE');
             $this->query->addFilter('=' . $propRuntimeName . '.ORDER_PROPS_ID', $propIDTmp);
 
             $output = 'PROPERTY_CODE_' . $propIDTmp;
-        } elseif (strpos($key, "PROPERTY_VAL_BY_CODE_") === 0) {
+        } elseif (mb_strpos($key, "PROPERTY_VAL_BY_CODE_") === 0) {
             $propIndex++;
             $this->addPropertyRuntime($propIndex);
             if (!($propRuntimeName = $this->getPropertyRuntimeName($propIndex))) {
                 return null;
             }
 
-            $propIDTmp = preg_replace("/[^a-zA-Z0-9_-]/is", "", trim(substr($key, strlen("PROPERTY_VAL_BY_CODE_"))));
+            $propIDTmp = preg_replace(
+                "/[^a-zA-Z0-9_-]/is",
+                "",
+                trim(mb_substr($key, mb_strlen("PROPERTY_VAL_BY_CODE_")))
+            );
 
             $this->addQueryAlias('PROPERTY_VAL_BY_CODE_' . $propIDTmp, $propRuntimeName . '.VALUE');
             if (isset($locationPropInfo['CODE'][$propIDTmp])) {
@@ -2991,7 +3133,7 @@ class OrderCompatibility extends Internals\EntityCompatibility
             $this->query->addFilter('=' . $propRuntimeName . '.CODE', $propIDTmp);
 
             $output = 'PROPERTY_VAL_BY_CODE_' . $propIDTmp;
-        } elseif (strpos($key, "BASKET_") === 0) {
+        } elseif (mb_strpos($key, "BASKET_") === 0) {
             $output = static::addBasketRuntime($key);
         }
 
@@ -3017,8 +3159,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
      */
     protected function addPropertyRuntime($index)
     {
-        if ($this->getPropertyRuntimeName($index))
+        if ($this->getPropertyRuntimeName($index)) {
             return;
+        }
 
         $this->query->registerRuntimeField(
             'PROPERTY_' . $index,
@@ -3069,7 +3212,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
             $this->addQueryAlias('BASKET_DISCOUNT_COUPON', 'COUPONS.COUPON');
             $output = 'BASKET_DISCOUNT_COUPON';
-
         } elseif ($key == "BASKET_DISCOUNT_NAME") {
             if (!in_array('DISCOUNT_ORDER_RULES', $this->runtimeFields)) {
                 $this->query->registerRuntimeField(

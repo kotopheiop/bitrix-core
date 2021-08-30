@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php");
@@ -7,14 +8,35 @@ define("HELP_FILE", "add_issue.php");
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("post_posting_tab"), "ICON" => "main_user_edit", "TITLE" => GetMessage("post_posting_tab_title")),
-    array("DIV" => "edit2", "TAB" => GetMessage("post_subscr_tab"), "ICON" => "main_user_edit", "TITLE" => GetMessage("post_subscr_tab_title")),
-    array("DIV" => "edit3", "TAB" => GetMessage("post_attachments"), "ICON" => "main_user_edit", "TITLE" => GetMessage("post_attachments_title")),
-    array("DIV" => "edit4", "TAB" => GetMessage("post_params_tab"), "ICON" => "main_user_edit", "TITLE" => GetMessage("post_params_tab_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("post_posting_tab"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("post_posting_tab_title")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("post_subscr_tab"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("post_subscr_tab_title")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("post_attachments"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("post_attachments_title")
+    ),
+    array(
+        "DIV" => "edit4",
+        "TAB" => GetMessage("post_params_tab"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("post_params_tab_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -24,7 +46,8 @@ $bCopy = ($action == "copy");
 $message = null;
 $bVarsFromForm = false;
 
-if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue != "") && $POST_RIGHT == "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue != "") && $POST_RIGHT == "W" && check_bitrix_sessid(
+    )) {
     $posting = new CPosting();
     $arFields = Array(
         "FROM_FIELD" => $_REQUEST["FROM_FIELD"],
@@ -43,16 +66,19 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
     );
 
     if ($STATUS <> "") {
-        if ($STATUS <> "S" && $STATUS <> "E" && $STATUS <> "P" && $STATUS <> "W")
+        if ($STATUS <> "S" && $STATUS <> "E" && $STATUS <> "P" && $STATUS <> "W") {
             $STATUS = "D";
+        }
     }
 
     if ($ID > 0) {
         $res = $posting->Update($ID, $arFields);
-        if (strlen($Resend) > 0)
+        if ($Resend <> '') {
             $STATUS = "W";
-        if ($res && $STATUS <> "")
+        }
+        if ($res && $STATUS <> "") {
             $res = $posting->ChangeStatus($ID, $STATUS);
+        }
     } else {
         $arFields["STATUS"] = "D";
         $ID = $posting->Add($arFields);
@@ -61,9 +87,11 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
 
     if ($res) {
         //Delete checked
-        if (is_array($FILE_ID))
-            foreach ($FILE_ID as $file)
+        if (is_array($FILE_ID)) {
+            foreach ($FILE_ID as $file) {
                 CPosting::DeleteFile($ID, $file);
+            }
+        }
 
         //New files
         $arFiles = array();
@@ -71,14 +99,17 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
         //Brandnew
         if (is_array($_FILES["NEW_FILE"])) {
             foreach ($_FILES["NEW_FILE"] as $attribute => $files) {
-                if (is_array($files))
-                    foreach ($files as $index => $value)
+                if (is_array($files)) {
+                    foreach ($files as $index => $value) {
                         $arFiles[$index][$attribute] = $value;
+                    }
+                }
             }
 
             foreach ($arFiles as $index => $file) {
-                if (!is_uploaded_file($file["tmp_name"]))
+                if (!is_uploaded_file($file["tmp_name"])) {
                     unset($arFiles[$index]);
+                }
             }
         }
 
@@ -88,8 +119,9 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
                 //Files from posting_edit.php
                 foreach (array_reverse($_POST["FILES"], true) as $key => $file_id) {
                     //skip "deleted"
-                    if (is_array($FILE_ID) && array_key_exists($key, $FILE_ID))
+                    if (is_array($FILE_ID) && array_key_exists($key, $FILE_ID)) {
                         continue;
+                    }
                     //clone file
                     if (intval($file_id) > 0) {
                         $rsFile = CPosting::GetFileList($COPY_ID, $file_id);
@@ -103,7 +135,7 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
                 foreach (array_reverse($_POST["FILES"], true) as $file) {
                     if (
                         is_array($file)
-                        && strlen($file["tmp_name"]) > 0
+                        && $file["tmp_name"] <> ''
                         && $APPLICATION->GetFileAccessPermission($file["tmp_name"]) >= "W"
                     ) {
                         array_unshift($arFiles, $file);
@@ -113,7 +145,7 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
         }
 
         foreach ($arFiles as $file) {
-            if (strlen($file["name"]) > 0 and intval($file["size"]) > 0) {
+            if ($file["name"] <> '' and intval($file["size"]) > 0) {
                 if (!$posting->SaveFile($ID, $file)) {
                     $_SESSION["SESS_ADMIN"]["POSTING_EDIT_MESSAGE"] = array(
                         "MESSAGE" => $posting->LAST_ERROR,
@@ -140,8 +172,9 @@ if ($REQUEST_METHOD == "POST" && ($save . $apply . $Send . $Resend . $Continue !
             LocalRedirect("posting_admin.php?lang=" . LANG);
         }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("post_save_error"), $e);
+        }
         $bVarsFromForm = true;
     }
 }
@@ -157,23 +190,27 @@ $str_AUTO_SEND_TIME = ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL");
 
 if ($ID > 0) {
     $post = CPosting::GetByID($ID);
-    if (!($post_arr = $post->ExtractFields("str_")))
+    if (!($post_arr = $post->ExtractFields("str_"))) {
         $ID = 0;
+    }
 }
 
 if ($bVarsFromForm) {
-    if (!array_key_exists("DIRECT_SEND", $_REQUEST))
+    if (!array_key_exists("DIRECT_SEND", $_REQUEST)) {
         $DIRECT_SEND = "N";
+    }
     $DB->InitTableVarsForEdit("b_posting", "", "str_");
-    if (array_key_exists("AUTO_SEND_FLAG", $_REQUEST))
+    if (array_key_exists("AUTO_SEND_FLAG", $_REQUEST)) {
         $str_AUTO_SEND_FLAG = "Y";
-    else
+    } else {
         $str_AUTO_SEND_FLAG = "N";
+    }
 } elseif ($ID > 0) {
-    if (strlen($str_AUTO_SEND_TIME))
+    if ($str_AUTO_SEND_TIME <> '') {
         $str_AUTO_SEND_FLAG = "Y";
-    else
+    } else {
         $str_AUTO_SEND_FLAG = "N";
+    }
 }
 
 $APPLICATION->SetTitle(($ID > 0 && !$bCopy ? GetMessage("post_title_edit") . $ID : GetMessage("post_title_add")));
@@ -205,7 +242,10 @@ if ($ID > 0 && !$bCopy) {
     $aMenu[] = array(
         "TEXT" => GetMessage("post_mnu_del"),
         "TITLE" => GetMessage("post_mnu_del_title"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("post_mnu_confirm") . "'))window.location='posting_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "post_mnu_confirm"
+            ) . "'))window.location='posting_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -217,10 +257,11 @@ if (is_array($_SESSION["SESS_ADMIN"]["POSTING_EDIT_MESSAGE"])) {
     $_SESSION["SESS_ADMIN"]["POSTING_EDIT_MESSAGE"] = false;
 }
 
-if ($message)
+if ($message) {
     echo $message->Show();
-elseif ($posting->LAST_ERROR != "")
+} elseif ($posting->LAST_ERROR != "") {
     CAdminMessage::ShowMessage($posting->LAST_ERROR);
+}
 ?>
 
 <form method="POST" Action="<? echo $APPLICATION->GetCurPage() ?>" ENCTYPE="multipart/form-data" name="post_form">
@@ -241,7 +282,7 @@ elseif ($posting->LAST_ERROR != "")
             <td><? echo GetMessage("post_date_upd") ?></td>
             <td><? echo $str_TIMESTAMP_X; ?></td>
         </tr>
-        <? if (strlen($str_DATE_SENT) > 0): ?>
+        <? if ($str_DATE_SENT <> ''): ?>
             <tr>
                 <td><? echo GetMessage("post_date_sent") ?></td>
                 <td><? echo $str_DATE_SENT; ?></td>
@@ -253,7 +294,9 @@ elseif ($posting->LAST_ERROR != "")
             <tr>
                 <td><? echo GetMessage("POST_TO") ?></td>
                 <td>[&nbsp;<a class="tablebodylink" href="javascript:void(0)"
-                              OnClick="jsUtils.OpenWindow('posting_bcc.php?ID=<? echo $str_ID ?>&lang=<? echo LANG ?>&find_status_id=E&set_filter=Y', 600, 500);"><? echo GetMessage("POST_SHOW_LIST") ?></a>&nbsp;]
+                              OnClick="jsUtils.OpenWindow('posting_bcc.php?ID=<? echo $str_ID ?>&lang=<? echo LANG ?>&find_status_id=E&set_filter=Y', 600, 500);"><? echo GetMessage(
+                            "POST_SHOW_LIST"
+                        ) ?></a>&nbsp;]
                 </td>
             </tr>
         <? endif; ?>
@@ -263,13 +306,24 @@ elseif ($posting->LAST_ERROR != "")
         <td width="60%">
             <?
             if ($ID > 0 && !$bCopy) {
-                if ($str_STATUS == "D") echo GetMessage("POST_STATUS_DRAFT");
-                if ($str_STATUS == "S") echo GetMessage("POST_STATUS_SENT");
-                if ($str_STATUS == "P") echo GetMessage("POST_STATUS_PART");
-                if ($str_STATUS == "E") echo GetMessage("POST_STATUS_ERROR");
-                if ($str_STATUS == "W") echo GetMessage("POST_STATUS_WAIT");
-            } else
+                if ($str_STATUS == "D") {
+                    echo GetMessage("POST_STATUS_DRAFT");
+                }
+                if ($str_STATUS == "S") {
+                    echo GetMessage("POST_STATUS_SENT");
+                }
+                if ($str_STATUS == "P") {
+                    echo GetMessage("POST_STATUS_PART");
+                }
+                if ($str_STATUS == "E") {
+                    echo GetMessage("POST_STATUS_ERROR");
+                }
+                if ($str_STATUS == "W") {
+                    echo GetMessage("POST_STATUS_WAIT");
+                }
+            } else {
                 echo GetMessage("POST_STATUS_DRAFT");
+            }
             ?>
         </td>
     </tr>
@@ -310,7 +364,18 @@ elseif ($posting->LAST_ERROR != "")
     <tr>
         <td colspan="2">
             <?
-            CFileMan::AddHTMLEditorFrame("BODY", $str_BODY, "BODY_TYPE", $str_BODY_TYPE, array('height' => '400', 'width' => '100%'), "N", 0, "", "", SITE_ID);
+            CFileMan::AddHTMLEditorFrame(
+                "BODY",
+                $str_BODY,
+                "BODY_TYPE",
+                $str_BODY_TYPE,
+                array('height' => '400', 'width' => '100%'),
+                "N",
+                0,
+                "",
+                "",
+                SITE_ID
+            );
             ?>
         </td>
     </tr>
@@ -336,19 +401,26 @@ elseif ($posting->LAST_ERROR != "")
                 $aPostRub = array();
                 if ($ID > 0) {
                     $post_rub = CPosting::GetRubricList($ID);
-                    while ($ar = $post_rub->Fetch())
+                    while ($ar = $post_rub->Fetch()) {
                         $aPostRub[] = $ar["ID"];
+                    }
                 }
-                if (!is_array($RUB_ID))
+                if (!is_array($RUB_ID)) {
                     $RUB_ID = array();
-                $rub = CRubric::GetList(array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y"));
+                }
+                $rub = CRubric::GetList(
+                    array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"),
+                    array("ACTIVE" => "Y")
+                );
                 while ($ar = $rub->GetNext()):
                     ?>
                     <div class="adm-list-item">
                         <div class="adm-list-control"><input type="checkbox" id="RUB_ID_<? echo $ar["ID"] ?>"
                                                              name="RUB_ID[]"
-                                                             value="<? echo $ar["ID"] ?>"<? if (in_array($ar["ID"], ($bVarsFromForm ? $RUB_ID : $aPostRub))) echo " checked" ?>
-                                                             OnClick="CheckAll('RUB_ID')"></div>
+                                                             value="<? echo $ar["ID"] ?>"<? if (in_array(
+                                $ar["ID"],
+                                ($bVarsFromForm ? $RUB_ID : $aPostRub)
+                            )) echo " checked" ?> OnClick="CheckAll('RUB_ID')"></div>
                         <div class="adm-list-label"><label
                                     for="RUB_ID_<? echo $ar["ID"] ?>"><? echo "[" . $ar["LID"] . "] " . $ar["NAME"] ?></label>
                         </div>
@@ -361,8 +433,12 @@ elseif ($posting->LAST_ERROR != "")
         <td width="40%"><? echo GetMessage("post_format") ?></td>
         <td width="60%">
             <select class="typeselect" name="SUBSCR_FORMAT" id="SUBSCR_FORMAT">
-                <option value=""<? if ($str_SUBSCR_FORMAT == "") echo " selected" ?>><? echo GetMessage("post_format_any") ?></option>
-                <option value="text"<? if ($str_SUBSCR_FORMAT == "text") echo " selected" ?>><? echo GetMessage("post_format_text") ?></option>
+                <option value=""<? if ($str_SUBSCR_FORMAT == "") echo " selected" ?>><? echo GetMessage(
+                        "post_format_any"
+                    ) ?></option>
+                <option value="text"<? if ($str_SUBSCR_FORMAT == "text") echo " selected" ?>><? echo GetMessage(
+                        "post_format_text"
+                    ) ?></option>
                 <option value="html"<? if ($str_SUBSCR_FORMAT == "html") echo " selected" ?>>HTML</option>
             </select>
         </td>
@@ -385,19 +461,23 @@ elseif ($posting->LAST_ERROR != "")
                 $aPostGrp = array();
                 if ($ID > 0) {
                     $post_grp = CPosting::GetGroupList($ID);
-                    while ($post_grp_arr = $post_grp->Fetch())
+                    while ($post_grp_arr = $post_grp->Fetch()) {
                         $aPostGrp[] = $post_grp_arr["ID"];
+                    }
                 }
-                if (!is_array($GROUP_ID))
+                if (!is_array($GROUP_ID)) {
                     $GROUP_ID = array();
-                $group = CGroup::GetList(($by = "sort"), ($order = "asc"));
+                }
+                $group = CGroup::GetList();
                 while ($ar = $group->GetNext()):
                     ?>
                     <div class="adm-list-item">
                         <div class="adm-list-control"><input type="checkbox" id="GROUP_ID_<? echo $ar["ID"] ?>"
                                                              name="GROUP_ID[]"
-                                                             value="<? echo $ar["ID"] ?>"<? if (in_array($ar["ID"], ($bVarsFromForm ? $GROUP_ID : $aPostGrp))) echo " checked" ?>
-                                                             OnClick="CheckAll('GROUP_ID')"></div>
+                                                             value="<? echo $ar["ID"] ?>"<? if (in_array(
+                                $ar["ID"],
+                                ($bVarsFromForm ? $GROUP_ID : $aPostGrp)
+                            )) echo " checked" ?> OnClick="CheckAll('GROUP_ID')"></div>
                         <div class="adm-list-label"><label for="GROUP_ID_<? echo $ar["ID"] ?>"><? echo $ar["NAME"] ?>
                                 &nbsp;[<a
                                         href="/bitrix/admin/group_edit.php?ID=<? echo $ar["ID"] ?>&amp;lang=<? echo LANGUAGE_ID ?>"><? echo $ar["ID"] ?></a>]</label>
@@ -514,8 +594,9 @@ elseif ($posting->LAST_ERROR != "")
                         </tr>
                         <?
                         foreach ($tools->aMatches as $attachment):
-                            if (CFile::GetImageSize($attachment["PATH"], true) === false)
+                            if (CFile::GetImageSize($attachment["PATH"], true) === false) {
                                 continue;
+                            }
                             ?>
                             <tr>
                                 <td><a href="<? echo $attachment["SRC"] ?>"
@@ -636,7 +717,7 @@ elseif ($posting->LAST_ERROR != "")
             //-->
         </script>
     <? else:
-    $str_AUTO_SEND_FLAG = strlen($str_AUTO_SEND_TIME) ? "Y" : "N";
+    $str_AUTO_SEND_FLAG = $str_AUTO_SEND_TIME <> '' ? "Y" : "N";
     ?>
         <tr>
             <td><? echo GetMessage("post_send_flag") ?></td>
@@ -663,19 +744,28 @@ elseif ($posting->LAST_ERROR != "")
     <input type="hidden" name="lang" value="<?= LANG ?>">
     <? if ($str_STATUS == "D"): ?>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input <? if ($POST_RIGHT < "W") echo "disabled" ?> type="submit"
-                                                                                          value="<? echo GetMessage("post_butt_send") ?>"
-                                                                                          name="Send"
-                                                                                          title="<? echo GetMessage("post_hint_send") ?>">
+                                                                                          value="<? echo GetMessage(
+                                                                                              "post_butt_send"
+                                                                                          ) ?>" name="Send"
+                                                                                          title="<? echo GetMessage(
+                                                                                              "post_hint_send"
+                                                                                          ) ?>">
     <? elseif ($str_STATUS == "W"): ?>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input <? if ($POST_RIGHT < "W") echo "disabled" ?> type="submit"
-                                                                                          value="<? echo GetMessage("post_continue") ?>"
-                                                                                          name="Continue"
-                                                                                          title="<? echo GetMessage("post_continue_conf") ?>">
+                                                                                          value="<? echo GetMessage(
+                                                                                              "post_continue"
+                                                                                          ) ?>" name="Continue"
+                                                                                          title="<? echo GetMessage(
+                                                                                              "post_continue_conf"
+                                                                                          ) ?>">
     <? elseif ($str_STATUS == "E"): ?>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input <? if ($POST_RIGHT < "W") echo "disabled" ?> type="submit"
-                                                                                          value="<? echo GetMessage("post_resend") ?>"
-                                                                                          name="Resend"
-                                                                                          title="<? echo GetMessage("post_resend_conf") ?>">
+                                                                                          value="<? echo GetMessage(
+                                                                                              "post_resend"
+                                                                                          ) ?>" name="Resend"
+                                                                                          title="<? echo GetMessage(
+                                                                                              "post_resend_conf"
+                                                                                          ) ?>">
     <? endif ?>
     <? if ($ID > 0): ?>
         <? if ($bCopy): ?>

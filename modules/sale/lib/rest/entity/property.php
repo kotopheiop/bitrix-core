@@ -99,6 +99,9 @@ class Property extends Base
                     'TYPE' => self::TYPE_DATATYPE,
                     //'ATTRIBUTES'=>[Attributes::ReadOnly]
                 ],
+                'ENTITY_TYPE' => [
+                    'TYPE' => self::TYPE_STRING,
+                ],
             ],
             $this->getFieldsByTypeString(),
             $this->getFieldsByTypeLocation()
@@ -127,7 +130,10 @@ class Property extends Base
             $r = array_filter(
                 $this->getFields(),
                 function ($k) {
-                    return (is_set($this->getFieldsByTypeString(), $k) === false && is_set($this->getFieldsByTypeLocation(), $k) === false);
+                    return (is_set($this->getFieldsByTypeString(), $k) === false && is_set(
+                            $this->getFieldsByTypeLocation(),
+                            $k
+                        ) === false);
                 },
                 ARRAY_FILTER_USE_KEY
             );

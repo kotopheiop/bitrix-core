@@ -19,14 +19,17 @@ abstract class CommonHelper
 {
     public static function getSqlForDataType($type, $len = 0)
     {
-        if ($type == 'int')
+        if ($type == 'int') {
             return 'int';
+        }
 
-        if ($type == 'varchar')
+        if ($type == 'varchar') {
             return 'varchar(' . (intval($len) ? intval($len) : '1') . ')';
+        }
 
-        if ($type == 'char')
+        if ($type == 'char') {
             return 'char(' . (intval($len) ? intval($len) : '1') . ')';
+        }
 
         return '';
     }
@@ -38,8 +41,9 @@ abstract class CommonHelper
         $dbHelper = Main\HttpApplication::getConnection()->getSqlHelper();
 
         if (is_array($fields)) {
-            foreach ($fields as $fld)
+            foreach ($fields as $fld) {
                 $map[] = $dbHelper->forSql($fld);
+            }
         }
 
         return 'INSERT IGNORE INTO ' . $dbHelper->forSql($tableName) . ' (' . implode(',', $map) . ') values ';
@@ -67,18 +71,20 @@ abstract class CommonHelper
 
     protected static function prepareSql($row, $fields, $map)
     {
-        if (!is_array($row) || empty($row) || !is_array($fields) || empty($fields) || !is_array($map) || empty($map))
+        if (!is_array($row) || empty($row) || !is_array($fields) || empty($fields) || !is_array($map) || empty($map)) {
             return '';
+        }
 
         $sql = array();
         foreach ($fields as $fld => $none) {
             $val = $row[$fld];
 
             // only numeric and literal fields supported at the moment
-            if ($map[$fld]['data_type'] == 'integer')
+            if ($map[$fld]['data_type'] == 'integer') {
                 $sql[] = intval($val);
-            else
+            } else {
                 $sql[] = "'" . Main\HttpApplication::getConnection()->getSqlHelper()->forSql($val) . "'";
+            }
         }
 
         return '(' . implode(',', $sql) . ')';
@@ -134,8 +140,9 @@ abstract class CommonHelper
 
     public static function createIndex($tableName, $ixNamePostfix, $columns = array(), $unique = false)
     {
-        if (!strlen($tableName) || !strlen($ixNamePostfix) || !is_array($columns) || empty($columns))
+        if (!mb_strlen($tableName) || !mb_strlen($ixNamePostfix) || !is_array($columns) || empty($columns)) {
             return false;
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
         $dbHelper = $dbConnection->getSqlHelper();
@@ -146,11 +153,17 @@ abstract class CommonHelper
 
         $ixName = static::getIndexName($tableName, $ixNamePostfix, $columns);
 
-        if (strlen($ixName) > 30)
+        if (mb_strlen($ixName) > 30) {
             return false;
+        }
 
         if (!static::checkIndexNameExists($ixName, $tableName)) {
-            $dbConnection->query("CREATE " . ($unique ? "UNIQUE" : "") . " INDEX " . $ixName . " ON " . $tableName . " (" . implode(', ', $columns) . ")");
+            $dbConnection->query(
+                "CREATE " . ($unique ? "UNIQUE" : "") . " INDEX " . $ixName . " ON " . $tableName . " (" . implode(
+                    ', ',
+                    $columns
+                ) . ")"
+            );
             return true;
         }
 
@@ -164,8 +177,9 @@ abstract class CommonHelper
 
     protected static function escapeArray($columns)
     {
-        foreach ($columns as &$col)
+        foreach ($columns as &$col) {
             $col = Main\HttpApplication::getConnection()->getSqlHelper()->forSql($col);
+        }
 
         return $columns;
     }
@@ -176,8 +190,9 @@ abstract class CommonHelper
 
         $tableName = $dbConnection->getSqlHelper()->forSql($tableName);
 
-        if ($dbConnection->isTableExists($tableName))
+        if ($dbConnection->isTableExists($tableName)) {
             Main\HttpApplication::getConnection()->query('drop table ' . $tableName);
+        }
     }
 
     public static function checkTableExists($tableName)
@@ -191,8 +206,9 @@ abstract class CommonHelper
 
         $tableName = $dbConnection->getSqlHelper()->forSql($tableName);
 
-        if ($dbConnection->isTableExists($tableName))
+        if ($dbConnection->isTableExists($tableName)) {
             Main\HttpApplication::getConnection()->query('truncate table ' . $tableName);
+        }
     }
 
     public static function getQuerySeparatorSql()

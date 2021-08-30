@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/options.php");
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/prolog.php");
@@ -29,14 +30,24 @@ $aTabs = array(
             "use_stemming" => Array(GetMessage("SEARCH_OPTIONS_USE_STEMMING"), Array("checkbox", "N")),
             "agent_stemming" => Array(GetMessage("SEARCH_OPTIONS_AGENT_STEMMING"), Array("checkbox", "N")),
             "agent_duration" => Array(GetMessage("SEARCH_OPTIONS_AGENT_DURATION"), Array("text", 6)),
-            "full_text_engine" => Array(GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE"), Array("select", array(
-                "bitrix" => GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE_BITRIX"),
-                "sphinx" => GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE_SPHINX"),
-            ))),
+            "full_text_engine" => Array(
+                GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE"),
+                Array(
+                    "select",
+                    array(
+                        "bitrix" => GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE_BITRIX"),
+                        "sphinx" => GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE_SPHINX"),
+                    )
+                )
+            ),
             "letters" => Array(GetMessage("SEARCH_OPTIONS_LETTERS"), Array("text", 45), "bitrix"),
             "sphinx_connection" => Array(GetMessage("SEARCH_OPTIONS_SPHINX_CONNECTION"), Array("text", 45), "sphinx"),
             "sphinx_index_name" => Array(GetMessage("SEARCH_OPTIONS_SPHINX_INDEX_NAME"), Array("text", 45), "sphinx"),
-            "sphinx_note" => Array("", Array("note", "
+            "sphinx_note" => Array(
+                "",
+                Array(
+                    "note",
+                    "
 <pre>
 #sphinx.conf
 index bitrix
@@ -80,7 +91,10 @@ index bitrix
 		#charset_type = utf-8
 }
 </pre>
-			"), "sphinx"),
+			"
+                ),
+                "sphinx"
+            ),
             "mysql_note" => Array("", Array("note", GetMessage("SEARCH_OPTIONS_MYSQL_NOTE")), "mysql"),
         )
     ),
@@ -125,24 +139,26 @@ if ($DBsearch->type === 'MYSQL') {
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && check_bitrix_sessid()) {
-    if (strlen($RestoreDefaults) > 0) {
+if ($REQUEST_METHOD == "POST" && $Update . $Apply . $RestoreDefaults <> '' && check_bitrix_sessid()) {
+    if ($RestoreDefaults <> '') {
         COption::RemoveOption("search");
     } else {
         if ($_POST["full_text_engine"] === "sphinx") {
             $search = new CSearchSphinx();
             if (!$search->connect($_POST["sphinx_connection"], $_POST["sphinx_index_name"], true)) {
                 $e = $APPLICATION->GetException();
-                if (is_object($e))
+                if (is_object($e)) {
                     $message = new CAdminMessage(GetMessage("SEARCH_OPTIONS_SPHINX_ERROR"), $e);
+                }
                 $bVarsFromForm = true;
             }
         } elseif ($_POST["full_text_engine"] === "mysql") {
             $search = new CSearchMysql();
             if (!$search->connect()) {
                 $e = $APPLICATION->GetException();
-                if (is_object($e))
+                if (is_object($e)) {
                     $message = new CAdminMessage(GetMessage("SEARCH_OPTIONS_MYSQL_ERROR"), $e);
+                }
                 $bVarsFromForm = true;
             }
         }
@@ -155,12 +171,14 @@ if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0
             foreach ($aTabs as $i => $aTab) {
                 foreach ($aTab["OPTIONS"] as $name => $arOption) {
                     $disabled = array_key_exists("disabled", $arOption) ? $arOption["disabled"] : "";
-                    if ($disabled)
+                    if ($disabled) {
                         continue;
+                    }
 
                     $val = $_POST[$name];
-                    if ($arOption[1][0] == "checkbox" && $val != "Y")
+                    if ($arOption[1][0] == "checkbox" && $val != "Y") {
                         $val = "N";
+                    }
 
                     COption::SetOptionString("search", $name, $val, $arOption[0]);
                 }
@@ -182,15 +200,23 @@ if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0
     CSearchStatistic::SetActive(COption::GetOptionString("search", "stat_phrase") == "Y");
 
     if (!$bVarsFromForm) {
-        if (strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+        if ($Update <> '' && $_REQUEST["back_url_settings"] <> '') {
             LocalRedirect($_REQUEST["back_url_settings"]);
-        else
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&back_url_settings=" . urlencode(
+                    $_REQUEST["back_url_settings"]
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     }
 }
 
-if (is_object($message))
+if (is_object($message)) {
     echo $message->Show();
+}
 
 $aMenu = array(
     array(
@@ -216,22 +242,30 @@ $tabControl->Begin();
     foreach ($aTabs as $aTab):
         $tabControl->BeginNextTab();
         foreach ($aTab["OPTIONS"] as $name => $arOption):
-            if ($bVarsFromForm)
+            if ($bVarsFromForm) {
                 $val = $_POST[$name];
-            else
+            } else {
                 $val = COption::GetOptionString("search", $name);
+            }
             $type = $arOption[1];
             $disabled = array_key_exists("disabled", $arOption) ? $arOption["disabled"] : "";
             //if (isset($_REQUEST["
             ?>
-            <tr <? if (isset($arOption[2])) echo 'style="display:none" class="show-for-' . htmlspecialcharsbx($arOption[2]) . '"' ?>>
+            <tr <? if (isset($arOption[2])) echo 'style="display:none" class="show-for-' . htmlspecialcharsbx(
+                    $arOption[2]
+                ) . '"' ?>>
                 <td width="40%" <? if ($type[0] == "textarea") echo 'class="adm-detail-valign-top"' ?>>
                     <label for="<? echo htmlspecialcharsbx($name) ?>"><? echo $arOption[0] ?></label>
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($name) ?>"
-                               id="<? echo htmlspecialcharsbx($name) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?><? if ($disabled) echo ' disabled="disabled"'; ?>><? if ($disabled) echo '<br>' . $disabled; ?>
+                               id="<? echo htmlspecialcharsbx($name) ?>" value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?><? if ($disabled) {
+                            echo ' disabled="disabled"';
+                        } ?>><? if ($disabled) {
+                            echo '<br>' . $disabled;
+                        } ?>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>" name="<? echo htmlspecialcharsbx($name) ?>">
@@ -241,7 +275,11 @@ $tabControl->Begin();
                     <? elseif ($type[0] == "select"):?>
                         <select name="<? echo htmlspecialcharsbx($name) ?>" onchange="doShowAndHide()">
                             <? foreach ($type[1] as $key => $value):?>
-                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if ($val == $key) echo 'selected="selected"' ?>><? echo htmlspecialcharsEx($value) ?></option>
+                                <option value="<? echo htmlspecialcharsbx(
+                                    $key
+                                ) ?>" <? if ($val == $key) echo 'selected="selected"' ?>><? echo htmlspecialcharsEx(
+                                        $value
+                                    ) ?></option>
                             <?endforeach ?>
                         </select>
                     <? elseif ($type[0] == "note"):?>
@@ -257,10 +295,11 @@ $tabControl->Begin();
            title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
     <input type="submit" name="Apply" value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
            title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-    <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+    <? if ($_REQUEST["back_url_settings"] <> ''): ?>
         <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-               onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>" onclick="window.location='<? echo htmlspecialcharsbx(
+            CUtil::addslashes($_REQUEST["back_url_settings"])
+        ) ?>'">
         <input type="hidden" name="back_url_settings" value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
     <? endif ?>
     <input type="submit" name="RestoreDefaults" title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CCloudFailover
@@ -29,11 +30,13 @@ class CCloudFailover
             } else {
                 $BUCKET_ID = $obBucket->FAILOVER_BUCKET_ID;
             }
-            \Bitrix\Clouds\DeleteQueueTable::add(array(
-                "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
-                "BUCKET_ID" => $BUCKET_ID,
-                "FILE_PATH" => $FILE_PATH,
-            ));
+            \Bitrix\Clouds\DeleteQueueTable::add(
+                array(
+                    "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
+                    "BUCKET_ID" => $BUCKET_ID,
+                    "FILE_PATH" => $FILE_PATH,
+                )
+            );
         }
     }
 
@@ -55,22 +58,26 @@ class CCloudFailover
                 $SOURCE_BUCKET_ID = $obBucket->ID;
             }
 
-            \Bitrix\Clouds\CopyQueueTable::add(array(
-                "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
-                "OP" => \Bitrix\Clouds\CopyQueueTable::OP_COPY,
-                "SOURCE_BUCKET_ID" => $SOURCE_BUCKET_ID,
-                "SOURCE_FILE_PATH" => $FILE_PATH,
-                "TARGET_BUCKET_ID" => $TARGET_BUCKET_ID,
-                "TARGET_FILE_PATH" => $FILE_PATH,
-            ));
+            \Bitrix\Clouds\CopyQueueTable::add(
+                array(
+                    "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
+                    "OP" => \Bitrix\Clouds\CopyQueueTable::OP_COPY,
+                    "SOURCE_BUCKET_ID" => $SOURCE_BUCKET_ID,
+                    "SOURCE_FILE_PATH" => $FILE_PATH,
+                    "TARGET_BUCKET_ID" => $TARGET_BUCKET_ID,
+                    "TARGET_FILE_PATH" => $FILE_PATH,
+                )
+            );
 
-            $deleteTasks = \Bitrix\Clouds\DeleteQueueTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=BUCKET_ID' => $TARGET_BUCKET_ID,
-                    '=FILE_PATH' => $FILE_PATH,
-                ),
-            ));
+            $deleteTasks = \Bitrix\Clouds\DeleteQueueTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=BUCKET_ID' => $TARGET_BUCKET_ID,
+                        '=FILE_PATH' => $FILE_PATH,
+                    ),
+                )
+            );
             while ($task = $deleteTasks->fetch()) {
                 \Bitrix\Clouds\DeleteQueueTable::delete($task['ID']);
             }
@@ -93,22 +100,26 @@ class CCloudFailover
                 $BUCKET_ID = $obBucket->FAILOVER_BUCKET_ID;
             }
 
-            \Bitrix\Clouds\CopyQueueTable::add(array(
-                "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
-                "OP" => \Bitrix\Clouds\CopyQueueTable::OP_RENAME,
-                "SOURCE_BUCKET_ID" => $BUCKET_ID,
-                "SOURCE_FILE_PATH" => $FILE_PATH_FROM,
-                "TARGET_BUCKET_ID" => $BUCKET_ID,
-                "TARGET_FILE_PATH" => $FILE_PATH_TO,
-            ));
+            \Bitrix\Clouds\CopyQueueTable::add(
+                array(
+                    "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
+                    "OP" => \Bitrix\Clouds\CopyQueueTable::OP_RENAME,
+                    "SOURCE_BUCKET_ID" => $BUCKET_ID,
+                    "SOURCE_FILE_PATH" => $FILE_PATH_FROM,
+                    "TARGET_BUCKET_ID" => $BUCKET_ID,
+                    "TARGET_FILE_PATH" => $FILE_PATH_TO,
+                )
+            );
 
-            $deleteTasks = \Bitrix\Clouds\DeleteQueueTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=BUCKET_ID' => $BUCKET_ID,
-                    '=FILE_PATH' => $FILE_PATH_TO,
-                ),
-            ));
+            $deleteTasks = \Bitrix\Clouds\DeleteQueueTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=BUCKET_ID' => $BUCKET_ID,
+                        '=FILE_PATH' => $FILE_PATH_TO,
+                    ),
+                )
+            );
             while ($task = $deleteTasks->fetch()) {
                 \Bitrix\Clouds\DeleteQueueTable::delete($task['ID']);
             }
@@ -117,10 +128,12 @@ class CCloudFailover
 
     public static function executeDeleteQueue()
     {
-        $deleteTask = \Bitrix\Clouds\DeleteQueueTable::getList(array(
-            'limit' => 1,
-            'order' => Array('ID' => 'ASC')
-        ))->fetch();
+        $deleteTask = \Bitrix\Clouds\DeleteQueueTable::getList(
+            array(
+                'limit' => 1,
+                'order' => Array('ID' => 'ASC')
+            )
+        )->fetch();
         if ($deleteTask) {
             $testBucket = new CCloudStorageBucket($deleteTask["BUCKET_ID"]);
             if (
@@ -136,11 +149,13 @@ class CCloudFailover
                     $obBucket->setQueueFlag(false);
                     if (!CCloudTempFile::IsTempFile($deleteTask["FILE_PATH"])) {
                         $fileExists = $obBucket->FileExists($deleteTask["FILE_PATH"]);
-                        if ($fileExists)
+                        if ($fileExists) {
                             $fileSize = $obBucket->GetFileSize($deleteTask["FILE_PATH"]);
+                        }
                         $result = $obBucket->DeleteFile($deleteTask["FILE_PATH"]);
-                        if ($result && $fileExists)
+                        if ($result && $fileExists) {
                             $obBucket->DecFileCounter($fileSize);
+                        }
                     } else {
                         $result = $obBucket->DeleteFile($deleteTask["FILE_PATH"]);
                     }
@@ -156,11 +171,13 @@ class CCloudFailover
 
     public static function executeCopyQueue()
     {
-        $task = \Bitrix\Clouds\CopyQueueTable::getList(array(
-            'filter' => array("=STATUS" => "Y"),
-            'limit' => 1,
-            'order' => Array('ID' => 'ASC')
-        ))->fetch();
+        $task = \Bitrix\Clouds\CopyQueueTable::getList(
+            array(
+                'filter' => array("=STATUS" => "Y"),
+                'limit' => 1,
+                'order' => Array('ID' => 'ASC')
+            )
+        )->fetch();
         if ($task) {
             if ($task["OP"] == \Bitrix\Clouds\CopyQueueTable::OP_RENAME) {
                 return static::executeRenameTask($task);
@@ -200,45 +217,123 @@ class CCloudFailover
         //Initialize storages
         $sourceBucket = new CCloudStorageBucket($copyTask["SOURCE_BUCKET_ID"], false);
         if (!$sourceBucket->Init()) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to init source bucket."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to init source bucket."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
         $targetBucket = new CCloudStorageBucket($copyTask["TARGET_BUCKET_ID"], false);
         if (!$targetBucket->Init()) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to init target bucket."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to init target bucket."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
         //Check if source file is exists
         if (!$sourceBucket->FileExists($copyTask["SOURCE_FILE_PATH"])) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): source file does not exists."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): source file does not exists."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
         $CONTENT_TYPE = $sourceBucket->GetService()->GetLastRequestHeader('Content-Type');
+        $CONTENT_LENGTH = $sourceBucket->GetService()->GetLastRequestHeader('Content-Length');
 
         if ($copyTask["FILE_SIZE"] == -1) {
-            $copyTask["FILE_SIZE"] = $sourceBucket->GetFileSize($copyTask["SOURCE_FILE_PATH"]);
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FILE_SIZE" => $copyTask["FILE_SIZE"],
-            ));
+            if ($CONTENT_LENGTH) {
+                $copyTask["FILE_SIZE"] = intval($CONTENT_LENGTH);
+            } else {
+                $copyTask["FILE_SIZE"] = $sourceBucket->GetFileSize($copyTask["SOURCE_FILE_PATH"]);
+            }
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FILE_SIZE" => $copyTask["FILE_SIZE"],
+                )
+            );
         }
         //AddMessage2Log($copyTask);
         $targetBucket->setQueueFlag(false);
         $tempPath = $copyTask["TARGET_FILE_PATH"] . ".fail-over-copy-part";
+
+        $CLOchunkSize = $targetBucket->GetService()->GetMinUploadPartSize();
+        if ($copyTask["FILE_SIZE"] <= $CLOchunkSize) {
+            $http = new \Bitrix\Main\Web\HttpClient(
+                array(
+                    "streamTimeout" => 0,
+                )
+            );
+            $arFile = array(
+                "type" => $CONTENT_TYPE,
+                "content" => false,
+            );
+            $arFile["content"] = $http->get($sourceBucket->GetFileSRC($copyTask["SOURCE_FILE_PATH"]));
+            if ($arFile["content"] === false) {
+                \Bitrix\Clouds\CopyQueueTable::update(
+                    $copyTask["ID"],
+                    array(
+                        "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                        "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                            "clouds",
+                            "max_copy_fail_count"
+                        ) ? "F" : $copyTask["STATUS"],
+                        "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to download."
+                    )
+                );
+                return CCloudFailover::ST_ERROR;
+            }
+
+            if (!$overwrite && $targetBucket->FileExists($copyTask["TARGET_FILE_PATH"])) {
+                \Bitrix\Clouds\CopyQueueTable::delete($copyTask["ID"]);
+                return CCloudFailover::ST_CONTINUE;
+            }
+
+            $res = $targetBucket->SaveFile($copyTask["TARGET_FILE_PATH"], $arFile);
+            if ($res) {
+                \Bitrix\Clouds\CopyQueueTable::delete($copyTask["ID"]);
+                return CCloudFailover::ST_CONTINUE;
+            } else {
+                \Bitrix\Clouds\CopyQueueTable::update(
+                    $copyTask["ID"],
+                    array(
+                        "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                        "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                            "clouds",
+                            "max_copy_fail_count"
+                        ) ? "F" : $copyTask["STATUS"],
+                        "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to upload file."
+                    )
+                );
+                return CCloudFailover::ST_ERROR;
+            }
+        }
 
         $upload = new CCloudStorageUpload($tempPath);
         if ($copyTask["FILE_POS"] == 0) {
@@ -249,11 +344,17 @@ class CCloudFailover
 
             if (!$upload->isStarted()) {
                 if (!$upload->Start($targetBucket, $copyTask["FILE_SIZE"], $CONTENT_TYPE)) {
-                    \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                        "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                        "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                        "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to start upload."
-                    ));
+                    \Bitrix\Clouds\CopyQueueTable::update(
+                        $copyTask["ID"],
+                        array(
+                            "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                            "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                                "clouds",
+                                "max_copy_fail_count"
+                            ) ? "F" : $copyTask["STATUS"],
+                            "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): failed to start upload."
+                        )
+                    );
                     return CCloudFailover::ST_ERROR;
                 }
             }
@@ -263,7 +364,10 @@ class CCloudFailover
 
         $http = new \Bitrix\Main\Web\HttpClient();
         $rangeStart = $copyTask["FILE_POS"];
-        $rangeEnd = min($copyTask["FILE_POS"] + $targetBucket->getService()->GetMinUploadPartSize(), $copyTask["FILE_SIZE"]) - 1;
+        $rangeEnd = min(
+                $copyTask["FILE_POS"] + $targetBucket->getService()->GetMinUploadPartSize(),
+                $copyTask["FILE_SIZE"]
+            ) - 1;
         $http->setHeader("Range", "bytes=" . $rangeStart . "-" . $rangeEnd);
         $data = $http->get($sourceBucket->GetFileSRC($copyTask["SOURCE_FILE_PATH"]));
 
@@ -276,11 +380,17 @@ class CCloudFailover
         }
 
         if (!$uploadResult) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): upload part failed."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): upload part failed."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
@@ -288,18 +398,27 @@ class CCloudFailover
 
         //Continue next time
         if ($filePos < $copyTask["FILE_SIZE"]) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FILE_POS" => $filePos,
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FILE_POS" => $filePos,
+                )
+            );
             return CCloudFailover::ST_CONTINUE;
         }
 
         if (!$upload->Finish($targetBucket)) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): finish has failed."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): finish has failed."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
@@ -317,11 +436,17 @@ class CCloudFailover
         }
 
         if (!$targetBucket->FileRename($tempPath, $copyTask["TARGET_FILE_PATH"])) {
-            \Bitrix\Clouds\CopyQueueTable::update($copyTask["ID"], array(
-                "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
-                "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt("clouds", "max_copy_fail_count") ? "F" : $copyTask["STATUS"],
-                "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): rename failed."
-            ));
+            \Bitrix\Clouds\CopyQueueTable::update(
+                $copyTask["ID"],
+                array(
+                    "FAIL_COUNTER" => $copyTask["FAIL_COUNTER"] + 1,
+                    "STATUS" => $copyTask["FAIL_COUNTER"] >= COption::GetOptionInt(
+                        "clouds",
+                        "max_copy_fail_count"
+                    ) ? "F" : $copyTask["STATUS"],
+                    "ERROR_MESSAGE" => "CCloudFailover::executeCopyQueue(" . $copyTask["ID"] . "): rename failed."
+                )
+            );
             return CCloudFailover::ST_ERROR;
         }
 
@@ -394,16 +519,18 @@ class CCloudFailover
             if ($bucket->Init()) {
                 $etime = time() + COption::GetOptionInt("clouds", "sync_agent_time");
                 do {
-                    $lastJob = \Bitrix\Clouds\CopyQueueTable::getList(array(
-                        "select" => array("SOURCE_FILE_PATH"),
-                        "filter" => array(
-                            "=OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
-                            "=SOURCE_BUCKET_ID" => $bucketFrom,
-                            "=TARGET_BUCKET_ID" => $bucketTo,
-                        ),
-                        "order" => array("ID" => "DESC"),
-                        "limit" => 1
-                    ))->fetch();
+                    $lastJob = \Bitrix\Clouds\CopyQueueTable::getList(
+                        array(
+                            "select" => array("SOURCE_FILE_PATH"),
+                            "filter" => array(
+                                "=OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
+                                "=SOURCE_BUCKET_ID" => $bucketFrom,
+                                "=TARGET_BUCKET_ID" => $bucketTo,
+                            ),
+                            "order" => array("ID" => "DESC"),
+                            "limit" => 1
+                        )
+                    )->fetch();
                     $lastKey = $lastJob ? ltrim($lastJob["SOURCE_FILE_PATH"], '/') : '';
 
                     $files = $bucket->ListFiles("/", true, $limit, $lastKey);
@@ -412,14 +539,16 @@ class CCloudFailover
                     }
 
                     foreach ($files['file'] as $fileName) {
-                        \Bitrix\Clouds\CopyQueueTable::add(array(
-                            "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
-                            "OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
-                            "SOURCE_BUCKET_ID" => $bucketFrom,
-                            "SOURCE_FILE_PATH" => "/" . $fileName,
-                            "TARGET_BUCKET_ID" => $bucketTo,
-                            "TARGET_FILE_PATH" => "/" . $fileName,
-                        ));
+                        \Bitrix\Clouds\CopyQueueTable::add(
+                            array(
+                                "TIMESTAMP_X" => new \Bitrix\Main\Type\DateTime(),
+                                "OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
+                                "SOURCE_BUCKET_ID" => $bucketFrom,
+                                "SOURCE_FILE_PATH" => "/" . $fileName,
+                                "TARGET_BUCKET_ID" => $bucketTo,
+                                "TARGET_FILE_PATH" => "/" . $fileName,
+                            )
+                        );
                     }
                 } while (time() < $etime);
             }

@@ -89,7 +89,7 @@ class Configuration extends Model
      */
     public function getValue()
     {
-        return unserialize($this->value);
+        return unserialize($this->value, ['allowed_classes' => false]);
     }
 
     /**
@@ -132,10 +132,12 @@ class Configuration extends Model
      */
     public static function loadByIds(array $ids)
     {
-        return static::getModelList(array(
-            'select' => array('*'),
-            'filter' => array('ID' => $ids),
-        ));
+        return static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => array('ID' => $ids),
+            )
+        );
     }
 
     /**

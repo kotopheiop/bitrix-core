@@ -1,5 +1,6 @@
 <?
-$MESS["SALE_DLVRS_ADD_ESL_TITLE"] = "Подъем на этаж";
-$MESS["SALE_DLVRS_ADD_ESL_PARAMS_NAME"] = "Настройка стоимости";
-$MESS["SALE_DLVRS_ADD_ESL_WEIGHT_FROM"] = "для веса от";
-$MESS["SALE_DLVRS_ADD_ESL_KG"] = "кг";
+
+$MESS["SALE_DLVRS_ADD_ESL_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADD_ESL_PARAMS_NAME"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADD_ESL_WEIGHT_FROM"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ";
+$MESS["SALE_DLVRS_ADD_ESL_KG"] = "пїЅпїЅ";

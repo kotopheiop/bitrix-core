@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
@@ -6,13 +9,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 /** @global CUser $USER */
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
-if (!CModule::IncludeModule('perfmon'))
+if (!Loader::includeModule('perfmon')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 IncludeModuleLangFile(__FILE__);
@@ -46,14 +51,24 @@ $rsSuggest = CPerfomanceIndexSuggest::GetList(
     array()
 );
 $arSuggest = $rsSuggest->Fetch();
-if (!$arSuggest)
+if (!$arSuggest) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sql = CPerfomanceSQL::Format($arSuggest["SQL_TEXT"]);
 $sql = htmlspecialcharsEx($sql);
-$sql = preg_replace("/(" . preg_quote($arSuggest["TABLE_NAME"]) . "\\s+(?i:as\\s+)*" . $arSuggest["TABLE_ALIAS"] . ")\\s+/", "<b>\\1</b> ", $sql);
-foreach (explode(",", $arSuggest["COLUMN_NAMES"]) as $column_name)
-    $sql = str_replace($arSuggest["TABLE_ALIAS"] . "." . $column_name, "<b>" . $arSuggest["TABLE_ALIAS"] . "." . $column_name . "</b>", $sql);
+$sql = preg_replace(
+    "/(" . preg_quote($arSuggest["TABLE_NAME"]) . "\\s+(?i:as\\s+)*" . $arSuggest["TABLE_ALIAS"] . ")\\s+/",
+    "<b>\\1</b> ",
+    $sql
+);
+foreach (explode(",", $arSuggest["COLUMN_NAMES"]) as $column_name) {
+    $sql = str_replace(
+        $arSuggest["TABLE_ALIAS"] . "." . $column_name,
+        "<b>" . $arSuggest["TABLE_ALIAS"] . "." . $column_name . "</b>",
+        $sql
+    );
+}
 $arSuggest["FORMATTED_SQL_TEXT"] = $sql;
 
 $arColumns = explode(",", $arSuggest["COLUMN_NAMES"]);
@@ -80,24 +95,38 @@ while ($arQuery = $rsQueries->Fetch()) {
     if ($q->parse($q->transform2select($arQuery["SQL_TEXT"]))) {
         foreach ($arColumns as $column_name) {
             $arQuery["WHERE"][$column_name] = $q->find_value($arSuggest["TABLE_NAME"], $column_name);
-            if ($arQuery["WHERE"][$column_name] == "")
+            if ($arQuery["WHERE"][$column_name] == "") {
                 $arQuery["JOIN"][$column_name] = $q->find_join($arSuggest["TABLE_NAME"], $column_name);
-            else
+            } else {
                 $arQuery["JOIN"][$column_name] = "";
+            }
         }
     }
 
     $sql = CPerfomanceSQL::Format($arQuery["SQL_TEXT"]);
     $sql = htmlspecialcharsEx($sql);
-    $sql = preg_replace("/(" . preg_quote($arSuggest["TABLE_NAME"]) . "\\s+(?i:as\\s+)*" . $arSuggest["TABLE_ALIAS"] . ")\\s+/", "<b>\\1</b> ", $sql);
-    foreach (explode(",", $arSuggest["COLUMN_NAMES"]) as $column_name)
-        $sql = str_replace($arSuggest["TABLE_ALIAS"] . "." . $column_name, "<b>" . $arSuggest["TABLE_ALIAS"] . "." . $column_name . "</b>", $sql);
+    $sql = preg_replace(
+        "/(" . preg_quote($arSuggest["TABLE_NAME"]) . "\\s+(?i:as\\s+)*" . $arSuggest["TABLE_ALIAS"] . ")\\s+/",
+        "<b>\\1</b> ",
+        $sql
+    );
+    foreach (explode(",", $arSuggest["COLUMN_NAMES"]) as $column_name) {
+        $sql = str_replace(
+            $arSuggest["TABLE_ALIAS"] . "." . $column_name,
+            "<b>" . $arSuggest["TABLE_ALIAS"] . "." . $column_name . "</b>",
+            $sql
+        );
+    }
 
     $arQuery["FORMATTED_SQL_TEXT"] = $sql;
 
     foreach ($arColumns as $column_name) {
         if ($arQuery["WHERE"][$column_name]) {
-            $arColStat = CPerfQueryStat::GatherColumnStatByValue($arSuggest["TABLE_NAME"], $column_name, trim($arQuery["WHERE"][$column_name], "'"));
+            $arColStat = CPerfQueryStat::GatherColumnStatByValue(
+                $arSuggest["TABLE_NAME"],
+                $column_name,
+                trim($arQuery["WHERE"][$column_name], "'")
+            );
             if ($arColStat && $arColStat["TABLE_ROWS"] > 0) {
                 $arQuery["STAT"][$column_name] = $arColStat["COLUMN_ROWS"] / $arColStat["TABLE_ROWS"];
             }
@@ -116,32 +145,39 @@ while ($arQuery = $rsQueries->Fetch()) {
 
 function _sort_index_columns($a, $b)
 {
-    if ($a > $b)
+    if ($a > $b) {
         return 1;
-    elseif ($a < $b)
+    } elseif ($a < $b) {
         return -1;
-    else
+    } else {
         return 0;
+    }
 }
 
 $arIndexColumns = array();
 foreach ($arColumns as $column_name) {
     $arIndexColumns[$column_name] = 0;
     $i = 0;
-    foreach ($arQueries as $i => $arQuery)
+    foreach ($arQueries as $i => $arQuery) {
         $arIndexColumns[$column_name] += $arQuery["STAT"][$column_name];
+    }
     $arIndexColumns[$column_name] /= $i + 1;
 }
 if (count($arIndexColumns) > 1) {
     $bHasSelective = false;
-    foreach ($arIndexColumns as $column_name => $stat)
-        if ($stat < 0.05)
+    foreach ($arIndexColumns as $column_name => $stat) {
+        if ($stat < 0.05) {
             $bHasSelective = true;
+        }
+    }
 
-    if ($bHasSelective)
-        foreach ($arIndexColumns as $column_name => $stat)
-            if ($stat > 0.05)
+    if ($bHasSelective) {
+        foreach ($arIndexColumns as $column_name => $stat) {
+            if ($stat > 0.05) {
                 unset($arIndexColumns[$column_name]);
+            }
+        }
+    }
 
     uasort($arIndexColumns, "_sort_index_columns");
 }
@@ -149,8 +185,9 @@ $arIndexColumns = array_keys($arIndexColumns);
 
 $table = trim($arSuggest["TABLE_NAME"], "`");
 $index = array();
-foreach ($arIndexColumns as $indColumn)
+foreach ($arIndexColumns as $indColumn) {
     $index[] = trim($indColumn, "`");
+}
 
 $IndexExists = $DB->GetIndexName($table, $index);
 
@@ -160,13 +197,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
     if (isset($_REQUEST["create_index"]) && isset($_REQUEST["ddl"])) {
         $res = $DB->Query($_REQUEST["ddl"], true);
         if (is_object($res)) {
-            CPerfomanceIndexComplete::Add(array(
-                "TABLE_NAME" => $arSuggest["TABLE_NAME"],
-                "COLUMN_NAMES" => $arSuggest["COLUMN_NAMES"],
-                "INDEX_NAME" => $_REQUEST["index_name"],
-                "BANNED" => "N",
-            ));
-            LocalRedirect("/bitrix/admin/perfmon_index_detail.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
+            CPerfomanceIndexComplete::Add(
+                array(
+                    "TABLE_NAME" => $arSuggest["TABLE_NAME"],
+                    "COLUMN_NAMES" => $arSuggest["COLUMN_NAMES"],
+                    "INDEX_NAME" => $_REQUEST["index_name"],
+                    "BANNED" => "N",
+                )
+            );
+            LocalRedirect(
+                "/bitrix/admin/perfmon_index_detail.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam(
+                )
+            );
         } else {
             $strError = $DB->GetErrorMessage();
         }
@@ -174,16 +216,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
         $res = $DB->Query($_REQUEST["ddl"], true);
         if (is_object($res)) {
             CPerfomanceIndexComplete::DeleteByTableName($arSuggest["TABLE_NAME"], $arSuggest["COLUMN_NAMES"]);
-            LocalRedirect("/bitrix/admin/perfmon_index_detail.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
-        } else
+            LocalRedirect(
+                "/bitrix/admin/perfmon_index_detail.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        } else {
             $strError = $DB->GetErrorMessage();
+        }
     } elseif (isset($_REQUEST["ban_index"])) {
-        CPerfomanceIndexComplete::Add(array(
-            "TABLE_NAME" => $arSuggest["TABLE_NAME"],
-            "COLUMN_NAMES" => $arSuggest["COLUMN_NAMES"],
-            "INDEX_NAME" => false,
-            "BANNED" => "Y",
-        ));
+        CPerfomanceIndexComplete::Add(
+            array(
+                "TABLE_NAME" => $arSuggest["TABLE_NAME"],
+                "COLUMN_NAMES" => $arSuggest["COLUMN_NAMES"],
+                "INDEX_NAME" => false,
+                "BANNED" => "Y",
+            )
+        );
         LocalRedirect("/bitrix/admin/perfmon_index_list.php?lang=" . LANGUAGE_ID);
     }
 }
@@ -204,11 +252,13 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if ($strError) {
-    $message = new CAdminMessage(array(
-        "MESSAGE" => GetMessage("admin_lib_error"),
-        "DETAILS" => $strError,
-        "TYPE" => "ERROR",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => GetMessage("admin_lib_error"),
+            "DETAILS" => $strError,
+            "TYPE" => "ERROR",
+        )
+    );
     echo $message->Show();
 }
 ?>
@@ -279,9 +329,11 @@ if ($strError) {
                 <?
                 foreach ($arIndexes as $index_name => $arIndexColumnsTmp):
                     $arIndexColumnsTmp2 = $arIndexColumnsTmp;
-                    foreach ($arIndexColumnsTmp2 as $i => $index_column)
-                        if (in_array($index_column, $arColumns))
+                    foreach ($arIndexColumnsTmp2 as $i => $index_column) {
+                        if (in_array($index_column, $arColumns)) {
                             $arIndexColumnsTmp2[$i] = "<b>" . $arIndexColumnsTmp2[$i] . "</b>";
+                        }
+                    }
                     ?>
                     <tr valign="top">
                         <td><? echo htmlspecialcharsbx($index_name) ?></td>
@@ -315,16 +367,22 @@ if ($strError) {
                             ?></td>
                         <? foreach ($arQuery["STAT"] as $column_name => $ratio): ?>
                             <td style="text-align:center"><?
-                                if (isset($arQuery["WHERE"][$column_name]))
+                                if (isset($arQuery["WHERE"][$column_name])) {
                                     echo htmlspecialcharsEx($arQuery["WHERE"][$column_name]);
-                                else
+                                } else {
                                     echo htmlspecialcharsEx($arQuery["JOIN"][$column_name]);
+                                }
 
                                 $proc = max($ratio * 100, 0.0001);
-                                if ($proc > 5)
-                                    echo '<br><span class="errortext">', round($proc, 4), '%</span><br>' . GetMessage("PERFMON_IDETAIL_QUERY_IS_BAD");
-                                else
-                                    echo '<br><span class="notetext">', round($proc, 4), '%</span><br>' . GetMessage("PERFMON_IDETAIL_QUERY_IS_GOOD");
+                                if ($proc > 5) {
+                                    echo '<br><span class="errortext">', round($proc, 4), '%</span><br>' . GetMessage(
+                                            "PERFMON_IDETAIL_QUERY_IS_BAD"
+                                        );
+                                } else {
+                                    echo '<br><span class="notetext">', round($proc, 4), '%</span><br>' . GetMessage(
+                                            "PERFMON_IDETAIL_QUERY_IS_GOOD"
+                                        );
+                                }
                                 ?></td>
                         <? endforeach ?>
                     </tr>
@@ -367,7 +425,7 @@ if ($strError) {
                     <td><? echo GetMessage("PERFMON_IDETAIL_F_ROWS"); ?></td>
                     <td><? echo GetMessage("PERFMON_IDETAIL_F_EXTRA"); ?></td>
                 </tr>
-                <? foreach (unserialize($arSuggest["SQL_EXPLAIN"]) as $arRes): ?>
+                <? foreach (unserialize($arSuggest["SQL_EXPLAIN"], ['allowed_classes' => false]) as $arRes): ?>
                     <tr>
                         <td><? echo htmlspecialcharsEx($arRes["select_type"]); ?></td>
                         <td><? echo htmlspecialcharsEx($arRes["table"]); ?></td>
@@ -394,10 +452,11 @@ if ($strError) {
         <tr>
             <td><? echo GetMessage("PERFMON_IDETAIL_CREATE_INDEX_DDL") ?>:</td>
             <?
-            $prefix = substr("ix_perf_" . trim($arSuggest["TABLE_NAME"], "`"), 0, 27) . "_";
+            $prefix = mb_substr("ix_perf_" . trim($arSuggest["TABLE_NAME"], "`"), 0, 27) . "_";
             $i = 1;
-            while (array_key_exists($prefix . $i, $arIndexes))
+            while (array_key_exists($prefix . $i, $arIndexes)) {
                 $i++;
+            }
 
             $ddl = $obTable->getCreateIndexDDL($arSuggest["TABLE_NAME"], $prefix . $i, $arIndexColumns);
             ?>
@@ -425,7 +484,11 @@ if ($strError) {
     <? else: ?>
         <tr>
             <td><? echo GetMessage("PERFMON_IDETAIL_CREATED_INDEX_DDL") ?>:</td>
-            <td><? echo $obTable->getCreateIndexDDL($arSuggest["TABLE_NAME"], $IndexExists, $arIndexes[$IndexExists]) ?></td>
+            <td><? echo $obTable->getCreateIndexDDL(
+                    $arSuggest["TABLE_NAME"],
+                    $IndexExists,
+                    $arIndexes[$IndexExists]
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("PERFMON_IDETAIL_DROP_INDEX_DDL") ?>:</td>
@@ -490,7 +553,9 @@ if ($strError) {
         $sql = preg_replace("/^\\s*select\\s+/is", "SELECT /*SQL_NO_CACHE*/ ", $sql);
         $stime = getmicrotime();
         $rs = $DB->Query($sql);
-        while ($rs->Fetch()) ;
+        while ($rs->Fetch()) {
+            ;
+        }
         $etime = getmicrotime();
 
         $ratio = ($arSuggest["SQL_TIME"] / $arSuggest["SQL_COUNT"]) / ($etime - $stime);

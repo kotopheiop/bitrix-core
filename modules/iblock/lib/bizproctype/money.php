@@ -19,16 +19,18 @@ if (Loader::requireModule('bizproc')) {
             $currentValue = $explode[0] ? $explode[0] : '';
             $currentCurrency = $explode[1] ? $explode[1] : '';
 
-            if (!$currentCurrency)
+            if (!$currentCurrency) {
                 return intval($currentValue) ? $currentValue : '';
+            }
 
             if (CurrencyManager::isCurrencyExist($currentCurrency)) {
                 $format = \CCurrencyLang::getCurrencyFormat($currentCurrency);
                 $separators = \CCurrencyLang::getSeparators();
                 $thousandsSep = $separators[$format['THOUSANDS_VARIANT']];
                 $currentValue = number_format($currentValue, $format['DECIMALS'], $format['DEC_POINT'], $thousandsSep);
-                if ($format['THOUSANDS_VARIANT'] == \CCurrencyLang::SEP_NBSPACE)
+                if ($format['THOUSANDS_VARIANT'] == \CCurrencyLang::SEP_NBSPACE) {
                     $currentValue = str_replace(' ', '&nbsp;', $currentValue);
+                }
                 return preg_replace('/(^|[^&])#/', '${1}' . $currentValue, $format['FORMAT_STRING']);
             }
 
@@ -43,8 +45,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             if (\CBPActivity::isExpression($value)) {
                 $selectorValue = $value;
@@ -93,22 +100,30 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             $typeValue = array();
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             foreach ($value as $v) {
-                if (\CBPActivity::isExpression($v))
+                if (\CBPActivity::isExpression($v)) {
                     $selectorValue = $v;
-                else
+                } else {
                     $typeValue[] = $v;
+                }
             }
             // need to show at least one control
-            if (empty($typeValue))
+            if (empty($typeValue)) {
                 $typeValue[] = null;
+            }
 
             $controls = array();
 
@@ -180,19 +195,21 @@ if (Loader::requireModule('bizproc')) {
 
             $separator = Main\Text\HtmlFilter::encode((string)IblockMoneyProperty::SEPARATOR);
             $listCurrency = array();
-            $queryObject = CurrencyTable::getList(array(
-                'select' => array(
-                    'CURRENCY',
-                    'BASE',
-                    'NAME' => 'CURRENT_LANG_FORMAT.FULL_NAME',
-                    'FORMAT' => 'CURRENT_LANG_FORMAT.FORMAT_STRING',
-                    'DEC_POINT' => 'CURRENT_LANG_FORMAT.DEC_POINT',
-                    'THOUSANDS_VARIANT' => 'CURRENT_LANG_FORMAT.THOUSANDS_VARIANT',
-                    'DECIMALS' => 'CURRENT_LANG_FORMAT.DECIMALS',
-                ),
-                'filter' => array(),
-                'order' => array('SORT' => 'ASC', 'CURRENCY' => 'ASC')
-            ));
+            $queryObject = CurrencyTable::getList(
+                array(
+                    'select' => array(
+                        'CURRENCY',
+                        'BASE',
+                        'NAME' => 'CURRENT_LANG_FORMAT.FULL_NAME',
+                        'FORMAT' => 'CURRENT_LANG_FORMAT.FORMAT_STRING',
+                        'DEC_POINT' => 'CURRENT_LANG_FORMAT.DEC_POINT',
+                        'THOUSANDS_VARIANT' => 'CURRENT_LANG_FORMAT.THOUSANDS_VARIANT',
+                        'DECIMALS' => 'CURRENT_LANG_FORMAT.DECIMALS',
+                    ),
+                    'filter' => array(),
+                    'order' => array('SORT' => 'ASC', 'CURRENCY' => 'ASC')
+                )
+            );
             $separators = \CCurrencyLang::getSeparators();
             while ($currency = $queryObject->fetch()) {
                 $currency['SEPARATOR'] = $separators[$currency['THOUSANDS_VARIANT']];
@@ -260,8 +277,8 @@ if (Loader::requireModule('bizproc')) {
         public static function compareValues($valueA, $valueB)
         {
             if (
-                strpos($valueA, '|') === false
-                || strpos($valueB, '|') === false
+                mb_strpos($valueA, '|') === false
+                || mb_strpos($valueB, '|') === false
                 || !Main\Loader::includeModule('currency')
             ) {
                 return parent::compareValues($valueA, $valueB);

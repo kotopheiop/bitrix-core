@@ -19,13 +19,16 @@ abstract class Base extends CopyImplementer
     {
         list($field, $text) = $this->getText($id);
 
-        $detailText = call_user_func_array($callback, [
-            $text,
-            $this->ufEntityObject,
-            $id,
-            $this->ufDiskFileField,
-            $attachedIds
-        ]);
+        $detailText = call_user_func_array(
+            $callback,
+            [
+                $text,
+                $this->ufEntityObject,
+                $id,
+                $this->ufDiskFileField,
+                $attachedIds
+            ]
+        );
 
         $this->update($id, [$field => $detailText]);
     }

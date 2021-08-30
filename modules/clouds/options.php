@@ -1,4 +1,5 @@
 <?
+
 $module_id = "clouds";
 $RIGHT_R = $USER->CanDoOperation('clouds_config');
 $RIGHT_W = $USER->CanDoOperation('clouds_config');
@@ -12,23 +13,33 @@ if ($RIGHT_R || $RIGHT_W) :
     );
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "clouds_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-        array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "clouds_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "ICON" => "clouds_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+            "ICON" => "clouds_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
     CModule::IncludeModule($module_id);
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && $RIGHT_W && check_bitrix_sessid()) {
-
-        if (strlen($RestoreDefaults) > 0) {
+    if ($REQUEST_METHOD == "POST" && $Update . $Apply . $RestoreDefaults <> '' && $RIGHT_W && check_bitrix_sessid()) {
+        if ($RestoreDefaults <> '') {
             COption::RemoveOption($module_id);
         } else {
             foreach ($arAllOptions as $arOption) {
                 $name = $arOption[0];
                 $val = trim($_REQUEST[$name], " \t\n\r");
-                if ($arOption[2][0] == "checkbox" && $val != "Y")
+                if ($arOption[2][0] == "checkbox" && $val != "Y") {
                     $val = "N";
+                }
                 COption::SetOptionString($module_id, $name, $val, $arOption[1]);
             }
         }
@@ -38,13 +49,24 @@ if ($RIGHT_R || $RIGHT_W) :
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights2.php");
         ob_end_clean();
 
-        if (strlen($_REQUEST["back_url_settings"]) > 0) {
-            if ((strlen($Apply) > 0) || (strlen($RestoreDefaults) > 0))
-                LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
-            else
+        if ($_REQUEST["back_url_settings"] <> '') {
+            if (($Apply <> '') || ($RestoreDefaults <> '')) {
+                LocalRedirect(
+                    $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                        LANGUAGE_ID
+                    ) . "&back_url_settings=" . urlencode(
+                        $_REQUEST["back_url_settings"]
+                    ) . "&" . $tabControl->ActiveTabParam()
+                );
+            } else {
                 LocalRedirect($_REQUEST["back_url_settings"]);
+            }
         } else {
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
         }
     }
 
@@ -65,8 +87,9 @@ if ($RIGHT_R || $RIGHT_W) :
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                               id="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                               id="<? echo htmlspecialcharsbx($arOption[0]) ?>" value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>"
@@ -75,12 +98,16 @@ if ($RIGHT_R || $RIGHT_W) :
                     <? elseif ($type[0] == "textarea"):?>
                         <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
                                   name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                                  id="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                                  id="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx(
+                                $val
+                            ) ?></textarea>
                     <? elseif ($type[0] == "selectbox"):
                         ?><select name="<? echo htmlspecialcharsbx($arOption[0]) ?>"><?
                         foreach ($type[1] as $key => $value) {
                             ?>
-                            <option value="<? echo $key ?>"<? if ($val == $key) echo " selected" ?>><? echo htmlspecialcharsbx($value) ?></option><?
+                            <option value="<? echo $key ?>"<? if ($val == $key) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                $value
+                            ) ?></option><?
                         }
                         ?></select><?
                     endif ?>
@@ -96,18 +123,21 @@ if ($RIGHT_R || $RIGHT_W) :
         <input <? if (!$RIGHT_W) echo "disabled" ?> type="submit" name="Apply"
                                                     value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
                                                     title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-        <? if (strlen($_REQUEST["back_url_settings"]) > 0):?>
+        <? if ($_REQUEST["back_url_settings"] <> ''):?>
             <input <? if (!$RIGHT_W) echo "disabled" ?> type="button" name="Cancel"
                                                         value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
                                                         title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-                                                        onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                                                        onclick="window.location='<? echo htmlspecialcharsbx(
+                                                            CUtil::addslashes($_REQUEST["back_url_settings"])
+                                                        ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <? endif ?>
         <input <? if (!$RIGHT_W) echo "disabled" ?> type="submit" name="RestoreDefaults"
                                                     title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
-                                                    onclick="return confirm('<? echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")) ?>')"
-                                                    value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
+                                                    onclick="return confirm('<? echo AddSlashes(
+                                                        GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")
+                                                    ) ?>')" value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
         <?= bitrix_sessid_post(); ?>
         <? $tabControl->End(); ?>
     </form>

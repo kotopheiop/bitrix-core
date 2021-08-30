@@ -16,9 +16,11 @@ class PropertyRelation extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\PropertyRelation();
-        return ['PROPERTY_VARIANT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PROPERTY_VARIANT' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function addAction(array $fields)
@@ -26,11 +28,13 @@ class PropertyRelation extends Controller
         $r = new Result();
         $relationTable = new OrderPropsRelationTable();
 
-        $res = $this->existsByFilter([
-            'PROPERTY_ID' => $fields['PROPERTY_ID'],
-            'ENTITY_ID' => $fields['ENTITY_ID'],
-            'ENTITY_TYPE' => $fields['ENTITY_TYPE']
-        ]);
+        $res = $this->existsByFilter(
+            [
+                'PROPERTY_ID' => $fields['PROPERTY_ID'],
+                'ENTITY_ID' => $fields['ENTITY_ID'],
+                'ENTITY_TYPE' => $fields['ENTITY_TYPE']
+            ]
+        );
 
         if ($res->isSuccess() == false) {
             $r = $this->existsProperty($fields['PROPERTY_ID']);
@@ -48,13 +52,15 @@ class PropertyRelation extends Controller
         } else {
             return [
                 'PROPERTY_RELATION' =>
-                    OrderPropsRelationTable::getList([
-                        'filter' => [
-                            'PROPERTY_ID' => $fields['PROPERTY_ID'],
-                            'ENTITY_ID' => $fields['ENTITY_ID'],
-                            'ENTITY_TYPE' => $fields['ENTITY_TYPE']
+                    OrderPropsRelationTable::getList(
+                        [
+                            'filter' => [
+                                'PROPERTY_ID' => $fields['PROPERTY_ID'],
+                                'ENTITY_ID' => $fields['ENTITY_ID'],
+                                'ENTITY_TYPE' => $fields['ENTITY_TYPE']
+                            ]
                         ]
-                    ])->fetchAll()[0]
+                    )->fetchAll()[0]
             ];
         }
     }
@@ -95,11 +101,13 @@ class PropertyRelation extends Controller
             ]
         )->fetchAll();
 
-        return new Page('PROPERTY_RELATIONS', $items, function () use ($filter) {
+        return new Page(
+            'PROPERTY_RELATIONS', $items, function () use ($filter) {
             return count(
                 OrderPropsRelationTable::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     //endregion
@@ -108,9 +116,18 @@ class PropertyRelation extends Controller
     {
         $r = new Result();
 
-        $row = OrderPropsRelationTable::getList(['filter' => ['PROPERTY_ID' => $filter['PROPERTY_ID'], 'ENTITY_ID' => $filter['ENTITY_ID'], 'ENTITY_TYPE' => $filter['ENTITY_TYPE']]])->fetchAll();
-        if (isset($row[0]['PROPERTY_ID']) == false)
+        $row = OrderPropsRelationTable::getList(
+            [
+                'filter' => [
+                    'PROPERTY_ID' => $filter['PROPERTY_ID'],
+                    'ENTITY_ID' => $filter['ENTITY_ID'],
+                    'ENTITY_TYPE' => $filter['ENTITY_TYPE']
+                ]
+            ]
+        )->fetchAll();
+        if (isset($row[0]['PROPERTY_ID']) == false) {
             $r->addError(new Error('property relation is not exists', 201640400004));
+        }
 
         return $r;
     }
@@ -119,14 +136,17 @@ class PropertyRelation extends Controller
     {
         $r = new Result();
 
-        if (isset($fields['PROPERTY_ID']) == false && $fields['PROPERTY_ID'] <> '')
+        if (isset($fields['PROPERTY_ID']) == false && $fields['PROPERTY_ID'] <> '') {
             $r->addError(new Error('propertyId - parametrs is empty', 201640400001));
+        }
 
-        if (isset($fields['ENTITY_ID']) == false && $fields['ENTITY_ID'] <> '')
+        if (isset($fields['ENTITY_ID']) == false && $fields['ENTITY_ID'] <> '') {
             $r->addError(new Error('propertyId - parametrs is empty', 201640400002));
+        }
 
-        if (isset($fields['ENTITY_TYPE']) == false && $fields['ENTITY_TYPE'] <> '')
+        if (isset($fields['ENTITY_TYPE']) == false && $fields['ENTITY_TYPE'] <> '') {
             $r->addError(new Error('propertyId - parametrs is empty', 201640400003));
+        }
 
         return $r;
     }
@@ -145,14 +165,17 @@ class PropertyRelation extends Controller
     {
         $r = new Result();
 
-        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow([
-            'filter' => [
-                '=ID' => $id
+        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow(
+            [
+                'filter' => [
+                    '=ID' => $id
+                ]
             ]
-        ]);
+        );
 
-        if (is_null($property))
+        if (is_null($property)) {
             $r->addError(new Error('property id is not exists', 201650000002));
+        }
 
         return $r;
     }

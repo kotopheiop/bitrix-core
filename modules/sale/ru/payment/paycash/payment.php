@@ -1,17 +1,21 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 ?>
 <form ACTION="http://127.0.0.1:8129/wallet" METHOD="POST" target="_blank">
     <input type="hidden" NAME="currency" value="643">
     <input type="hidden" NAME="PayManner" value="paycash">
     <input type="hidden" NAME="invoice" value="<?= $ORDER_ID ?>">
-    <p>�� ������ �������� ����� ������� <strong>������.������</strong>.</p>
+    <p>�� ������ �������� ����� ������� <strong>�Money</strong>.</p>
     <p>C��� � <?= htmlspecialcharsEx($ORDER_ID . " �� " . $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]) ?></p>
-    <p>����� � ������ �� �����:
-        <strong><? echo SaleFormatCurrency($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"], $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) ?></strong>
-    </p>
-    <input type="hidden" name="InvoiceArticlesNames"
-           value="Order &nbsp;<?= $ORDER_ID ?>&nbsp(<?= htmlspecialcharsEx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]) ?>)">
+    <p>����� � ������ �� �����: <strong><? echo SaleFormatCurrency(
+                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+            ) ?></strong></p>
+    <input type="hidden" name="InvoiceArticlesNames" value="Order &nbsp;<?= $ORDER_ID ?>&nbsp(<?= htmlspecialcharsEx(
+        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]
+    ) ?>)">
     <input type="hidden" name="sum"
            value="<?= htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"]) ?>">
     <input type="hidden" name="ShopID"
@@ -31,18 +35,18 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
     <input type="Submit" name="Ok" value="��������� ������" class="btn btn-primary">
 </form>
 
-<div class="alert alert-warning mt-4"><strong>��������!</strong> ������� ������� �� ��������� ������� ������.������ -
+<div class="alert alert-warning mt-4"><strong>��������!</strong> ������� ������� �� ��������� ������� �Money -
     ����������, ����������, ������ ����������� ��� ������ ������.
 </div>
 
 <h4>��������� ������</h4>
 
-<p>����� �������� ������ "��������", ��������� ��� <i>������� "������.������" � ��� �������</i>. ����� ������� ������
-    "��������" ������� �������� ������ �������� "������.������" ���������� �� ������, ���������� �������� ������.
-    ���������� �� ������ ��������� ����������� �������� �������� ��������.<p>
+<p>����� �������� ������ "��������", ��������� ��� <i>������� "�Money" � ��� �������</i>. ����� ������� ������
+    "��������" ������� �������� ������ �������� "�Money" ���������� �� ������, ���������� �������� ������. ���������� ��
+    ������ ��������� ����������� �������� �������� ��������.<p>
 
 <p>��� ������� ����������� ��� ���������� ������. ���� �� ��������, � � ��� ���������� ����� �� �����, �� ��� �������
     �������� �������� ������ �������� ����������� ������ � ����������� ����� ����������� �������� ����. ����� ����, ���
-    �� �������� ���� � ������� ������.������, �� ������ ������, ����� ����� ��������� � ��������� �������� ��������
-    ��������. ��������, ������ ������� �������� � ���������������� ������ � ������� ����� ������ ������: � 10.00 ��
-    18.00, �� ������.</p>
+    �� �������� ���� � ������� �Money, �� ������ ������, ����� ����� ��������� � ��������� �������� �������� ��������.
+    ��������, ������ ������� �������� � ���������������� ������ � ������� ����� ������ ������: � 10.00 �� 18.00, ��
+    ������.</p>

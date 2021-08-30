@@ -34,7 +34,11 @@ final class SonetGroup extends Base
                     $groupPath = (
                     (!isset($options['mobile']) || !$options['mobile'])
                     && (!isset($options['im']) || !$options['im'])
-                        ? Option::get('socialnetwork', 'workgroups_page', SITE_DIR . 'company/workgroups/') . 'group/#group_id#/'
+                        ? Option::get(
+                            'socialnetwork',
+                            'workgroups_page',
+                            SITE_DIR . 'company/workgroups/'
+                        ) . 'group/#group_id#/'
                         : ''
                     );
                 }
@@ -75,7 +79,7 @@ final class SonetGroup extends Base
 
                     if ($groupSiteID) {
                         $tmp = \CSocNetLogTools::processPath(array("GROUP_URL" => $link), $USER->getId(), $groupSiteID);
-                        $link = (strlen($tmp["URLS"]["GROUP_URL"]) > 0 ? $tmp["SERVER_NAME"] . $tmp["URLS"]["GROUP_URL"] : $link);
+                        $link = ($tmp["URLS"]["GROUP_URL"] <> '' ? $tmp["SERVER_NAME"] . $tmp["URLS"]["GROUP_URL"] : $link);
                     }
 
                     $result['link'] = $link;

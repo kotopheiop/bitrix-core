@@ -40,20 +40,26 @@ class DiscountModuleTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('DISCOUNT_MODULE_ENTITY_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_MODULE_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('DISCOUNT_MODULE_ENTITY_MODULE_ID_FIELD')
-            )),
+            )
+            ),
         );
     }
 
@@ -78,12 +84,15 @@ class DiscountModuleTable extends Main\Entity\DataManager
     public static function deleteByDiscount($discount)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return;
+        }
         $conn = Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discount
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'DISCOUNT_ID'
+            ) . ' = ' . $discount
         );
     }
 
@@ -98,8 +107,9 @@ class DiscountModuleTable extends Main\Entity\DataManager
     public static function updateByDiscount($discount, $moduleList, $clear)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return false;
+        }
         $clear = ($clear === true);
         if ($clear) {
             self::deleteByDiscount($discount);
@@ -130,21 +140,25 @@ class DiscountModuleTable extends Main\Entity\DataManager
         if (!empty($discountList) && is_array($discountList)) {
             Main\Type\Collection::normalizeArrayValuesByInt($discountList);
             if (!empty($discountList)) {
-                if (!is_array($filter))
+                if (!is_array($filter)) {
                     $filter = array();
+                }
 
                 $discountRows = array_chunk($discountList, 500);
                 foreach ($discountRows as &$row) {
                     $filter['@DISCOUNT_ID'] = $row;
 
-                    $moduleIterator = self::getList(array(
-                        'select' => array('DISCOUNT_ID', 'MODULE_ID'),
-                        'filter' => $filter
-                    ));
+                    $moduleIterator = self::getList(
+                        array(
+                            'select' => array('DISCOUNT_ID', 'MODULE_ID'),
+                            'filter' => $filter
+                        )
+                    );
                     while ($module = $moduleIterator->fetch()) {
                         $module['DISCOUNT_ID'] = (int)$module['DISCOUNT_ID'];
-                        if (!isset($result[$module['DISCOUNT_ID']]))
+                        if (!isset($result[$module['DISCOUNT_ID']])) {
                             $result[$module['DISCOUNT_ID']] = array();
+                        }
                         $result[$module['DISCOUNT_ID']][] = $module['MODULE_ID'];
                     }
                     unset($module, $moduleIterator);

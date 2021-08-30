@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
@@ -8,8 +9,9 @@ if ($STAT_RIGHT == "D") {
         $isManager = CAdvContract::IsManager();
         $isAdvertiser = CAdvContract::IsAdvertiser();
         $isAdmin = CAdvContract::IsAdmin();
-        if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser)
+        if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
             $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+        }
     } else {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
     }
@@ -45,9 +47,11 @@ $arFilter = Array(
     ($find_region_name_exact_match == "Y" ? "=" : "%") . "REGION_NAME" => ($find != "" && $find_type == "region_name" ? $find : $find_region_name),
     ($find_city_name_exact_match == "Y" ? "=" : "%") . "CITY_NAME" => ($find != "" && $find_type == "city_name" ? $find : $find_city_name),
 );
-foreach ($arFilter as $i => $flt)
-    if (trim($flt) == "")
+foreach ($arFilter as $i => $flt) {
+    if (trim($flt) == "") {
         unset($arFilter[$i]);
+    }
+}
 
 $cData = new CCity;
 $rsData = $cData->GetList(array($by => $order), $arFilter);
@@ -92,7 +96,10 @@ $lAdmin->AddHeaders($arHeaders);
 
 while ($arRes = $rsData->NavNext(true, "f_")):
     $row =& $lAdmin->AddRow($f_CITY_ID, $arRes);
-    $row->AddViewField("COUNTRY_ID", $f_COUNTRY_ID . '<input type="hidden" name="CITY_NAME[' . $f_CITY_ID . ']" id="CITY_NAME[' . $f_CITY_ID . ']" value="[' . $f_COUNTRY_ID . '] [' . $f_REGION_NAME . '] ' . $f_CITY_NAME . '">');
+    $row->AddViewField(
+        "COUNTRY_ID",
+        $f_COUNTRY_ID . '<input type="hidden" name="CITY_NAME[' . $f_CITY_ID . ']" id="CITY_NAME[' . $f_CITY_ID . ']" value="[' . $f_COUNTRY_ID . '] [' . $f_REGION_NAME . '] ' . $f_CITY_NAME . '">'
+    );
 endwhile;
 
 $arFooter = array();
@@ -107,15 +114,18 @@ $arFooter[] = array(
 );
 $lAdmin->AddFooter($arFooter);
 
-$lAdmin->AddGroupActionTable(array(
+$lAdmin->AddGroupActionTable(
     array(
-        "action" => "setTargetValue(0, 'form_" . $sTableID . "', '" . CUtil::JSEscape($_REQUEST["field"]) . "')",
-        "value" => "select",
-        "type" => "button",
-        "title" => GetMessage("STAT_CITY_MSEL_SELECT_TITLE"),
-        "name" => GetMessage("STAT_CITY_MSEL_SELECT"),
-    )
-), array("disable_action_target" => true));
+        array(
+            "action" => "setTargetValue(0, 'form_" . $sTableID . "', '" . CUtil::JSEscape($_REQUEST["field"]) . "')",
+            "value" => "select",
+            "type" => "button",
+            "title" => GetMessage("STAT_CITY_MSEL_SELECT_TITLE"),
+            "name" => GetMessage("STAT_CITY_MSEL_SELECT"),
+        )
+    ),
+    array("disable_action_target" => true)
+);
 
 $lAdmin->CheckListMode();
 
@@ -207,32 +217,37 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
         <tr>
             <td><? echo GetMessage("STAT_CITY_MSEL_COUNTRY_ID") ?></td>
             <td><input type="text" name="find_country_id" size="47"
-                       value="<? echo htmlspecialcharsbx($find_country_id) ?>"><?= ShowExactMatchCheckbox("find_country_id") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_country_id) ?>"><?= ShowExactMatchCheckbox(
+                    "find_country_id"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_CITY_MSEL_COUNTRY_SHORT_NAME") ?></td>
             <td><input type="text" name="find_country_short_name" size="47"
-                       value="<? echo htmlspecialcharsbx($find_country_short_name) ?>"><?= ShowExactMatchCheckbox("find_country_short_name") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_country_short_name) ?>"><?= ShowExactMatchCheckbox(
+                    "find_country_short_name"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_CITY_MSEL_COUNTRY_NAME") ?></td>
             <td><input type="text" name="find_country_name" size="47"
-                       value="<? echo htmlspecialcharsbx($find_country_name) ?>"><?= ShowExactMatchCheckbox("find_country_name") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_country_name) ?>"><?= ShowExactMatchCheckbox(
+                    "find_country_name"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_CITY_MSEL_REGION_NAME") ?></td>
             <td><input type="text" name="find_region_name" size="47"
-                       value="<? echo htmlspecialcharsbx($find_region_name) ?>"><?= ShowExactMatchCheckbox("find_region_name") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_region_name) ?>"><?= ShowExactMatchCheckbox(
+                    "find_region_name"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_CITY_MSEL_CITY_NAME") ?></td>
             <td><input type="text" name="find_city_name" size="47"
-                       value="<? echo htmlspecialcharsbx($find_city_name) ?>"><?= ShowExactMatchCheckbox("find_city_name") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_city_name) ?>"><?= ShowExactMatchCheckbox(
+                    "find_city_name"
+                ) ?></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "find_form"));

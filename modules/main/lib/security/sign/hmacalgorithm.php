@@ -26,8 +26,9 @@ class HmacAlgorithm
      */
     public function __construct($hashAlgorithm = null)
     {
-        if ($hashAlgorithm)
+        if ($hashAlgorithm) {
             $this->setHashAlgorithm($hashAlgorithm);
+        }
     }
 
     /**
@@ -39,8 +40,9 @@ class HmacAlgorithm
      */
     public function setHashAlgorithm($hashAlgorithm)
     {
-        if (!in_array($hashAlgorithm, hash_algos()))
+        if (!in_array($hashAlgorithm, hash_algos())) {
             throw new ArgumentOutOfRangeException('hashAlgorithm', hash_algos());
+        }
 
         $this->hashAlgorithm = $hashAlgorithm;
         return $this;
@@ -107,13 +109,8 @@ class HmacAlgorithm
             throw new ArgumentTypeException('actual', 'string');
         }
 
-        if (function_exists('mb_orig_strlen')) {
-            $lenExpected = mb_orig_strlen($expected);
-            $lenActual = mb_orig_strlen($actual);
-        } else {
-            $lenExpected = strlen($expected);
-            $lenActual = strlen($actual);
-        }
+        $lenExpected = strlen($expected);
+        $lenActual = strlen($actual);
 
         $status = $lenExpected ^ $lenActual;
         $len = min($lenExpected, $lenActual);

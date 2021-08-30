@@ -43,15 +43,18 @@ class SectionPath extends Base
             $this->dbPath = array();
             $id = $this->id;
             while ($id > 0) {
-                $sectionList = \Bitrix\Iblock\SectionTable::getList(array(
-                    "select" => $select,
-                    "filter" => array("=ID" => $id),
-                ));
+                $sectionList = \Bitrix\Iblock\SectionTable::getList(
+                    array(
+                        "select" => $select,
+                        "filter" => array("=ID" => $id),
+                    )
+                );
                 $section = $sectionList->fetch();
-                if ($section)
+                if ($section) {
                     $this->dbPath[] = $section;
-                else
+                } else {
                     break;
+                }
                 $id = $section["IBLOCK_SECTION_ID"];
             }
             //Reversed from up to down
@@ -85,11 +88,12 @@ class SectionPath extends Base
             foreach ($userFields as $id => $uf) {
                 //TODO $uf["USER_TYPE"]["BASE_TYPE"] == "enum"
                 $propertyCode = $id;
-                $fieldCode = "property." . strtolower(substr($id, 3));
+                $fieldCode = "property." . mb_strtolower(mb_substr($id, 3));
                 $this->fieldMap[$fieldCode] = $propertyCode;
                 if (is_array($uf["VALUE"])) {
-                    foreach ($uf["VALUE"] as $value)
+                    foreach ($uf["VALUE"] as $value) {
                         $this->fields[$propertyCode][] = $value;
+                    }
                 } else {
                     $this->fields[$propertyCode][] = $uf["VALUE"];
                 }

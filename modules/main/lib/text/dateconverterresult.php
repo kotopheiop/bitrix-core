@@ -58,8 +58,13 @@ class DateConverterResult
      * @param array $metrics
      * @param array $metricModifier
      */
-    function __construct(\Bitrix\Main\Type\DateTime $date, $matchParams, $type = self::TYPE_UNKNOWN, $metrics = Array(), $metricModifier = Array())
-    {
+    function __construct(
+        \Bitrix\Main\Type\DateTime $date,
+        $matchParams,
+        $type = self::TYPE_UNKNOWN,
+        $metrics = Array(),
+        $metricModifier = Array()
+    ) {
         $this->date = $date;
         $this->type = $type;
         if (is_array($matchParams)) {

@@ -1,4 +1,5 @@
 <?
+
 define("BX_SESSION_ID_CHANGE", false);
 define("PERFMON_STOP", true);
 if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
@@ -16,9 +17,19 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         && check_bitrix_sessid()
         && $APPLICATION->GetGroupRight("perfmon") >= "W"
     ) {
-        $sec_per_page = number_format(array_sum($_SESSION["PERFMON_TIMES"]) / doubleval(count($_SESSION["PERFMON_TIMES"])), 4, ".", " ");
+        $sec_per_page = number_format(
+            array_sum($_SESSION["PERFMON_TIMES"]) / doubleval(count($_SESSION["PERFMON_TIMES"])),
+            4,
+            ".",
+            " "
+        );
         COption::SetOptionString("perfmon", "mark_php_page_time", $sec_per_page);
-        $result = number_format(doubleval(count($_SESSION["PERFMON_TIMES"])) / array_sum($_SESSION["PERFMON_TIMES"]), 2, ".", " ");
+        $result = number_format(
+            doubleval(count($_SESSION["PERFMON_TIMES"])) / array_sum($_SESSION["PERFMON_TIMES"]),
+            2,
+            ".",
+            " "
+        );
         COption::SetOptionString("perfmon", "mark_php_page_rate", $result);
         COption::SetOptionString("perfmon", "mark_php_page_date", ConvertTimeStamp(false, "FULL"));
 
@@ -30,22 +41,45 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                 }
             }
 
-            CPerfomanceHistory::Add($a = array(
-                "TOTAL_MARK" => round(doubleval(count($_SESSION["PERFMON_TIMES"])) / array_sum($_SESSION["PERFMON_TIMES"]), 2),
-                "ACCELERATOR_ENABLED" => $ACCELERATOR_ENABLED,
-            ));
+            CPerfomanceHistory::Add(
+                $a = array(
+                    "TOTAL_MARK" => round(
+                        doubleval(count($_SESSION["PERFMON_TIMES"])) / array_sum($_SESSION["PERFMON_TIMES"]),
+                        2
+                    ),
+                    "ACCELERATOR_ENABLED" => $ACCELERATOR_ENABLED,
+                )
+            );
         }
         ?>
         <script>
-            BX('mark_result_in_note').innerHTML = '<b><?echo GetMessage("PERFMON_PANEL_MARK_RESULT", array("#result#" => $result)), "<span class=\"required\"><sup>1</sup></span>"?></b>';
+            BX('mark_result_in_note').innerHTML = '<b><?echo GetMessage(
+                "PERFMON_PANEL_MARK_RESULT",
+                array("#result#" => $result)
+            ), "<span class=\"required\"><sup>1</sup></span>"?></b>';
             BX('page_rate_result').innerHTML = '<b><?echo $result?></b>';
             BX('page_time_result').innerHTML = '<?echo $sec_per_page?>';
-            BX('tab_cont_perfomance').innerHTML = '<?echo GetMessage("PERFMON_PANEL_PERF_NAME") . " (" . $result . ")"?>';
-            jsUtils.FindChildObject(BX('perfomance'), 'div', 'adm-detail-title', true).innerHTML = '<?echo GetMessage("PERFMON_PANEL_PERF_TITLE2", array("#TOTAL_MARK_DATE#" => COption::GetOptionString("perfmon", "mark_php_page_date"), "#TOTAL_MARK_VALUE#" => $result));?>';
+            BX('tab_cont_perfomance').innerHTML = '<?echo GetMessage(
+                    "PERFMON_PANEL_PERF_NAME"
+                ) . " (" . $result . ")"?>';
+            jsUtils.FindChildObject(BX('perfomance'), 'div', 'adm-detail-title', true).innerHTML = '<?echo GetMessage(
+                "PERFMON_PANEL_PERF_TITLE2",
+                array(
+                    "#TOTAL_MARK_DATE#" => COption::GetOptionString("perfmon", "mark_php_page_date"),
+                    "#TOTAL_MARK_VALUE#" => $result
+                )
+            );?>';
         </script><?
     }
+    AddEventHandler(
+        "main",
+        "OnAfterEpilog",
+        function () {
+            $main_exec_time = round(microtime(true) - START_EXEC_TIME, 4);
+            $_SESSION["PERFMON_TIMES"][] = $main_exec_time;
+        }
+    );
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
-    $_SESSION["PERFMON_TIMES"][] = $main_exec_time;
     die();
 } elseif (isset($_REQUEST["test"]) && $_REQUEST["test"] === "cluster") {
     define("PUBLIC_AJAX_MODE", true);
@@ -61,20 +95,24 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         && CModule::IncludeModule('perfmon')
     ) {
         $threads_step = intval($_GET["threads_step"]);
-        if ($threads_step <= 0)
+        if ($threads_step <= 0) {
             $threads_step = 0;
+        }
 
         $threads_from = intval($_GET["threads_from"]);
-        if ($threads_from <= 0)
+        if ($threads_from <= 0) {
             $threads_from = 1;
+        }
 
         $threads_to = intval($_GET["threads_to"]);
-        if ($threads_to < $threads_from)
+        if ($threads_to < $threads_from) {
             $threads_to = $threads_from + $threads_step;
+        }
 
         $threads_duration = intval($_GET["threads_duration"]);
-        if ($threads_duration <= 0)
+        if ($threads_duration <= 0) {
             $threads_duration = 10;
+        }
 
         $match = array();
         if (
@@ -99,14 +137,16 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
             die();
         }
 
-        if (strlen($_GET["server_url"]) > 0)
+        if ($_GET["server_url"] <> '') {
             $server_url = $_GET["server_url"];
-        else
+        } else {
             $server_url = '/bitrix/admin/perfmon_panel.php?test=Y&show_page_exec_time=Y&show_sql_stat=N';
+        }
 
-        if (strpos($server_url, "show_page_exec_time=Y") === false) {
-            if (strpos($server_url, "?") === false)
+        if (mb_strpos($server_url, "show_page_exec_time=Y") === false) {
+            if (mb_strpos($server_url, "?") === false) {
                 $server_url .= "?";
+            }
             $server_url .= '&show_page_exec_time=Y&show_sql_stat=N';
         }
 
@@ -153,8 +193,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                 $threads
             );
             $threads = $threads + $threads_step;
-            if ($threads > $threads_to)
+            if ($threads > $threads_to) {
                 $threads = $threads_to;
+            }
             ?>
             <script>
                 ThreadsUpdateImage('img_PAGES_PER_SECOND', <?echo $threads_from?>, <?echo $threads_to?>);
@@ -216,21 +257,16 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         && $APPLICATION->GetGroupRight("perfmon") >= "W"
     ) {
         if (
-            COption::GetOptionString("security", "session", "N") === "Y"
-            && CModule::IncludeModule("security")
-        ) {
-            $result = GetMessage("PERFMON_PANEL_SESSION_ERR") . "<span class=\"required\"><sup>3</sup>";
-            COption::SetOptionString("perfmon", "mark_php_session_time_value", -1);
-            ?>
-            <script>
-                BX('session_time_result').innerHTML = '<?echo $result?>';
-            </script><?
-        } elseif (
             isset($_SESSION["PERFMON_SESSION_START"])
             && is_array($_SESSION["PERFMON_SESSION_START"])
             && count($_SESSION["PERFMON_SESSION_START"]) > 0
         ) {
-            $result = number_format(array_sum($_SESSION["PERFMON_SESSION_START"]) / doubleval(count($_SESSION["PERFMON_SESSION_START"])), 4, ".", " ");
+            $result = number_format(
+                array_sum($_SESSION["PERFMON_SESSION_START"]) / doubleval(count($_SESSION["PERFMON_SESSION_START"])),
+                4,
+                ".",
+                " "
+            );
             COption::SetOptionString("perfmon", "mark_php_session_time_value", $result);
             ?>
             <script>
@@ -241,18 +277,19 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
     die();
 } elseif (isset($_REQUEST["test"]) && $_REQUEST["test"] === "session") {
-    $s = microtime();
+    define("NOT_CHECK_PERMISSIONS", true);
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
+
+    session_write_close();
+    $stime = microtime(true);
     session_start();
-    $e = microtime();
+    $etime = microtime(true);
 
-    list($s_sec, $s_usec) = explode(" ", $s);
-    list($e_sec, $e_usec) = explode(" ", $e);
+    if (isset($_SESSION["PERFMON_SESSION_START"]) && is_array($_SESSION["PERFMON_SESSION_START"])) {
+        $_SESSION["PERFMON_SESSION_START"][] = $etime - $stime;
+    }
 
-    $t = $e_sec + $e_usec - $s_sec - $s_usec;
-
-    if (isset($_SESSION["PERFMON_SESSION_START"]) && is_array($_SESSION["PERFMON_SESSION_START"]))
-        $_SESSION["PERFMON_SESSION_START"][] = $t;
-
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
     die();
 } elseif (isset($_REQUEST["test"])) {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -268,41 +305,67 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
     if (check_bitrix_sessid() && $APPLICATION->GetGroupRight("perfmon") >= "W") {
         switch ($_REQUEST["test"]) {
             case "cpu":
-                COption::SetOptionString("perfmon", "mark_php_cpu_value", number_format(CPerfomanceMeasure::GetPHPCPUMark(), 1, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_php_cpu_value",
+                    number_format(CPerfomanceMeasure::GetPHPCPUMark(), 1, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_php_cpu_value");
                 break;
             case "files":
-                COption::SetOptionString("perfmon", "mark_php_files_value", number_format(CPerfomanceMeasure::GetPHPFilesMark(), 1, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_php_files_value",
+                    number_format(CPerfomanceMeasure::GetPHPFilesMark(), 1, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_php_files_value");
                 break;
             case "mail":
-                COption::SetOptionString("perfmon", "mark_php_mail_value", number_format(CPerfomanceMeasure::GetPHPMailMark(), 4, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_php_mail_value",
+                    number_format(CPerfomanceMeasure::GetPHPMailMark(), 4, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_php_mail_value");
                 break;
             case "db_insert":
-                COption::SetOptionString("perfmon", "mark_db_insert_value", number_format(CPerfomanceMeasure::GetDBMark("insert"), 0, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_db_insert_value",
+                    number_format(CPerfomanceMeasure::GetDBMark("insert"), 0, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_db_insert_value");
                 break;
             case "db_read":
-                COption::SetOptionString("perfmon", "mark_db_read_value", number_format(CPerfomanceMeasure::GetDBMark("read"), 0, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_db_read_value",
+                    number_format(CPerfomanceMeasure::GetDBMark("read"), 0, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_db_read_value");
                 break;
             case "db_update":
-                COption::SetOptionString("perfmon", "mark_db_update_value", number_format(CPerfomanceMeasure::GetDBMark("update"), 0, ".", " "));
+                COption::SetOptionString(
+                    "perfmon",
+                    "mark_db_update_value",
+                    number_format(CPerfomanceMeasure::GetDBMark("update"), 0, ".", " ")
+                );
                 echo COption::GetOptionString("perfmon", "mark_db_update_value");
                 break;
             case "php":
                 $bPHPIsGood = version_compare(phpversion(), "5.1.0", ">=");
 
                 if ($bPHPIsGood) {
-                    if (strlen(ini_get('open_basedir')))
+                    if (ini_get('open_basedir') <> '') {
                         $bPHPIsGood = false;
+                    }
                 }
 
                 if ($bPHPIsGood) {
                     $size = CPerfAccel::unformat(ini_get('realpath_cache_size'));
-                    if ($size < 4 * 1024 * 1024)
+                    if ($size < 4 * 1024 * 1024) {
                         $bPHPIsGood = false;
+                    }
                 }
 
                 if ($bPHPIsGood) {
@@ -333,37 +396,54 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     $end_time = COption::GetOptionInt("perfmon", "end_time");
                     if (time() > $end_time) {
                         CPerfomanceKeeper::SetActive(false);
-                        if (COption::GetOptionString("perfmon", "total_mark_value", "") == "measure")
+                        if (COption::GetOptionString("perfmon", "total_mark_value", "") == "measure") {
                             COption::SetOptionString("perfmon", "total_mark_value", "calc");
+                        }
                     }
                 }
 
                 $cData = new CPerfomanceHit;
-                $rsData = $cData->GetList(array("IS_ADMIN" => "DESC"), array("=IS_ADMIN" => "N"), true, false, array("IS_ADMIN", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME"));
+                $rsData = $cData->GetList(
+                    array("IS_ADMIN" => "DESC"),
+                    array("=IS_ADMIN" => "N"),
+                    true,
+                    false,
+                    array("IS_ADMIN", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME")
+                );
                 $arTotalPage = $rsData->Fetch();
 
                 if (($action == "stop") || (COption::GetOptionString("perfmon", "total_mark_value") == "calc")) {
-                    if ($arTotalPage["AVG_PAGE_TIME"] > 0)
-                        COption::SetOptionString("perfmon", "total_mark_value", number_format(1 / $arTotalPage["AVG_PAGE_TIME"], 2));
-                    else
+                    if ($arTotalPage["AVG_PAGE_TIME"] > 0) {
+                        COption::SetOptionString(
+                            "perfmon",
+                            "total_mark_value",
+                            number_format(1 / $arTotalPage["AVG_PAGE_TIME"], 2)
+                        );
+                    } else {
                         COption::SetOptionString("perfmon", "total_mark_value", "N/A");
+                    }
                     COption::SetOptionString("perfmon", "total_mark_hits", intval($arTotalPage["COUNT"]));
                     COption::SetOptionString("perfmon", "total_mark_time", ConvertTimeStamp(false, "FULL"));
                 }
 
                 if (CPerfomanceKeeper::IsActive() || $duration > 0):
                     $interval = COption::GetOptionInt("perfmon", "end_time") - time();
-                    if ($interval < 0)
+                    if ($interval < 0) {
                         $interval = 0;
+                    }
                     $hours = intval($interval / 3600);
                     $interval -= $hours * 3600;
                     $minutes = intval($interval / 60);
                     $interval -= $minutes * 60;
                     $seconds = intval($interval);
-                    echo GetMessage("PERFMON_PANEL_MINUTES", array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds)); ?>
-                    <br>
-                    <? echo GetMessage("PERFMON_PANEL_TEST_PROGRESS", array("#HITS#" => intval($arTotalPage["COUNT"]))); ?>
-                    <br>
+                    echo GetMessage(
+                        "PERFMON_PANEL_MINUTES",
+                        array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds)
+                    ); ?><br>
+                    <? echo GetMessage(
+                    "PERFMON_PANEL_TEST_PROGRESS",
+                    array("#HITS#" => intval($arTotalPage["COUNT"]))
+                ); ?><br>
                     <input type="button" value="<? echo GetMessage("PERFMON_PANEL_BTN_STOP") ?>"
                            OnClick="javascript:StopTest()">
                     <script>
@@ -375,34 +455,51 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     <table border="0" cellpadding="0" cellspacing="0" class="internal" width="100%">
                         <tr class="heading">
                             <td width="40%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_SCRIPT_NAME") ?></td>
-                            <td width="0%"
-                                align="center"><? echo GetMessage("PERFMON_PANEL_DEV_WARNINGS"), "<span class=\"required\"><sup>2</sup></span>" ?></td>
+                            <td width="0%" align="center"><? echo GetMessage(
+                                    "PERFMON_PANEL_DEV_WARNINGS"
+                                ), "<span class=\"required\"><sup>2</sup></span>" ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_PERCENT") ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_COUNT") ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_AVG_PAGE_TIME") ?></td>
                         </tr>
                         <?
                         $cData = new CPerfomanceHit;
-                        $rsData = $cData->GetList(array("SUM_PAGE_TIME" => "DESC"), array("=IS_ADMIN" => "N"), true, false, array("SCRIPT_NAME", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME"));
+                        $rsData = $cData->GetList(
+                            array("SUM_PAGE_TIME" => "DESC"),
+                            array("=IS_ADMIN" => "N"),
+                            true,
+                            false,
+                            array("SCRIPT_NAME", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME")
+                        );
                         $i = 20;
                         while (($ar = $rsData->Fetch()) && ($i > 0)):
                             $ar["PERCENT"] = $ar["SUM_PAGE_TIME"] / $arTotalPage["SUM_PAGE_TIME"] * 100;
                             $i--;
                             ?>
                             <tr>
-                                <td>
-                                    <a href="<? echo htmlspecialcharsbx("perfmon_hit_list.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find_script_name=" . urlencode($ar["SCRIPT_NAME"])) ?>"><? echo htmlspecialcharsEx($ar["SCRIPT_NAME"]) ?></a>
-                                </td>
+                                <td><a href="<? echo htmlspecialcharsbx(
+                                        "perfmon_hit_list.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find_script_name=" . urlencode(
+                                            $ar["SCRIPT_NAME"]
+                                        )
+                                    ) ?>"><? echo htmlspecialcharsEx($ar["SCRIPT_NAME"]) ?></a></td>
                                 <td class="bx-digit-cell" id="err_count_<? echo $i ?>"><?
-                                    $rsHit = CPerfomanceHit::GetList(array("COUNT" => "DESC"), array(
-                                        '=SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                        '=IS_ADMIN' => 'N',
-                                        '=CACHE_TYPE' => 'Y',
-                                        '>MENU_RECALC' => 0,
-                                    ), true, array(), array('COUNT'));
+                                    $rsHit = CPerfomanceHit::GetList(
+                                        array("COUNT" => "DESC"),
+                                        array(
+                                            '=SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                            '=IS_ADMIN' => 'N',
+                                            '=CACHE_TYPE' => 'Y',
+                                            '>MENU_RECALC' => 0,
+                                        ),
+                                        true,
+                                        array(),
+                                        array('COUNT')
+                                    );
                                     if (($arHit = $rsHit->Fetch()) && ($arHit["COUNT"] >= $ar["COUNT"])):
                                         $err_count = 1;
-                                        $sHint = '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN1") . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN1_DESC") . '</td></tr>';
+                                        $sHint = '<tr><td nowrap><b>' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN1"
+                                            ) . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN1_DESC") . '</td></tr>';
                                     else:
                                         $err_count = 0;
                                         $sHint = "";
@@ -410,46 +507,80 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
 
                                     $arComps = array();
                                     if ($ar["COUNT"] > 1) {
-                                        $rsHit = CPerfomanceComponent::GetList(array("COUNT" => "DESC"), array(
-                                            '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                            '=HIT_IS_ADMIN' => 'N',
-                                            '=HIT_CACHE_TYPE' => 'Y',
-                                            '>QUERIES' => 0,
-                                        ), true, array(), array('COMPONENT_NAME', 'COUNT'));
+                                        $rsHit = CPerfomanceComponent::GetList(
+                                            array("COUNT" => "DESC"),
+                                            array(
+                                                '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                                '=HIT_IS_ADMIN' => 'N',
+                                                '=HIT_CACHE_TYPE' => 'Y',
+                                                '>QUERIES' => 0,
+                                            ),
+                                            true,
+                                            array(),
+                                            array('COMPONENT_NAME', 'COUNT')
+                                        );
 
                                         while ($arHit = $rsHit->Fetch()) {
-                                            if ($arHit["COUNT"] >= $ar["COUNT"])
+                                            if ($arHit["COUNT"] >= $ar["COUNT"]) {
                                                 $arComps[] = htmlspecialcharsbx($arHit["COMPONENT_NAME"]);
+                                            }
                                         }
                                     }
 
                                     if (count($arComps)) {
                                         $err_count++;
-                                        $sHint .= '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN2") . ' ' . GetMessage("PERFMON_PANEL_DEV_WARN2_DESC") . '</b> <ul style="font-size:100%">';
-                                        foreach ($arComps as $component_name)
-                                            $sHint .= '<li><a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(htmlspecialcharsbx($ar["SCRIPT_NAME"])) . '&amp;find_component_name=' . urlencode($component_name) . '">' . $component_name . '</a></li>';
+                                        $sHint .= '<tr><td nowrap><b>' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN2"
+                                            ) . ' ' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN2_DESC"
+                                            ) . '</b> <ul style="font-size:100%">';
+                                        foreach ($arComps as $component_name) {
+                                            $sHint .= '<li><a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(
+                                                    htmlspecialcharsbx($ar["SCRIPT_NAME"])
+                                                ) . '&amp;find_component_name=' . urlencode(
+                                                    $component_name
+                                                ) . '">' . $component_name . '</a></li>';
+                                        }
                                         $sHint .= '</ul></td></tr>';
                                     }
 
-                                    $rsHit = CPerfomanceComponent::GetList(array("COUNT" => "DESC"), array(
-                                        '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                        '=HIT_IS_ADMIN' => 'N',
-                                        '=HIT_CACHE_TYPE' => 'Y',
-                                        '>CACHE_SIZE' => 1024 * 1024,
-                                    ), true, array(), array('COMPONENT_NAME', 'MAX_CACHE_SIZE'));
+                                    $rsHit = CPerfomanceComponent::GetList(
+                                        array("COUNT" => "DESC"),
+                                        array(
+                                            '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                            '=HIT_IS_ADMIN' => 'N',
+                                            '=HIT_CACHE_TYPE' => 'Y',
+                                            '>CACHE_SIZE' => 1024 * 1024,
+                                        ),
+                                        true,
+                                        array(),
+                                        array('COMPONENT_NAME', 'MAX_CACHE_SIZE')
+                                    );
 
                                     $bFirst = true;
                                     while ($arHit = $rsHit->Fetch()) {
                                         if ($bFirst) {
                                             $err_count++;
-                                            $sHint .= '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN3") . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN3_DESC") . '<ul style="font-size:100%">';
+                                            $sHint .= '<tr><td nowrap><b>' . GetMessage(
+                                                    "PERFMON_PANEL_DEV_WARN3"
+                                                ) . '</b> ' . GetMessage(
+                                                    "PERFMON_PANEL_DEV_WARN3_DESC"
+                                                ) . '<ul style="font-size:100%">';
                                             $bFirst = false;
                                         }
-                                        $sHint .= '<li>' . CFile::FormatSize($arHit["MAX_CACHE_SIZE"], 0) . ' <a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(htmlspecialcharsbx($ar["SCRIPT_NAME"])) . '&amp;find_component_name=' . urlencode(htmlspecialcharsbx($arHit["COMPONENT_NAME"])) . '">' . htmlspecialcharsbx($arHit["COMPONENT_NAME"]) . '</a></li>';
+                                        $sHint .= '<li>' . CFile::FormatSize(
+                                                $arHit["MAX_CACHE_SIZE"],
+                                                0
+                                            ) . ' <a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(
+                                                htmlspecialcharsbx($ar["SCRIPT_NAME"])
+                                            ) . '&amp;find_component_name=' . urlencode(
+                                                htmlspecialcharsbx($arHit["COMPONENT_NAME"])
+                                            ) . '">' . htmlspecialcharsbx($arHit["COMPONENT_NAME"]) . '</a></li>';
                                     }
 
-                                    if (!$bFirst)
+                                    if (!$bFirst) {
                                         $sHint .= '</ul></td></tr>';
+                                    }
 
                                     ?>
                                     <? if ($err_count):?>
@@ -457,7 +588,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                            id="a_err_count_<? echo $i ?>"><? echo $err_count ?></a>
                                         <script>
                                             window.structHint<?echo "err_count_" . $i?> = new BXHint(
-                                                '<?echo CUtil::JSEscape('<table cellspacing="0" border="0" style="font-size:100%">' . $sHint . '</table>')?>',
+                                                '<?echo CUtil::JSEscape(
+                                                    '<table cellspacing="0" border="0" style="font-size:100%">' . $sHint . '</table>'
+                                                )?>',
                                                 BX('<?echo "a_err_count_" . $i?>'), {width: false, show_on_click: true}
                                             );
                                         </script>
@@ -467,23 +600,35 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                 </td>
                                 <td class="bx-digit-cell"><? echo number_format($ar["PERCENT"], 2) ?>%</td>
                                 <td class="bx-digit-cell"><? echo number_format($ar["COUNT"], 0, ".", " ") ?></td>
-                                <td class="bx-digit-cell"><? echo number_format($ar["AVG_PAGE_TIME"], 4, ".", " ") ?></td>
+                                <td class="bx-digit-cell"><? echo number_format(
+                                        $ar["AVG_PAGE_TIME"],
+                                        4,
+                                        ".",
+                                        " "
+                                    ) ?></td>
                             </tr>
                         <?endwhile; ?>
                     </table>
                     <br/>
-                    <a href="perfmon_hit_grouped.php?find_is_admin=N&amp;set_filter=Y&amp;lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage("PERFMON_PANEL_DEV_GROUPED_HIT_LIST") ?></a>
+                    <a href="perfmon_hit_grouped.php?find_is_admin=N&amp;set_filter=Y&amp;lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage(
+                            "PERFMON_PANEL_DEV_GROUPED_HIT_LIST"
+                        ) ?></a>
                     <script>
                         CloseWaitWindow();
                         BX('calc').disabled = false;
                         jsUtils.FindChildObject(BX('dev'), 'div', 'adm-detail-title', true).innerHTML = '<?echo
-                        GetMessage("PERFMON_PANEL_DEV_TITLE2", array(
-                            "#mark_value#" => COption::GetOptionString("perfmon", "total_mark_value"),
-                            "#hits#" => COption::GetOptionString("perfmon", "total_mark_hits"),
-                            "#duration#" => COption::GetOptionString("perfmon", "total_mark_duration"),
-                            "#mark_time#" => COption::GetOptionString("perfmon", "total_mark_time"),
-                        ));?>';
-                        BX('tab_cont_dev').innerHTML = '<?echo GetMessage("PERFMON_PANEL_DEV_NAME") . " (" . COption::GetOptionString("perfmon", "total_mark_value") . ")";?>';
+                        GetMessage(
+                            "PERFMON_PANEL_DEV_TITLE2",
+                            array(
+                                "#mark_value#" => COption::GetOptionString("perfmon", "total_mark_value"),
+                                "#hits#" => COption::GetOptionString("perfmon", "total_mark_hits"),
+                                "#duration#" => COption::GetOptionString("perfmon", "total_mark_duration"),
+                                "#mark_time#" => COption::GetOptionString("perfmon", "total_mark_time"),
+                            )
+                        );?>';
+                        BX('tab_cont_dev').innerHTML = '<?echo GetMessage(
+                                "PERFMON_PANEL_DEV_NAME"
+                            ) . " (" . COption::GetOptionString("perfmon", "total_mark_value") . ")";?>';
                     </script>
                 <?endif;
                 break;
@@ -494,7 +639,6 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
     die();
 } else {
-
     define("ADMIN_MODULE_NAME", "perfmon");
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
     /** @global CMain $APPLICATION */
@@ -505,10 +649,10 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
     IncludeModuleLangFile(__FILE__);
 
     $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-    if ($RIGHT < "R")
+    if ($RIGHT < "R") {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 
-    $bSessionDB = COption::GetOptionString("security", "session", "N") === "Y" && CModule::IncludeModule("security");
     $mark_value = COption::GetOptionString("perfmon", "mark_php_page_rate", "");
     $mark_date = COption::GetOptionString("perfmon", "mark_php_page_date", "");
 
@@ -522,7 +666,7 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         COption::RemoveOption("perfmon", "mark_db_read_value");
         COption::RemoveOption("perfmon", "mark_db_update_value");
 
-        if (strlen($total_calc)) {
+        if ($total_calc <> '') {
             CPerfomanceComponent::Clear();
             CPerfomanceSQL::Clear();
             CPerfomanceHit::Clear();
@@ -532,9 +676,6 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
             COption::SetOptionInt("perfmon", "total_mark_duration", $total_duration);
             COption::RemoveOption("perfmon", "total_mark_hits");
             COption::RemoveOption("perfmon", "total_mark_time");
-        } else {
-//		COption::RemoveOption("perfmon", "total_mark_value");
-//		COption::RemoveOption("perfmon", "total_mark_duration");
         }
 
         COption::SetOptionString("perfmon", "mark_php_page_rate", "measure");
@@ -560,12 +701,16 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         && (COption::GetOptionString("search", "use_stemming") == "Y")
         && (COption::GetOptionString("search", "use_tf_cache") == "Y");
 
-    if (CModule::IncludeModule('advertising') && COption::GetOptionString('advertising', 'DONT_FIX_BANNER_SHOWS') !== "Y") {
-        $rsBanners = CAdvBanner::GetList($by, $order, array("FIX_SHOW" => "Y"), $is_filtered, "N");
-        if ($rsBanners->Fetch())
+    if (CModule::IncludeModule('advertising') && COption::GetOptionString(
+            'advertising',
+            'DONT_FIX_BANNER_SHOWS'
+        ) !== "Y") {
+        $rsBanners = CAdvBanner::GetList('', '', array("FIX_SHOW" => "Y"), null, "N");
+        if ($rsBanners->Fetch()) {
             $adv_banners_fix_shows = true;
-        else
+        } else {
             $adv_banners_fix_shows = false;
+        }
     } else {
         $adv_banners_fix_shows = false;
     }
@@ -599,10 +744,11 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         "CACHED_b_vote_question",
     );
     foreach ($arConstants as $i => $constant) {
-        if (!defined($constant))
+        if (!defined($constant)) {
             unset($arConstants[$i]);
-        elseif (constant($constant) !== false)
+        } elseif (constant($constant) !== false) {
             unset($arConstants[$i]);
+        }
     }
     $bManagedCache = count($arConstants) <= 0;
 
@@ -612,8 +758,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         if (file_exists($file_name) && is_file($file_name)) {
             $fp = fopen($file_name, "rb");
             $sign = fread($fp, 4);
-            if ($sign == "Zend")
+            if ($sign == "Zend") {
                 $arEncodedModules[] = $module_id;
+            }
             fclose($fp);
         }
     }
@@ -632,15 +779,23 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         && $bOptimized;
 
     if ($bOptimal) {
-        if (COption::GetOptionString("perfmon", "bitrix_optimal", "-") !== "Y")
+        if (COption::GetOptionString("perfmon", "bitrix_optimal", "-") !== "Y") {
             COption::SetOptionString("perfmon", "bitrix_optimal", "Y");
+        }
     } else {
-        if (COption::GetOptionString("perfmon", "bitrix_optimal", "-") !== "N")
+        if (COption::GetOptionString("perfmon", "bitrix_optimal", "-") !== "N") {
             COption::SetOptionString("perfmon", "bitrix_optimal", "N");
+        }
     }
 
     $cData = new CPerfomanceHit;
-    $rsData = $cData->GetList(array("IS_ADMIN" => "DESC"), array("=IS_ADMIN" => "N"), true, false, array("IS_ADMIN", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME"));
+    $rsData = $cData->GetList(
+        array("IS_ADMIN" => "DESC"),
+        array("=IS_ADMIN" => "N"),
+        true,
+        false,
+        array("IS_ADMIN", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME")
+    );
     $arTotalPage = $rsData->Fetch();
 
     if (COption::GetOptionString("perfmon", "total_mark_value") == "calc" && $arTotalPage) {
@@ -655,14 +810,17 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         array(
             "DIV" => "perfomance",
             "TAB" => GetMessage("PERFMON_PANEL_PERF_NAME") . (
-                strlen($mark_value) && $mark_value != "measure" ?
+                mb_strlen($mark_value) && $mark_value != "measure" ?
                     " (" . $mark_value . ")" :
                     ""
                 ),
             "ICON" => "main_user_edit",
             "TITLE" => (
-            strlen($mark_value) && $mark_value != "measure" ?
-                GetMessage("PERFMON_PANEL_PERF_TITLE2", array("#TOTAL_MARK_DATE#" => $mark_date, "#TOTAL_MARK_VALUE#" => $mark_value)) :
+            mb_strlen($mark_value) && $mark_value != "measure" ?
+                GetMessage(
+                    "PERFMON_PANEL_PERF_TITLE2",
+                    array("#TOTAL_MARK_DATE#" => $mark_date, "#TOTAL_MARK_VALUE#" => $mark_value)
+                ) :
                 GetMessage("PERFMON_PANEL_PERF_TITLE1")
             ),
         ),
@@ -679,19 +837,22 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         array(
             "DIV" => "dev",
             "TAB" => GetMessage("PERFMON_PANEL_DEV_NAME") . (
-                strlen(COption::GetOptionString("perfmon", "total_mark_time", "")) > 0 ?
+                COption::GetOptionString("perfmon", "total_mark_time", "") <> '' ?
                     " (" . COption::GetOptionString("perfmon", "total_mark_value") . ")" :
                     ""
                 ),
             "ICON" => "main_user_edit",
             "TITLE" => (
-            strlen(COption::GetOptionString("perfmon", "total_mark_time", "")) > 0 ?
-                GetMessage("PERFMON_PANEL_DEV_TITLE2", array(
-                    "#mark_value#" => COption::GetOptionString("perfmon", "total_mark_value"),
-                    "#hits#" => COption::GetOptionString("perfmon", "total_mark_hits"),
-                    "#duration#" => COption::GetOptionString("perfmon", "total_mark_duration"),
-                    "#mark_time#" => COption::GetOptionString("perfmon", "total_mark_time"),
-                )) :
+            COption::GetOptionString("perfmon", "total_mark_time", "") <> '' ?
+                GetMessage(
+                    "PERFMON_PANEL_DEV_TITLE2",
+                    array(
+                        "#mark_value#" => COption::GetOptionString("perfmon", "total_mark_value"),
+                        "#hits#" => COption::GetOptionString("perfmon", "total_mark_hits"),
+                        "#duration#" => COption::GetOptionString("perfmon", "total_mark_duration"),
+                        "#mark_time#" => COption::GetOptionString("perfmon", "total_mark_time"),
+                    )
+                ) :
                 GetMessage("PERFMON_PANEL_DEV_TITLE1")
             ),
         ),
@@ -709,8 +870,10 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
 
     <script>
         var page_rate_count = 10;
-        var session_count = <?echo $bSessionDB ? '1' : '10'?>;
-        var duration = <?echo CPerfomanceKeeper::IsActive() ? 0 : intval(COption::GetOptionInt("perfmon", "total_mark_duration", 0))?>;
+        var session_count = 10;
+        var duration = <?echo CPerfomanceKeeper::IsActive() ? 0 : intval(
+            COption::GetOptionInt("perfmon", "total_mark_duration", 0)
+        )?>;
 
         function StopTest() {
 
@@ -719,7 +882,8 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                 CloseWaitWindow();
             };
 
-            CHttpRequest.Send('perfmon_panel.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get()?>&test=monitor&action=stop');
+            CHttpRequest.Send('perfmon_panel.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get(
+            )?>&test=monitor&action=stop');
         }
 
         function ShowBitrix() {
@@ -755,7 +919,10 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     setTimeout("PageRate()", 200);
                 } else {
                     CloseWaitWindow();
-                    <?if(COption::GetOptionString("perfmon", "total_mark_value") == "measure" && !CPerfomanceKeeper::IsActive()):?>
+                    <?if(COption::GetOptionString(
+                    "perfmon",
+                    "total_mark_value"
+                ) == "measure" && !CPerfomanceKeeper::IsActive()):?>
                     setTimeout("ShowBitrix()", 1500);
                     <?endif?>
                 }
@@ -972,10 +1139,14 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
         <p id="mark_result_in_note" style="font-size:200%"><b>
                 <?
                 $mark_value = COption::GetOptionString("perfmon", "mark_php_page_rate", "");
-                if ($mark_value == "" || $mark_value == "measure")
+                if ($mark_value == "" || $mark_value == "measure") {
                     echo GetMessage("PERFMON_PANEL_MARK_NO_RESULT");
-                else
-                    echo GetMessage("PERFMON_PANEL_MARK_RESULT", array("#result#" => $mark_value)) . "<span class=\"required\"><sup>1</sup></span>";
+                } else {
+                    echo GetMessage(
+                            "PERFMON_PANEL_MARK_RESULT",
+                            array("#result#" => $mark_value)
+                        ) . "<span class=\"required\"><sup>1</sup></span>";
+                }
                 ?>
             </b></p>
         <p>
@@ -986,13 +1157,25 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
             &nbsp;<select name="total_duration">
                 <?
                 $total_duration = COption::GetOptionInt("perfmon", "total_mark_duration");
-                if ($total_duration <= 0) $total_duration = 300;
+                if ($total_duration <= 0) {
+                    $total_duration = 300;
+                }
                 ?>
-                <option value="60" <? if ($total_duration == 60) echo "selected" ?>><? echo GetMessage("PERFMON_PANEL_INTERVAL_60_SEC") ?></option>
-                <option value="300" <? if ($total_duration == 300) echo "selected" ?>><? echo GetMessage("PERFMON_PANEL_INTERVAL_300_SEC") ?></option>
-                <option value="600" <? if ($total_duration == 600) echo "selected" ?>><? echo GetMessage("PERFMON_PANEL_INTERVAL_600_SEC") ?></option>
-                <option value="1800" <? if ($total_duration == 1800) echo "selected" ?>><? echo GetMessage("PERFMON_PANEL_INTERVAL_1800_SEC") ?></option>
-                <option value="3600" <? if ($total_duration == 3600) echo "selected" ?>><? echo GetMessage("PERFMON_PANEL_INTERVAL_3600_SEC") ?></option>
+                <option value="60" <? if ($total_duration == 60) echo "selected" ?>><? echo GetMessage(
+                        "PERFMON_PANEL_INTERVAL_60_SEC"
+                    ) ?></option>
+                <option value="300" <? if ($total_duration == 300) echo "selected" ?>><? echo GetMessage(
+                        "PERFMON_PANEL_INTERVAL_300_SEC"
+                    ) ?></option>
+                <option value="600" <? if ($total_duration == 600) echo "selected" ?>><? echo GetMessage(
+                        "PERFMON_PANEL_INTERVAL_600_SEC"
+                    ) ?></option>
+                <option value="1800" <? if ($total_duration == 1800) echo "selected" ?>><? echo GetMessage(
+                        "PERFMON_PANEL_INTERVAL_1800_SEC"
+                    ) ?></option>
+                <option value="3600" <? if ($total_duration == 3600) echo "selected" ?>><? echo GetMessage(
+                        "PERFMON_PANEL_INTERVAL_3600_SEC"
+                    ) ?></option>
             </select>
         </p>
         <? echo GetMessage("PERFMON_PANEL_TOP_NOTE"); ?>
@@ -1022,7 +1205,7 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                     <div id="page_rate_result_hidden" style="display:none"></div>
                                     <div id="page_rate_result"><? echo GetMessage("PERFMON_PANEL_MEASURE") ?></div>
                                 </b></td>
-                        <? elseif (strlen($mark_value) > 0):?>
+                        <? elseif ($mark_value <> ''):?>
                             <td class="bx-digit-cell"><b><? echo $mark_value ?></b></td>
                         <? else:?>
                             <td class="bx-digit-cell"><b><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></b></td>
@@ -1036,13 +1219,15 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     <tr>
                         <td nowrap><? echo GetMessage("PERFMON_PANEL_PAGE_TIME") ?></td>
                         <? if ($mark_value == "measure"):?>
-                            <td class="bx-digit-cell"
-                                id="page_time_result"><? echo GetMessage("PERFMON_PANEL_MEASURE") ?></td>
-                        <? elseif (strlen($mark_value) > 0):?>
+                            <td class="bx-digit-cell" id="page_time_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_MEASURE"
+                                ) ?></td>
+                        <? elseif ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="page_time_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="page_time_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="page_time_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">0.0330</td>
                         <td><? echo GetMessage("PERFMON_PANEL_PAGE_TIME_UNITS") ?></td>
@@ -1052,11 +1237,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     ?>
                     <tr>
                         <td nowrap><? echo GetMessage("PERFMON_PANEL_CPU") ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_php_cpu_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_php_cpu_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_php_cpu_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">9.0</td>
                         <td><? echo GetMessage("PERFMON_PANEL_CPU_UNITS") ?></td>
@@ -1066,11 +1252,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     ?>
                     <tr>
                         <td nowrap><? echo GetMessage("PERFMON_PANEL_FILES") ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_php_files_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_php_files_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_php_files_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">10 000</td>
                         <td><? echo GetMessage("PERFMON_PANEL_FILES_UNITS") ?></td>
@@ -1080,11 +1267,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     ?>
                     <tr>
                         <td nowrap><? echo GetMessage("PERFMON_PANEL_MAIL") ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_php_mail_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_php_mail_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_php_mail_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">0.0100</td>
                         <td><? echo GetMessage("PERFMON_PANEL_MAIL_UNITS") ?></td>
@@ -1097,14 +1285,15 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <div id="session_time_result_hidden" style="display:none"></div>
                         </td>
                         <? if ($mark_value == -1):?>
-                            <td class="bx-digit-cell"
-                                id="session_time_result"><? echo GetMessage("PERFMON_PANEL_SESSION_ERR") ?><span
-                                        class="required"><sup>3</sup></td>
-                        <? elseif (strlen($mark_value) > 0):?>
+                            <td class="bx-digit-cell" id="session_time_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_SESSION_ERR"
+                                ) ?></td>
+                        <? elseif ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="session_time_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="session_time_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="session_time_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">0.0002</td>
                         <td><? echo GetMessage("PERFMON_PANEL_SESSION_UNITS") ?></td>
@@ -1114,35 +1303,43 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     ?>
                     <tr>
                         <td nowrap><? echo GetMessage("PERFMON_PANEL_PHP") ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell"
-                                id="mark_php_is_good_result"><? echo($mark_value == "N" ? "<span class=\"errortext\">" . GetMessage("PERFMON_PANEL_MARK_PHP_IS_NO_GOOD") . "</span>" : GetMessage("PERFMON_PANEL_MARK_PHP_IS_GOOD")) ?></td>
+                                id="mark_php_is_good_result"><? echo($mark_value == "N" ? "<span class=\"errortext\">" . GetMessage(
+                                        "PERFMON_PANEL_MARK_PHP_IS_NO_GOOD"
+                                    ) . "</span>" : GetMessage("PERFMON_PANEL_MARK_PHP_IS_GOOD")) ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_php_is_good_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_php_is_good_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_MARK_PHP_IS_GOOD") ?></td>
-                        <td>
-                            <a href="perfmon_php.php?lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage("PERFMON_PANEL_PHP_REC") ?></a>
-                        </td>
+                        <td><a href="perfmon_php.php?lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage(
+                                    "PERFMON_PANEL_PHP_REC"
+                                ) ?></a></td>
                     </tr>
                     <?
-                    if ($DB->type == "MYSQL")
+                    if ($DB->type == "MYSQL") {
                         $db_type = "MySQL";
-                    elseif ($DB->type == "ORACLE")
+                    } elseif ($DB->type == "ORACLE") {
                         $db_type = "Oracle";
-                    else
+                    } else {
                         $db_type = "MS SQL";
+                    }
 
                     $mark_value = COption::GetOptionString("perfmon", "mark_db_insert_value", "");
                     ?>
                     <tr>
-                        <td nowrap><? echo GetMessage("PERFMON_PANEL_MARK_DB_INSERT_VALUE", array("#database_type#" => $db_type)) ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <td nowrap><? echo GetMessage(
+                                "PERFMON_PANEL_MARK_DB_INSERT_VALUE",
+                                array("#database_type#" => $db_type)
+                            ) ?></td>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_db_insert_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_db_insert_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_db_insert_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">5 600</td>
                         <td><? echo GetMessage("PERFMON_PANEL_MARK_DB_INSERT_UNITS") ?></td>
@@ -1151,12 +1348,16 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     $mark_value = COption::GetOptionString("perfmon", "mark_db_read_value", "");
                     ?>
                     <tr>
-                        <td nowrap><? echo GetMessage("PERFMON_PANEL_MARK_DB_READ_VALUE", array("#database_type#" => $db_type)) ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <td nowrap><? echo GetMessage(
+                                "PERFMON_PANEL_MARK_DB_READ_VALUE",
+                                array("#database_type#" => $db_type)
+                            ) ?></td>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_db_read_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_db_read_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_db_read_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">7 800</td>
                         <td><? echo GetMessage("PERFMON_PANEL_MARK_DB_READ_UNITS") ?></td>
@@ -1165,12 +1366,16 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                     $mark_value = COption::GetOptionString("perfmon", "mark_db_update_value", "");
                     ?>
                     <tr>
-                        <td nowrap><? echo GetMessage("PERFMON_PANEL_MARK_DB_UPDATE_VALUE", array("#database_type#" => $db_type)) ?></td>
-                        <? if (strlen($mark_value) > 0):?>
+                        <td nowrap><? echo GetMessage(
+                                "PERFMON_PANEL_MARK_DB_UPDATE_VALUE",
+                                array("#database_type#" => $db_type)
+                            ) ?></td>
+                        <? if ($mark_value <> ''):?>
                             <td class="bx-digit-cell" id="mark_db_update_value_result"><? echo $mark_value ?></td>
                         <? else:?>
-                            <td class="bx-digit-cell"
-                                id="mark_db_update_value_result"><? echo GetMessage("PERFMON_PANEL_UNKNOWN") ?></td>
+                            <td class="bx-digit-cell" id="mark_db_update_value_result"><? echo GetMessage(
+                                    "PERFMON_PANEL_UNKNOWN"
+                                ) ?></td>
                         <?endif ?>
                         <td class="bx-digit-cell">5 800</td>
                         <td><? echo GetMessage("PERFMON_PANEL_MARK_DB_UPDATE_UNITS") ?></td>
@@ -1183,9 +1388,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                 <br>
                 <? echo bitrix_sessid_post(); ?>
                 <input type="hidden" name="lang" value="<? echo LANGUAGE_ID ?>">
-                <input type="submit" name="calc" id="calc"
-                       value="<? echo GetMessage("PERFMON_PANEL_BTN_TEST") ?>" <? if ($RIGHT < "W" || COption::GetOptionString("perfmon", "total_mark_value") == "measure") echo "disabled" ?>
-                       class="adm-btn-save">
+                <input type="submit" name="calc" id="calc" value="<? echo GetMessage(
+                    "PERFMON_PANEL_BTN_TEST"
+                ) ?>" <? if ($RIGHT < "W" || COption::GetOptionString(
+                        "perfmon",
+                        "total_mark_value"
+                    ) == "measure") echo "disabled" ?> class="adm-btn-save">
             </td>
         </tr>
         <? $tabControl->BeginNextTab(); ?>
@@ -1204,9 +1412,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <td>&nbsp;</td>
                         <? else:?>
                             <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_COMPONENT_CACHE_OFF") ?></td>
-                            <td>
-                                <a href="cache.php?lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage("PERFMON_PANEL_COMPONENT_CACHE_REC") ?></a>
-                            </td>
+                            <td><a href="cache.php?lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage(
+                                        "PERFMON_PANEL_COMPONENT_CACHE_REC"
+                                    ) ?></a></td>
                         <?endif ?>
                     </tr>
                     <? if (IsModuleInstalled('statistic')):?>
@@ -1215,8 +1423,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <? if ($statistic_path):?>
                                 <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_STAT_SAVE_PATH_ON") ?></td>
                                 <td>
-                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=statistic&amp;tabControl_active_tab=edit2&amp;back_url_settings=<? echo urlencode($APPLICATION->GetCurPageParam("tabControl_active_tab=bitrix", array("tabControl_active_tab"))) ?>"><? echo GetMessage("PERFMON_PANEL_STAT_SAVE_PATH_REC") ?></a>
-                                </td>
+                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=statistic&amp;tabControl_active_tab=edit2&amp;back_url_settings=<? echo urlencode(
+                                        $APPLICATION->GetCurPageParam(
+                                            "tabControl_active_tab=bitrix",
+                                            array("tabControl_active_tab")
+                                        )
+                                    ) ?>"><? echo GetMessage("PERFMON_PANEL_STAT_SAVE_PATH_REC") ?></a></td>
                             <? else:?>
                                 <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_STAT_SAVE_PATH_OFF") ?></td>
                                 <td>&nbsp;</td>
@@ -1227,12 +1439,20 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                         <tr>
                             <td nowrap><? echo GetMessage("PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS") ?></td>
                             <? if ($adv_banners_fix_shows):?>
-                                <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_ON") ?></td>
+                                <td class="bx-digit-cell"><? echo GetMessage(
+                                        "PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_ON"
+                                    ) ?></td>
                                 <td>
-                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=advertising&amp;back_url_settings=<? echo urlencode($APPLICATION->GetCurPageParam("tabControl_active_tab=bitrix", array("tabControl_active_tab"))) ?>"><? echo GetMessage("PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_REC") ?></a>
-                                </td>
+                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=advertising&amp;back_url_settings=<? echo urlencode(
+                                        $APPLICATION->GetCurPageParam(
+                                            "tabControl_active_tab=bitrix",
+                                            array("tabControl_active_tab")
+                                        )
+                                    ) ?>"><? echo GetMessage("PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_REC") ?></a></td>
                             <? else:?>
-                                <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_OFF") ?></td>
+                                <td class="bx-digit-cell"><? echo GetMessage(
+                                        "PERFMON_PANEL_ADV_BANNERS_FIX_SHOWS_OFF"
+                                    ) ?></td>
                                 <td>&nbsp;</td>
                             <?endif ?>
                         </tr>
@@ -1246,8 +1466,12 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <? else:?>
                                 <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_SEARCH_STEM_OFF") ?></td>
                                 <td>
-                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=search&amp;back_url_settings=<? echo urlencode($APPLICATION->GetCurPageParam("tabControl_active_tab=bitrix", array("tabControl_active_tab"))) ?>"><? echo GetMessage("PERFMON_PANEL_SEARCH_STEM_REC") ?></a>
-                                </td>
+                                    <a href="settings.php?lang=<? echo LANGUAGE_ID ?>&amp;mid=search&amp;back_url_settings=<? echo urlencode(
+                                        $APPLICATION->GetCurPageParam(
+                                            "tabControl_active_tab=bitrix",
+                                            array("tabControl_active_tab")
+                                        )
+                                    ) ?>"><? echo GetMessage("PERFMON_PANEL_SEARCH_STEM_REC") ?></a></td>
                             <?endif ?>
                         </tr>
                     <?endif ?>
@@ -1286,17 +1510,30 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <td>&nbsp;</td>
                         <? else:?>
                             <td class="bx-digit-cell"><a href="javascript:void()"
-                                                         OnClick="BX('managed_cache_details').style.display='block';return false;"><? echo GetMessage("PERFMON_PANEL_MANAGED_CACHE_OFF") ?></a>
-                                <div id="managed_cache_details"
-                                     style="display:none"><? echo implode("<br>", $arConstants) ?></div>
+                                                         OnClick="BX('managed_cache_details').style.display='block';return false;"><? echo GetMessage(
+                                        "PERFMON_PANEL_MANAGED_CACHE_OFF"
+                                    ) ?></a>
+                                <div id="managed_cache_details" style="display:none"><? echo implode(
+                                        "<br>",
+                                        $arConstants
+                                    ) ?></div>
                             </td>
-                            <td><? echo GetMessage("PERFMON_PANEL_MANAGED_CACHE_REC", array(
-                                    "#file#" => (
-                                    IsModuleInstalled('fileman') && ($USER->CanDoOperation('fileman_admin_files') || $USER->CanDoOperation('fileman_edit_existent_files')) ?
-                                        "<a href=\"" . '/bitrix/admin/fileman_file_edit.php?lang=' . LANGUAGE_ID . '&amp;full_src=Y&amp;path=' . urlencode(BX_PERSONAL_ROOT . '/php_interface/dbconn.php') . '&amp;back_url=' . urlencode('/bitrix/admin/security_panel.php?lang=' . LANGUAGE_ID) . "\">dbconn.php</a>" :
-                                        "dbconn.php"
-                                    ),
-                                )); ?>
+                            <td><? echo GetMessage(
+                                    "PERFMON_PANEL_MANAGED_CACHE_REC",
+                                    array(
+                                        "#file#" => (
+                                        IsModuleInstalled('fileman') && ($USER->CanDoOperation(
+                                                'fileman_admin_files'
+                                            ) || $USER->CanDoOperation('fileman_edit_existent_files')) ?
+                                            "<a href=\"" . '/bitrix/admin/fileman_file_edit.php?lang=' . LANGUAGE_ID . '&amp;full_src=Y&amp;path=' . urlencode(
+                                                BX_PERSONAL_ROOT . '/php_interface/dbconn.php'
+                                            ) . '&amp;back_url=' . urlencode(
+                                                '/bitrix/admin/security_panel.php?lang=' . LANGUAGE_ID
+                                            ) . "\">dbconn.php</a>" :
+                                            "dbconn.php"
+                                        ),
+                                    )
+                                ); ?>
                             </td>
                         <?endif ?>
                     </tr>
@@ -1307,9 +1544,13 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <td>&nbsp;</td>
                         <? else:?>
                             <td class="bx-digit-cell"><a href="javascript:void()"
-                                                         OnClick="BX('encoded_modules_details').style.display='block';return false;"><? echo GetMessage("PERFMON_PANEL_ENC_MODULES_ON") ?></a>
-                                <div id="encoded_modules_details"
-                                     style="display:none"><? echo implode("<br>", $arEncodedModules) ?></div>
+                                                         OnClick="BX('encoded_modules_details').style.display='block';return false;"><? echo GetMessage(
+                                        "PERFMON_PANEL_ENC_MODULES_ON"
+                                    ) ?></a>
+                                <div id="encoded_modules_details" style="display:none"><? echo implode(
+                                        "<br>",
+                                        $arEncodedModules
+                                    ) ?></div>
                             </td>
                             <td><? echo GetMessage("PERFMON_PANEL_ENC_MODULES_REC"); ?></td>
                         <?endif ?>
@@ -1323,8 +1564,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                             <? else:?>
                                 <td class="bx-digit-cell"><? echo GetMessage("PERFMON_PANEL_DB_OPTIMIZE_NEEDED") ?></td>
                                 <td>
-                                    <a href="repair_db.php?lang=<? echo LANGUAGE_ID ?>&amp;optimize_tables=Y"><? echo GetMessage("PERFMON_PANEL_DB_OPTIMIZE_REC") ?></a>
-                                </td>
+                                    <a href="repair_db.php?lang=<? echo LANGUAGE_ID ?>&amp;optimize_tables=Y"><? echo GetMessage(
+                                            "PERFMON_PANEL_DB_OPTIMIZE_REC"
+                                        ) ?></a></td>
                             <?endif ?>
                         </tr>
                     <?endif ?>
@@ -1340,49 +1582,70 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
             <td id="dev_table">
                 <? if (COption::GetOptionString("perfmon", "total_mark_value") == "measure"):?>
                     <?
-                    if (CPerfomanceKeeper::IsActive())
+                    if (CPerfomanceKeeper::IsActive()) {
                         $interval = COption::GetOptionInt("perfmon", "end_time") - time();
-                    else
+                    } else {
                         $internal = COption::GetOptionInt("perfmon", "total_mark_duration");
+                    }
                     $hours = intval($interval / 3600);
                     $interval -= $hours * 3600;
                     $minutes = intval($interval / 60);
                     $interval -= $minutes * 60;
                     $seconds = intval($interval);
-                    echo GetMessage("PERFMON_PANEL_MINUTES", array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds));
+                    echo GetMessage(
+                        "PERFMON_PANEL_MINUTES",
+                        array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds)
+                    );
                     ?>
                 <? else:?>
                     <table border="0" cellpadding="0" cellspacing="0" class="internal" width="100%">
                         <tr class="heading">
                             <td width="40%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_SCRIPT_NAME") ?></td>
-                            <td width="0%"
-                                align="center"><? echo GetMessage("PERFMON_PANEL_DEV_WARNINGS"), "<span class=\"required\"><sup>2</sup></span>" ?></td>
+                            <td width="0%" align="center"><? echo GetMessage(
+                                    "PERFMON_PANEL_DEV_WARNINGS"
+                                ), "<span class=\"required\"><sup>2</sup></span>" ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_PERCENT") ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_COUNT") ?></td>
                             <td width="20%" align="center"><? echo GetMessage("PERFMON_PANEL_DEV_AVG_PAGE_TIME") ?></td>
                         </tr>
                         <?
                         $cData = new CPerfomanceHit;
-                        $rsData = $cData->GetList(array("SUM_PAGE_TIME" => "DESC"), array("=IS_ADMIN" => "N"), true, false, array("SCRIPT_NAME", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME"));
+                        $rsData = $cData->GetList(
+                            array("SUM_PAGE_TIME" => "DESC"),
+                            array("=IS_ADMIN" => "N"),
+                            true,
+                            false,
+                            array("SCRIPT_NAME", "COUNT", "SUM_PAGE_TIME", "AVG_PAGE_TIME")
+                        );
                         $i = 20;
                         while (($ar = $rsData->Fetch()) && ($i > 0)):
                             $ar["PERCENT"] = $ar["SUM_PAGE_TIME"] / $arTotalPage["SUM_PAGE_TIME"] * 100;
                             $i--;
                             ?>
                             <tr>
-                                <td>
-                                    <a href="<? echo htmlspecialcharsbx("perfmon_hit_list.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find_script_name=" . urlencode($ar["SCRIPT_NAME"])) ?>"><? echo htmlspecialcharsEx($ar["SCRIPT_NAME"]) ?></a>
-                                </td>
+                                <td><a href="<? echo htmlspecialcharsbx(
+                                        "perfmon_hit_list.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find_script_name=" . urlencode(
+                                            $ar["SCRIPT_NAME"]
+                                        )
+                                    ) ?>"><? echo htmlspecialcharsEx($ar["SCRIPT_NAME"]) ?></a></td>
                                 <td class="bx-digit-cell" id="err_count_<? echo $i ?>"><?
-                                    $rsHit = CPerfomanceHit::GetList(array("COUNT" => "DESC"), array(
-                                        '=SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                        '=IS_ADMIN' => 'N',
-                                        '=CACHE_TYPE' => 'Y',
-                                        '>MENU_RECALC' => 0,
-                                    ), true, array(), array('COUNT'));
+                                    $rsHit = CPerfomanceHit::GetList(
+                                        array("COUNT" => "DESC"),
+                                        array(
+                                            '=SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                            '=IS_ADMIN' => 'N',
+                                            '=CACHE_TYPE' => 'Y',
+                                            '>MENU_RECALC' => 0,
+                                        ),
+                                        true,
+                                        array(),
+                                        array('COUNT')
+                                    );
                                     if (($arHit = $rsHit->Fetch()) && ($arHit["COUNT"] >= $ar["COUNT"])):
                                         $err_count = 1;
-                                        $sHint = '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN1") . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN1_DESC") . '</td></tr>';
+                                        $sHint = '<tr><td nowrap><b>' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN1"
+                                            ) . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN1_DESC") . '</td></tr>';
                                     else:
                                         $err_count = 0;
                                         $sHint = "";
@@ -1390,46 +1653,80 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
 
                                     $arComps = array();
                                     if ($ar["COUNT"] > 1) {
-                                        $rsHit = CPerfomanceComponent::GetList(array("COUNT" => "DESC"), array(
-                                            '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                            '=HIT_IS_ADMIN' => 'N',
-                                            '=HIT_CACHE_TYPE' => 'Y',
-                                            '>QUERIES' => 0,
-                                        ), true, array(), array('COMPONENT_NAME', 'COUNT'));
+                                        $rsHit = CPerfomanceComponent::GetList(
+                                            array("COUNT" => "DESC"),
+                                            array(
+                                                '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                                '=HIT_IS_ADMIN' => 'N',
+                                                '=HIT_CACHE_TYPE' => 'Y',
+                                                '>QUERIES' => 0,
+                                            ),
+                                            true,
+                                            array(),
+                                            array('COMPONENT_NAME', 'COUNT')
+                                        );
 
                                         while ($arHit = $rsHit->Fetch()) {
-                                            if ($arHit["COUNT"] >= $ar["COUNT"])
+                                            if ($arHit["COUNT"] >= $ar["COUNT"]) {
                                                 $arComps[] = htmlspecialcharsbx($arHit["COMPONENT_NAME"]);
+                                            }
                                         }
                                     }
 
                                     if (count($arComps)) {
                                         $err_count++;
-                                        $sHint .= '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN2") . ' ' . GetMessage("PERFMON_PANEL_DEV_WARN2_DESC") . '</b> <ul style="font-size:100%">';
-                                        foreach ($arComps as $component_name)
-                                            $sHint .= '<li><a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(htmlspecialcharsbx($ar["SCRIPT_NAME"])) . '&amp;find_component_name=' . urlencode($component_name) . '">' . $component_name . '</a></li>';
+                                        $sHint .= '<tr><td nowrap><b>' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN2"
+                                            ) . ' ' . GetMessage(
+                                                "PERFMON_PANEL_DEV_WARN2_DESC"
+                                            ) . '</b> <ul style="font-size:100%">';
+                                        foreach ($arComps as $component_name) {
+                                            $sHint .= '<li><a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(
+                                                    htmlspecialcharsbx($ar["SCRIPT_NAME"])
+                                                ) . '&amp;find_component_name=' . urlencode(
+                                                    $component_name
+                                                ) . '">' . $component_name . '</a></li>';
+                                        }
                                         $sHint .= '</ul></td></tr>';
                                     }
 
-                                    $rsHit = CPerfomanceComponent::GetList(array("COUNT" => "DESC"), array(
-                                        '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
-                                        '=HIT_IS_ADMIN' => 'N',
-                                        '=HIT_CACHE_TYPE' => 'Y',
-                                        '>CACHE_SIZE' => 1024 * 1024,
-                                    ), true, array(), array('COMPONENT_NAME', 'MAX_CACHE_SIZE'));
+                                    $rsHit = CPerfomanceComponent::GetList(
+                                        array("COUNT" => "DESC"),
+                                        array(
+                                            '=HIT_SCRIPT_NAME' => $ar["SCRIPT_NAME"],
+                                            '=HIT_IS_ADMIN' => 'N',
+                                            '=HIT_CACHE_TYPE' => 'Y',
+                                            '>CACHE_SIZE' => 1024 * 1024,
+                                        ),
+                                        true,
+                                        array(),
+                                        array('COMPONENT_NAME', 'MAX_CACHE_SIZE')
+                                    );
 
                                     $bFirst = true;
                                     while ($arHit = $rsHit->Fetch()) {
                                         if ($bFirst) {
                                             $err_count++;
-                                            $sHint .= '<tr><td nowrap><b>' . GetMessage("PERFMON_PANEL_DEV_WARN3") . '</b> ' . GetMessage("PERFMON_PANEL_DEV_WARN3_DESC") . '<ul style="font-size:100%">';
+                                            $sHint .= '<tr><td nowrap><b>' . GetMessage(
+                                                    "PERFMON_PANEL_DEV_WARN3"
+                                                ) . '</b> ' . GetMessage(
+                                                    "PERFMON_PANEL_DEV_WARN3_DESC"
+                                                ) . '<ul style="font-size:100%">';
                                             $bFirst = false;
                                         }
-                                        $sHint .= '<li>' . CFile::FormatSize($arHit["MAX_CACHE_SIZE"], 0) . ' <a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(htmlspecialcharsbx($ar["SCRIPT_NAME"])) . '&amp;find_component_name=' . urlencode(htmlspecialcharsbx($arHit["COMPONENT_NAME"])) . '">' . htmlspecialcharsbx($arHit["COMPONENT_NAME"]) . '</a></li>';
+                                        $sHint .= '<li>' . CFile::FormatSize(
+                                                $arHit["MAX_CACHE_SIZE"],
+                                                0
+                                            ) . ' <a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_hit_script_name=' . urlencode(
+                                                htmlspecialcharsbx($ar["SCRIPT_NAME"])
+                                            ) . '&amp;find_component_name=' . urlencode(
+                                                htmlspecialcharsbx($arHit["COMPONENT_NAME"])
+                                            ) . '">' . htmlspecialcharsbx($arHit["COMPONENT_NAME"]) . '</a></li>';
                                     }
 
-                                    if (!$bFirst)
+                                    if (!$bFirst) {
                                         $sHint .= '</ul></td></tr>';
+                                    }
 
                                     ?>
                                     <? if ($err_count):?>
@@ -1437,7 +1734,9 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                            id="a_err_count_<? echo $i ?>"><? echo $err_count ?></a>
                                         <script>
                                             window.structHint<?echo "err_count_" . $i?> = new BXHint(
-                                                '<?echo CUtil::JSEscape('<table cellspacing="0" border="0" style="font-size:100%">' . $sHint . '</table>')?>',
+                                                '<?echo CUtil::JSEscape(
+                                                    '<table cellspacing="0" border="0" style="font-size:100%">' . $sHint . '</table>'
+                                                )?>',
                                                 BX('<?echo "a_err_count_" . $i?>'), {width: false, show_on_click: true}
                                             );
                                         </script>
@@ -1447,12 +1746,19 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                 </td>
                                 <td class="bx-digit-cell"><? echo number_format($ar["PERCENT"], 2) ?>%</td>
                                 <td class="bx-digit-cell"><? echo number_format($ar["COUNT"], 0, ".", " ") ?></td>
-                                <td class="bx-digit-cell"><? echo number_format($ar["AVG_PAGE_TIME"], 4, ".", " ") ?></td>
+                                <td class="bx-digit-cell"><? echo number_format(
+                                        $ar["AVG_PAGE_TIME"],
+                                        4,
+                                        ".",
+                                        " "
+                                    ) ?></td>
                             </tr>
                         <?endwhile; ?>
                     </table>
                     <br/>
-                    <a href="perfmon_hit_grouped.php?find_is_admin=N&amp;set_filter=Y&amp;lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage("PERFMON_PANEL_DEV_GROUPED_HIT_LIST") ?></a>
+                    <a href="perfmon_hit_grouped.php?find_is_admin=N&amp;set_filter=Y&amp;lang=<? echo LANGUAGE_ID ?>"><? echo GetMessage(
+                            "PERFMON_PANEL_DEV_GROUPED_HIT_LIST"
+                        ) ?></a>
                 <?endif ?>
             </td>
         </tr>
@@ -1526,9 +1832,24 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
                                 <td class="bx-digit-cell"><? echo intval($ar["THREADS"]) ?></td>
                                 <td class="bx-digit-cell"><? echo intval($ar["HITS"]) ?></td>
                                 <td class="bx-digit-cell"><? echo intval($ar["ERRORS"]) ?></td>
-                                <td class="bx-digit-cell"><? echo number_format($ar["PAGES_PER_SECOND"], 2, ".", " ") ?></td>
-                                <td class="bx-digit-cell"><? echo number_format($ar["PAGE_EXEC_TIME"], 6, ".", " ") ?></td>
-                                <td class="bx-digit-cell"><? echo number_format($ar["PAGE_RESP_TIME"], 6, ".", " ") ?></td>
+                                <td class="bx-digit-cell"><? echo number_format(
+                                        $ar["PAGES_PER_SECOND"],
+                                        2,
+                                        ".",
+                                        " "
+                                    ) ?></td>
+                                <td class="bx-digit-cell"><? echo number_format(
+                                        $ar["PAGE_EXEC_TIME"],
+                                        6,
+                                        ".",
+                                        " "
+                                    ) ?></td>
+                                <td class="bx-digit-cell"><? echo number_format(
+                                        $ar["PAGE_RESP_TIME"],
+                                        6,
+                                        ".",
+                                        " "
+                                    ) ?></td>
                             </tr>
                         <?endwhile; ?>
                         <? if ($i == 0):?>
@@ -1543,15 +1864,15 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
             <td width="<? echo $width ?>" align="center" class="adm-detail-valign-top">
                 <div id="img_PAGES_PER_SECOND">
                     <? echo GetMessage("PERFMON_PANEL_CLUSTER_PAGES_PER_SECOND") ?><br>
-                    <img class="graph"
-                         src="/bitrix/admin/perfmon_cluster_graph.php?rand=<?= rand() ?>&amp;find_data_type=PAGES_PER_SECOND&amp;width=<? echo $width ?>&amp;height=<? echo $height ?>&amp;lang=<? echo LANGUAGE_ID ?>"
+                    <img class="graph" src="/bitrix/admin/perfmon_cluster_graph.php?rand=<?= rand(
+                    ) ?>&amp;find_data_type=PAGES_PER_SECOND&amp;width=<? echo $width ?>&amp;height=<? echo $height ?>&amp;lang=<? echo LANGUAGE_ID ?>"
                          width="<? echo $width ?>" height="<? echo $height ?>">
                 </div>
                 <br/>
                 <div id="img_PAGE_EXEC_TIME">
                     <? echo GetMessage("PERFMON_PANEL_CLUSTER_PAGE_TIME") ?><br>
-                    <img class="graph"
-                         src="/bitrix/admin/perfmon_cluster_graph.php?rand=<?= rand() ?>&amp;find_data_type=PAGE_EXEC_TIME&amp;width=<? echo $width ?>&amp;height=<? echo $height ?>&amp;lang=<? echo LANGUAGE_ID ?>"
+                    <img class="graph" src="/bitrix/admin/perfmon_cluster_graph.php?rand=<?= rand(
+                    ) ?>&amp;find_data_type=PAGE_EXEC_TIME&amp;width=<? echo $width ?>&amp;height=<? echo $height ?>&amp;lang=<? echo LANGUAGE_ID ?>"
                          width="<? echo $width ?>" height="<? echo $height ?>">
                 </div>
             </td>
@@ -1570,7 +1891,6 @@ if (isset($_REQUEST["test"]) && $_REQUEST["test"] === "Y") {
     , GetMessage("PERFMON_PANEL_WARN_NOTE_1"), "<br>"
     , GetMessage("PERFMON_PANEL_WARN_NOTE_2"), "<br>"
     , GetMessage("PERFMON_PANEL_WARN_NOTE_3"), "<br>"
-    , "<span class=\"required\"><sup>3</sup></span>", GetMessage("PERFMON_PANEL_SESSION_NOTE"), "<br>"
     , EndNote();
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

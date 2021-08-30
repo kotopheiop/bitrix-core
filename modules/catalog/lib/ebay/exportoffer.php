@@ -28,14 +28,15 @@ class ExportOffer implements \Iterator
     /*other vars*/
     protected $cnt = 0;
     /** @var null|\CIBlockResult $dbItems */
-    protected $dbItems = NULL;
+    protected $dbItems = null;
     protected $catalogType;
     protected $onlyAvailableElements = false;    // export with flag "available"
 
     public function __construct($catalogType, $params)
     {
-        if (!isset($params["IBLOCK_ID"]) || intval($params["IBLOCK_ID"]) <= 0)
+        if (!isset($params["IBLOCK_ID"]) || intval($params["IBLOCK_ID"]) <= 0) {
             throw new SystemException("Incorrect iBlock ID  (" . __CLASS__ . "::" . __METHOD__ . ")");
+        }
 
         $this->catalogType = $catalogType;
 
@@ -44,10 +45,12 @@ class ExportOffer implements \Iterator
 
         $this->arIblock = $this->getIblockProps($params["SETUP_SERVER_NAME"]);
         $this->arSections = $this->getSections($params["PRODUCT_GROUPS"]);
-        if (isset($params["START_POSITION"]) && $params["START_POSITION"])
+        if (isset($params["START_POSITION"]) && $params["START_POSITION"]) {
             $this->startPosition = $params["START_POSITION"];
-        if (isset($params["INCLUDE_SUBSECTION"]))
+        }
+        if (isset($params["INCLUDE_SUBSECTION"])) {
             $this->includeSubsections = $params["INCLUDE_SUBSECTION"];
+        }
 
         $this->bAllSections = in_array(0, $this->arSections) ? true : false;
         $availGroups = $this->getAvailGroups();
@@ -117,22 +120,36 @@ class ExportOffer implements \Iterator
     {
 //		order need for limiting by ID
         $order = array("ID" => "ASC");
-        $arSelect = array("ID", "LID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "NAME", "PREVIEW_PICTURE", "PREVIEW_TEXT",
-            "PREVIEW_TEXT_TYPE", "DETAIL_PICTURE", "LANG_DIR", "DETAIL_PAGE_URL", "DETAIL_TEXT");
+        $arSelect = array(
+            "ID",
+            "LID",
+            "IBLOCK_ID",
+            "IBLOCK_SECTION_ID",
+            "NAME",
+            "PREVIEW_PICTURE",
+            "PREVIEW_TEXT",
+            "PREVIEW_TEXT_TYPE",
+            "DETAIL_PICTURE",
+            "LANG_DIR",
+            "DETAIL_PAGE_URL",
+            "DETAIL_TEXT"
+        );
 
         $filter = array("IBLOCK_ID" => $this->iBlockId);
 
 //		if set start position - limit result by ID
-        if ($this->startPosition)
+        if ($this->startPosition) {
             $filter[">=ID"] = $this->startPosition;
+        }
 
         if (!$this->bAllSections && !empty($this->arSections)) {
             $filter["INCLUDE_SUBSECTIONS"] = $this->includeSubsections ? "Y" : "N";
             $filter["SECTION_ID"] = $this->arSections;
         }
 
-        if ($this->onlyAvailableElements)
+        if ($this->onlyAvailableElements) {
             $filter["CATALOG_AVAILABLE"] = "Y";
+        }
         $filter["ACTIVE"] = "Y";
         $filter["SECTION_GLOBAL_ACTIVE"] = "Y";
         $filter["ACTIVE_DATE"] = "Y";
@@ -144,9 +161,11 @@ class ExportOffer implements \Iterator
     {
         $result = 0;
 
-        foreach ($arAvailGroups as $group)
-            if ($result < $group["ID"])
+        foreach ($arAvailGroups as $group) {
+            if ($result < $group["ID"]) {
                 $result = $group["ID"];
+            }
+        }
 
         $result += 100000000;
 
@@ -172,7 +191,14 @@ class ExportOffer implements \Iterator
                     );
                 }
 
-                $filter = array("IBLOCK_ID" => $this->iBlockId, ">LEFT_MARGIN" => $curLEFT_MARGIN, "<RIGHT_MARGIN" => $curRIGHT_MARGIN, "ACTIVE" => "Y", "IBLOCK_ACTIVE" => "Y", "GLOBAL_ACTIVE" => "Y");
+                $filter = array(
+                    "IBLOCK_ID" => $this->iBlockId,
+                    ">LEFT_MARGIN" => $curLEFT_MARGIN,
+                    "<RIGHT_MARGIN" => $curRIGHT_MARGIN,
+                    "ACTIVE" => "Y",
+                    "IBLOCK_ACTIVE" => "Y",
+                    "GLOBAL_ACTIVE" => "Y"
+                );
                 $db_res = \CIBlockSection::GetList(array("left_margin" => "asc"), $filter);
                 while ($ar_res = $db_res->Fetch()) {
                     $arAvailGroups[$ar_res["ID"]] = array(
@@ -183,7 +209,12 @@ class ExportOffer implements \Iterator
                 }
             }
         } else {
-            $filter = array("IBLOCK_ID" => $this->iBlockId, "ACTIVE" => "Y", "IBLOCK_ACTIVE" => "Y", "GLOBAL_ACTIVE" => "Y");
+            $filter = array(
+                "IBLOCK_ID" => $this->iBlockId,
+                "ACTIVE" => "Y",
+                "IBLOCK_ACTIVE" => "Y",
+                "GLOBAL_ACTIVE" => "Y"
+            );
             $db_res = \CIBlockSection::GetList(array("left_margin" => "asc"), $filter);
             while ($ar_res = $db_res->Fetch()) {
                 $arAvailGroups[$ar_res["ID"]] = array(
@@ -205,8 +236,9 @@ class ExportOffer implements \Iterator
             foreach ($selectedGroups as $value) {
                 $arSections[] = (int)$value;
 
-                if ($value == 0)
+                if ($value == 0) {
                     break;
+                }
             }
         }
 
@@ -219,17 +251,18 @@ class ExportOffer implements \Iterator
         $arIblock = $dbIblock->Fetch();
 
         if ($arIblock) {
-            if (strlen($serverName) <= 0) {
-                if (strlen($arIblock['SERVER_NAME']) <= 0) {
-                    $b = "sort";
-                    $o = "asc";
-                    $rsSite = \CSite::GetList($b, $o, array("LID" => $arIblock["LID"]));
-                    if ($arSite = $rsSite->Fetch())
+            if ($serverName == '') {
+                if ($arIblock['SERVER_NAME'] == '') {
+                    $rsSite = \CSite::GetList('', '', array("LID" => $arIblock["LID"]));
+                    if ($arSite = $rsSite->Fetch()) {
                         $arIblock["SERVER_NAME"] = $arSite["SERVER_NAME"];
-                    if (strlen($arIblock["SERVER_NAME"]) <= 0 && defined("SITE_SERVER_NAME"))
+                    }
+                    if ($arIblock["SERVER_NAME"] == '' && defined("SITE_SERVER_NAME")) {
                         $arIblock["SERVER_NAME"] = SITE_SERVER_NAME;
-                    if (strlen($arIblock["SERVER_NAME"]) <= 0)
+                    }
+                    if ($arIblock["SERVER_NAME"] == '') {
                         $arIblock["SERVER_NAME"] = \COption::GetOptionString("main", "server_name", "");
+                    }
                 }
             } else {
                 $arIblock['SERVER_NAME'] = $serverName;
@@ -267,10 +300,11 @@ class ExportOffer implements \Iterator
         if ($arProduct = $rsProducts->Fetch()) {
             $arProduct['QUANTITY'] = doubleval($arProduct['QUANTITY']);
 
-            if (0 >= $arProduct['QUANTITY'] && ('Y' != $arProduct['QUANTITY_TRACE'] || 'N' != $arProduct['CAN_BUY_ZERO']))
+            if (0 >= $arProduct['QUANTITY'] && ('Y' != $arProduct['QUANTITY_TRACE'] || 'N' != $arProduct['CAN_BUY_ZERO'])) {
                 $result = 1;
-            else
+            } else {
                 $result = $arProduct['QUANTITY'];
+            }
         }
 
         return $result;
@@ -295,10 +329,11 @@ class ExportOffer implements \Iterator
      */
     public function setOnlyAvailableFlag($flag)
     {
-        if ($flag)
+        if ($flag) {
             $this->onlyAvailableElements = true;
-        else
+        } else {
             $this->onlyAvailableElements = false;
+        }
     }
 
     protected function getPrices($productId, $siteId)
@@ -312,7 +347,9 @@ class ExportOffer implements \Iterator
         $RUR = $this->getRub();
 
         if ($this->xmlData['PRICE'] > 0) {
-            $rsPrices = \CPrice::GetListEx(array(), array(
+            $rsPrices = \CPrice::GetListEx(
+                array(),
+                array(
                     'PRODUCT_ID' => $productId,
                     'CATALOG_GROUP_ID' => $this->xmlData['PRICE'],
                     'CAN_BUY' => 'Y',
@@ -365,10 +402,11 @@ class ExportOffer implements \Iterator
 
     protected function getDetailPageUrl($detailPageUrl)
     {
-        if (strlen($detailPageUrl) <= 0)
+        if ($detailPageUrl == '') {
             $detailPageUrl = '/';
-        else
+        } else {
             $detailPageUrl = str_replace(' ', '%20', $detailPageUrl);
+        }
 
         $result = "http://" . $this->arIblock['SERVER_NAME'] . Main\Text\HtmlFilter::encode($detailPageUrl);
 
@@ -380,12 +418,22 @@ class ExportOffer implements \Iterator
         $strFile = "";
 
         if ($file = \CFile::GetFileArray($pictNo)) {
-            if (substr($file["SRC"], 0, 1) == "/")
-                $strFile = "http://" . $this->arIblock['SERVER_NAME'] . implode("/", array_map("rawurlencode", explode("/", $file["SRC"])));
-            elseif (preg_match("/^(http|https):\\/\\/(.*?)\\/(.*)\$/", $file["SRC"], $match))
-                $strFile = "http://" . $match[2] . '/' . implode("/", array_map("rawurlencode", explode("/", $match[3])));
-            else
+            if (mb_substr($file["SRC"], 0, 1) == "/") {
+                $strFile = "http://" . $this->arIblock['SERVER_NAME'] . implode(
+                        "/",
+                        array_map(
+                            "rawurlencode",
+                            explode("/", $file["SRC"])
+                        )
+                    );
+            } elseif (preg_match("/^(http|https):\\/\\/(.*?)\\/(.*)\$/", $file["SRC"], $match)) {
+                $strFile = "http://" . $match[2] . '/' . implode(
+                        "/",
+                        array_map("rawurlencode", explode("/", $match[3]))
+                    );
+            } else {
                 $strFile = $file["SRC"];
+            }
         }
 
         return $strFile;
@@ -393,16 +441,17 @@ class ExportOffer implements \Iterator
 
     protected function getParams($product, $arIblock)
     {
-        if (isset($arIblock['PROPERTY']))
+        if (isset($arIblock['PROPERTY'])) {
             $arProperties = $arIblock['PROPERTY'];
-        else
+        } else {
             $arProperties = array();
+        }
 
         $arUserTypeFormat = array();
 
         foreach ($arProperties as $key => $arProperty) {
             $arUserTypeFormat[$arProperty["ID"]] = false;
-            if (strlen($arProperty["USER_TYPE"])) {
+            if ($arProperty["USER_TYPE"] <> '') {
                 $arUserType = \CIBlockProperty::GetUserType($arProperty["USER_TYPE"]);
                 if (array_key_exists("GetPublicViewHTML", $arUserType)) {
                     $arUserTypeFormat[$arProperty["ID"]] = $arUserType["GetPublicViewHTML"];
@@ -414,10 +463,13 @@ class ExportOffer implements \Iterator
         $result = array();
 
 
-        if (is_array($this->xmlData) && is_array($this->xmlData['XML_DATA']) && is_array($this->xmlData['XML_DATA']['PARAMS'])) {
+        if (is_array($this->xmlData) && is_array($this->xmlData['XML_DATA']) && is_array(
+                $this->xmlData['XML_DATA']['PARAMS']
+            )) {
             foreach ($this->xmlData['XML_DATA']['PARAMS'] as $key => $propId) {
-                if ($propId)
+                if ($propId) {
                     $result[] = $this->getValue($product, 'PARAM_' . $key, $propId, $arProperties, $arUserTypeFormat);
+                }
             }
         }
 
@@ -440,18 +492,21 @@ class ExportOffer implements \Iterator
 
             $value = array();
 
-            if (!is_array($arProperty["VALUE"]))
+            if (!is_array($arProperty["VALUE"])) {
                 $arProperty["VALUE"] = array($arProperty["VALUE"]);
+            }
 
             switch ($arProperties[$PROPERTY]['PROPERTY_TYPE']) {
                 case 'USER_TYPE':
                     foreach ($arProperty["VALUE"] as $oneValue) {
-                        $value[] = call_user_func_array($arUserTypeFormat[$PROPERTY],
+                        $value[] = call_user_func_array(
+                            $arUserTypeFormat[$PROPERTY],
                             array(
                                 $arProperty,
                                 array("VALUE" => $oneValue),
                                 array('MODE' => 'SIMPLE_TEXT'),
-                            ));
+                            )
+                        );
                     }
                     break;
 
@@ -460,15 +515,26 @@ class ExportOffer implements \Iterator
 
                     foreach ($arProperty['VALUE'] as &$intValue) {
                         $intValue = (int)$intValue;
-                        if (0 < $intValue)
+                        if (0 < $intValue) {
                             $arCheckValue[] = $intValue;
+                        }
                     }
 
-                    if (isset($intValue))
+                    if (isset($intValue)) {
                         unset($intValue);
+                    }
 
                     if (!empty($arCheckValue)) {
-                        $dbRes = \CIBlockElement::GetList(array(), array('IBLOCK_ID' => $arProperties[$PROPERTY]['LINK_IBLOCK_ID'], 'ID' => $arCheckValue), false, false, array('NAME'));
+                        $dbRes = \CIBlockElement::GetList(
+                            array(),
+                            array(
+                                'IBLOCK_ID' => $arProperties[$PROPERTY]['LINK_IBLOCK_ID'],
+                                'ID' => $arCheckValue
+                            ),
+                            false,
+                            false,
+                            array('NAME')
+                        );
                         while ($arRes = $dbRes->Fetch()) {
                             $value[] = $arRes['NAME'];
                         }
@@ -480,15 +546,25 @@ class ExportOffer implements \Iterator
 
                     foreach ($arProperty['VALUE'] as &$intValue) {
                         $intValue = (int)$intValue;
-                        if (0 < $intValue)
+                        if (0 < $intValue) {
                             $arCheckValue[] = $intValue;
+                        }
                     }
 
-                    if (isset($intValue))
+                    if (isset($intValue)) {
                         unset($intValue);
+                    }
 
                     if (!empty($arCheckValue)) {
-                        $dbRes = \CIBlockSection::GetList(array(), array('IBLOCK_ID' => $arProperty['LINK_IBLOCK_ID'], 'ID' => $arCheckValue), false, array('NAME'));
+                        $dbRes = \CIBlockSection::GetList(
+                            array(),
+                            array(
+                                'IBLOCK_ID' => $arProperty['LINK_IBLOCK_ID'],
+                                'ID' => $arCheckValue
+                            ),
+                            false,
+                            array('NAME')
+                        );
                         while ($arRes = $dbRes->Fetch()) {
                             $value[] = $arRes['NAME'];
                         }
@@ -504,27 +580,45 @@ class ExportOffer implements \Iterator
                         $intValue = (int)$intValue;
                         if ($intValue > 0) {
                             if ($ar_file = \CFile::GetFileArray($intValue)) {
-                                if (substr($ar_file["SRC"], 0, 1) == "/")
-                                    $strFile = "http://" . $this->arIblock["SERVER_NAME"] . implode("/", array_map("rawurlencode", explode("/", $ar_file["SRC"])));
-                                elseif (preg_match("/^(http|https):\\/\\/(.*?)\\/(.*)\$/", $ar_file["SRC"], $match))
-                                    $strFile = "http://" . $match[2] . '/' . implode("/", array_map("rawurlencode", explode("/", $match[3])));
-                                else
+                                if (mb_substr($ar_file["SRC"], 0, 1) == "/") {
+                                    $strFile = "http://" . $this->arIblock["SERVER_NAME"] . implode(
+                                            "/",
+                                            array_map(
+                                                "rawurlencode",
+                                                explode(
+                                                    "/",
+                                                    $ar_file["SRC"]
+                                                )
+                                            )
+                                        );
+                                } elseif (preg_match("/^(http|https):\\/\\/(.*?)\\/(.*)\$/", $ar_file["SRC"], $match)) {
+                                    $strFile = "http://" . $match[2] . '/' . implode(
+                                            "/",
+                                            array_map(
+                                                "rawurlencode",
+                                                explode("/", $match[3])
+                                            )
+                                        );
+                                } else {
                                     $strFile = $ar_file["SRC"];
+                                }
                                 $value[] = $strFile;
                             }
                         }
                     }
 
-                    if (isset($intValue))
+                    if (isset($intValue)) {
                         unset($intValue);
+                    }
                     break;
 
                 default:
                     $value = $arProperty['VALUE'];
             }
 
-            if (is_array($value) && count($value) == 1)
+            if (is_array($value) && count($value) == 1) {
                 $value = implode("", $value);
+            }
 
             if ($bParam) {
                 $result[$param] = array(
@@ -547,27 +641,31 @@ class ExportOffer implements \Iterator
         $dbElementGroups = \CIBlockElement::GetElementGroups($productId, false, array('ID', 'ADDITIONAL_PROPERTY_ID'));
 
         while ($arElementGroup = $dbElementGroups->Fetch()) {
-            if (0 < (int)$arElementGroup['ADDITIONAL_PROPERTY_ID'])
+            if (0 < (int)$arElementGroup['ADDITIONAL_PROPERTY_ID']) {
                 continue;
+            }
 
             $boolCurrentSections = true;
 
-            if (in_array((int)$arElementGroup["ID"], $this->arSectionIDs))
+            if (in_array((int)$arElementGroup["ID"], $this->arSectionIDs)) {
                 $result[] = $arElementGroup["ID"];
+            }
         }
 
-        if (!$boolCurrentSections)
+        if (!$boolCurrentSections) {
             $result[] = $this->intMaxSectionID;
+        }
 
         return $result;
     }
 
     protected function getSectionIDs(array $availGroups)
     {
-        if (!empty($availGroups))
+        if (!empty($availGroups)) {
             $arSectionIDs = array_keys($availGroups);
-        else
+        } else {
             $arSectionIDs = array();
+        }
 
         return $arSectionIDs;
     }
@@ -578,18 +676,21 @@ class ExportOffer implements \Iterator
 
         if (100 <= $this->cnt) {
             $this->cnt = 0;
-            \CCatalogDiscount::ClearDiscountCache(array(
-                'PRODUCT' => true,
-                'SECTIONS' => true,
-                'PROPERTIES' => true,
-            ));
+            \CCatalogDiscount::ClearDiscountCache(
+                array(
+                    'PRODUCT' => true,
+                    'SECTIONS' => true,
+                    'PROPERTIES' => true,
+                )
+            );
         }
     }
 
     protected function nextItem()
     {
-        if (!$obElement = $this->dbItems->GetNextElement())
+        if (!$obElement = $this->dbItems->GetNextElement()) {
             return false;
+        }
 
         $arItem = $obElement->GetFields();
         $arItem['PROPERTIES'] = $obElement->GetProperties();

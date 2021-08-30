@@ -71,10 +71,11 @@ class CSocServOAuthTransport
 
     public function addScope($scope)
     {
-        if (is_array($scope))
+        if (is_array($scope)) {
             $this->scope = array_merge($this->scope, $scope);
-        else
+        } else {
             $this->scope[] = $scope;
+        }
         return $this;
     }
 
@@ -107,13 +108,15 @@ class CSocServOAuthTransport
     {
         $accessToken = '';
         if ($this->userId > 0) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                'filter' => [
-                    '=USER_ID' => $this->userId,
-                    "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
-                ],
-                'select' => ["USER_ID", "XML_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN", "PERMISSIONS"]
-            ]);
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                [
+                    'filter' => [
+                        '=USER_ID' => $this->userId,
+                        "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
+                    ],
+                    'select' => ["USER_ID", "XML_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN", "PERMISSIONS"]
+                ]
+            );
 
             $accessToken = $dbSocservUser->fetch();
         }
@@ -123,13 +126,15 @@ class CSocServOAuthTransport
     public function deleteStorageTokens()
     {
         if ($this->userId > 0) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(array(
-                'filter' => array(
-                    '=USER_ID' => $this->userId,
-                    "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
-                ),
-                'select' => array("ID")
-            ));
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                array(
+                    'filter' => array(
+                        '=USER_ID' => $this->userId,
+                        "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
+                    ),
+                    'select' => array("ID")
+                )
+            );
 
             while ($accessToken = $dbSocservUser->fetch()) {
                 \Bitrix\Socialservices\UserTable::delete($accessToken['ID']);

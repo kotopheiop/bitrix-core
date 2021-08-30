@@ -1,21 +1,26 @@
 <?php
+
 define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
 $width = intval($_GET["width"]);
 $max_width = COption::GetOptionInt("statistic", "GRAPH_WEIGHT");
-if ($width <= 0 || $width > $max_width)
+if ($width <= 0 || $width > $max_width) {
     $width = $max_width;
+}
 
 $height = intval($_GET["height"]);
 $max_height = COption::GetOptionInt("statistic", "GRAPH_HEIGHT");
-if ($height <= 0 || $height > $max_height)
+if ($height <= 0 || $height > $max_height) {
     $height = $max_height;
+}
 
 // image init
 $ImageHandle = CreateImageHandle($width, $height);
@@ -34,7 +39,7 @@ $arFilter = Array(
     "DATE1" => $find_date1,
     "DATE2" => $find_date2
 );
-$dynamic = CAdv::GetDynamicList($ADV_ID, ($by = "s_date"), ($order = "asc"), $arMaxMin, $arFilter, $is_filtered);
+$dynamic = CAdv::GetDynamicList($ADV_ID, "s_date", "asc", $arMaxMin, $arFilter);
 while ($arData = $dynamic->Fetch()) {
     $date = mktime(0, 0, 0, $arData["MONTH"], $arData["DAY"], $arData["YEAR"]);
     $date_tmp = 0;
@@ -53,7 +58,7 @@ while ($arData = $dynamic->Fetch()) {
     $arrX[] = $date;
     $arF["DATE1_PERIOD"] = GetTime($date);
     $arF["DATE2_PERIOD"] = GetTime($date);
-    $e = CAdv::GetEventList($ADV_ID, ($by = "s_def"), ($order = "desc"), $arF, $is_filtered);
+    $e = CAdv::GetEventList($ADV_ID, "s_def", "desc", $arF);
     while ($er = $e->Fetch()) {
         if ($find_show_money == "Y" && $STAT_RIGHT > "M") {
             $arrEvent[$er["ID"]][$date] = intval($er["MONEY_PERIOD"]);
@@ -83,10 +88,14 @@ $arrY = array();
 reset($find_events);
 foreach ($find_events as $eid) {
     $arr = $arrY_events[$eid];
-    foreach ($arr as $value) $arrY[] = intval($value);
+    foreach ($arr as $value) {
+        $arrY[] = intval($value);
+    }
 
     $arr = $arrY_events_back[$eid];
-    foreach ($arr as $value) $arrY[] = intval($value);
+    foreach ($arr as $value) {
+        $arrY[] = intval($value);
+    }
 }
 $arrayY = GetArrayY($arrY, $MinY, $MaxY);
 

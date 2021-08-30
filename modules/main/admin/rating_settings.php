@@ -10,13 +10,19 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
 ClearVars();
 
-if (!$USER->CanDoOperation('edit_ratings'))
+if (!$USER->CanDoOperation('edit_ratings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 if (isset($_POST["CLEAR_DATA"]) && $_POST["CLEAR_DATA"] == 'Y' && $USER->IsAdmin() && check_bitrix_sessid()) {
-    $_SESSION["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"] = array("MESSAGE" => GetMessage("RATING_SETTINGS_FRM_RATING_CLEAR_DATA_OK"), "TYPE" => "OK");
+    \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"] = array(
+        "MESSAGE" => GetMessage(
+            "RATING_SETTINGS_FRM_RATING_CLEAR_DATA_OK"
+        ),
+        "TYPE" => "OK"
+    );
     CRatings::ClearData();
     LocalRedirect("rating_settings.php?lang=" . LANG);
 }
@@ -31,37 +37,60 @@ $ratingNormalization = isset($_POST["RATING_NORMALIZATION"]) ? intval($_POST["RA
 $sRatingNormalizationType = isset($_POST["RATING_NORMALIZATION_TYPE"]) && $_POST["RATING_NORMALIZATION_TYPE"] == 'auto' ? 'auto' : 'manual';
 $ratingCountVote = isset($_POST["RATING_COUNT_VOTE"]) ? intval($_POST["RATING_COUNT_VOTE"]) : 10;
 $ratingStartValue = isset($_POST["RATING_START_AUTHORITY"]) ? intval($_POST["RATING_START_AUTHORITY"]) : 3;
-$communityLastVisit = isset($_POST["RATING_COMMUNITY_LAST_VISIT"]) && intval($_POST["RATING_COMMUNITY_LAST_VISIT"]) > 0 ? intval($_POST["RATING_COMMUNITY_LAST_VISIT"]) : 90;
+$communityLastVisit = isset($_POST["RATING_COMMUNITY_LAST_VISIT"]) && intval(
+    $_POST["RATING_COMMUNITY_LAST_VISIT"]
+) > 0 ? intval($_POST["RATING_COMMUNITY_LAST_VISIT"]) : 90;
 $ratingAuthorityDefault = isset($_POST["RATING_AUTHORITY_DEFAULT"]) ? intval($_POST["RATING_AUTHORITY_DEFAULT"]) : 0;
 
 $sRatingSelfVote = isset($_POST["RATING_SELF_VOTE"]) && $_POST["RATING_SELF_VOTE"] == 'Y' ? 'Y' : 'N';
 $sRatingAssignType = isset($_POST["RATING_ASSIGN_TYPE"]) && $_POST["RATING_ASSIGN_TYPE"] == 'auto' ? 'auto' : 'manual';
-$ratingAssignRatingGroupAdd = isset($_POST["RATING_ASSIGN_RATING_GROUP_ADD"]) ? intval($_POST["RATING_ASSIGN_RATING_GROUP_ADD"]) : 1;
-$ratingAssignRatingGroupDelete = isset($_POST["RATING_ASSIGN_RATING_GROUP_DELETE"]) ? intval($_POST["RATING_ASSIGN_RATING_GROUP_DELETE"]) : 1;
-$ratingAssignAuthorityGroupAdd = isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP_ADD"]) ? intval($_POST["RATING_ASSIGN_AUTHORITY_GROUP_ADD"]) : 2;
-$ratingAssignAuthorityGroupDelete = isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP_DELETE"]) ? intval($_POST["RATING_ASSIGN_AUTHORITY_GROUP_DELETE"]) : 2;
+$ratingAssignRatingGroupAdd = isset($_POST["RATING_ASSIGN_RATING_GROUP_ADD"]) ? intval(
+    $_POST["RATING_ASSIGN_RATING_GROUP_ADD"]
+) : 1;
+$ratingAssignRatingGroupDelete = isset($_POST["RATING_ASSIGN_RATING_GROUP_DELETE"]) ? intval(
+    $_POST["RATING_ASSIGN_RATING_GROUP_DELETE"]
+) : 1;
+$ratingAssignAuthorityGroupAdd = isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP_ADD"]) ? intval(
+    $_POST["RATING_ASSIGN_AUTHORITY_GROUP_ADD"]
+) : 2;
+$ratingAssignAuthorityGroupDelete = isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP_DELETE"]) ? intval(
+    $_POST["RATING_ASSIGN_AUTHORITY_GROUP_DELETE"]
+) : 2;
 
-$dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+$dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
 $arSites = array();
 $aSubTabs = array();
 while ($site = $dbSites->Fetch()) {
     $site["ID"] = htmlspecialcharsbx($site["ID"]);
     $site["NAME"] = htmlspecialcharsbx($site["NAME"]);
     $arSites[] = $site;
-    $aSubTabs[] = array("DIV" => "opt_site_" . $site["ID"], "TAB" => "(" . $site["ID"] . ") " . $site["NAME"], 'TITLE' => '');
+    $aSubTabs[] = array(
+        "DIV" => "opt_site_" . $site["ID"],
+        "TAB" => "(" . $site["ID"] . ") " . $site["NAME"],
+        'TITLE' => ''
+    );
 }
 foreach ($arSites as $site) {
     $arRatingVoteShow[$site['ID']] = isset($_POST["RATING_VOTE_SHOW"][$site['ID']]) && $_POST["RATING_VOTE_SHOW"][$site['ID']] == 'Y' ? 'Y' : 'N';
     $arRatingVoteType[$site['ID']] = isset($_POST["RATING_VOTE_TYPE"][$site['ID']]) && $_POST["RATING_VOTE_TYPE"][$site['ID']] == 'like' ? 'like' : 'standart';
-    $arRatingVoteTemplate[$site['ID']] = isset($_POST["RATING_VOTE_TEMPLATE"][$site['ID']]) && in_array($_POST["RATING_VOTE_TEMPLATE"][$site['ID']], Array('like', 'like_graphic', 'standart', 'standart_text')) ? $_POST["RATING_VOTE_TEMPLATE"][$site['ID']] : ($arRatingVoteType == 'like' ? 'like' : 'standart');
-    $arRatingTextLikeY[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_Y"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_Y"][$site['ID']] : GetMessage('RATING_SETTINGS_FRM_BUTTON_LIKE_Y_DEFAULT');
-    $arRatingTextLikeN[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_N"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_N"][$site['ID']] : GetMessage('RATING_SETTINGS_FRM_BUTTON_LIKE_N_DEFAULT');
-    $arRatingTextLikeD[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_D"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_D"][$site['ID']] : GetMessage('RATING_SETTINGS_FRM_BUTTON_LIKE_D_DEFAULT');
+    $arRatingVoteTemplate[$site['ID']] = isset($_POST["RATING_VOTE_TEMPLATE"][$site['ID']]) && in_array(
+        $_POST["RATING_VOTE_TEMPLATE"][$site['ID']],
+        Array('like', 'like_graphic', 'standart', 'standart_text')
+    ) ? $_POST["RATING_VOTE_TEMPLATE"][$site['ID']] : ($arRatingVoteType == 'like' ? 'like' : 'standart');
+    $arRatingTextLikeY[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_Y"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_Y"][$site['ID']] : GetMessage(
+        'RATING_SETTINGS_FRM_BUTTON_LIKE_Y_DEFAULT'
+    );
+    $arRatingTextLikeN[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_N"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_N"][$site['ID']] : GetMessage(
+        'RATING_SETTINGS_FRM_BUTTON_LIKE_N_DEFAULT'
+    );
+    $arRatingTextLikeD[$site['ID']] = isset($_POST["RATING_TEXT_LIKE_D"][$site['ID']]) ? $_POST["RATING_TEXT_LIKE_D"][$site['ID']] : GetMessage(
+        'RATING_SETTINGS_FRM_BUTTON_LIKE_D_DEFAULT'
+    );
 }
 
-if (isset($_POST["RATING_ASSIGN_RATING_GROUP"]))
+if (isset($_POST["RATING_ASSIGN_RATING_GROUP"])) {
     $ratingAssignRatingGroup = intval($_POST["RATING_ASSIGN_RATING_GROUP"]);
-else {
+} else {
     $ratingAssignRatingGroup = COption::GetOptionString("main", "rating_assign_rating_group", null);
     if ($ratingAssignRatingGroup == null) {
         $rsGroup = $DB->Query("SELECT * FROM b_group WHERE STRING_ID='RATING_VOTE'", true);
@@ -71,9 +100,9 @@ else {
     }
 }
 
-if (isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP"]))
+if (isset($_POST["RATING_ASSIGN_AUTHORITY_GROUP"])) {
     $ratingAssignAuthorityGroup = intval($_POST["RATING_ASSIGN_AUTHORITY_GROUP"]);
-else {
+} else {
     $ratingAssignAuthorityGroup = COption::GetOptionString("main", "rating_assign_authority_group", null);
     if ($ratingAssignAuthorityGroup == null) {
         $rsGroup = $DB->Query("SELECT * FROM b_group WHERE STRING_ID='RATING_VOTE_AUTHORITY'", true);
@@ -83,8 +112,9 @@ else {
     }
 }
 
-if ($ratingAssignRatingGroup == 0 && $ratingAssignAuthorityGroup == 0)
+if ($ratingAssignRatingGroup == 0 && $ratingAssignAuthorityGroup == 0) {
     COption::SetOptionString("main", "rating_assign_type", 'manual');
+}
 
 // save settings
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] <> "" && check_bitrix_sessid()) {
@@ -115,7 +145,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] <> "" && check_bitrix
 
     foreach ($arSites as $site) {
         COption::SetOptionString("main", "rating_vote_show", $arRatingVoteShow[$site['ID']], false, $site['ID']);
-        COption::SetOptionString("main", "rating_vote_template", $arRatingVoteTemplate[$site['ID']], false, $site['ID']);
+        COption::SetOptionString(
+            "main",
+            "rating_vote_template",
+            $arRatingVoteTemplate[$site['ID']],
+            false,
+            $site['ID']
+        );
         COption::SetOptionString("main", "rating_vote_type", $arRatingVoteType[$site['ID']], false, $site['ID']);
         if ($arRatingVoteType[$site['ID']] == 'like') {
             COption::SetOptionString("main", "rating_text_like_y", $arRatingTextLikeY[$site['ID']], false, $site['ID']);
@@ -130,11 +166,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] <> "" && check_bitrix
     if ($ratingAuthorityDefault > 0) {
         $arParams = array();
 
-        if ($ratingAuthorityDefault == 1)
+        if ($ratingAuthorityDefault == 1) {
             $arParams['DEFAULT_CONFIG_NEW_USER'] = 'Y';
+        }
 
-        if ($ratingAuthorityDefault == 2)
+        if ($ratingAuthorityDefault == 2) {
             $arParams['DEFAULT_USER_ACTIVE'] = 'Y';
+        }
 
         if ($ratingAuthorityDefault == 3) {
             $arParams['DEFAULT_USER_ACTIVE'] = 'Y';
@@ -142,7 +180,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] <> "" && check_bitrix
         }
         CRatings::SetAuthorityDefaultValue($arParams);
     }
-    $_SESSION["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"] = array("MESSAGE" => GetMessage("RATING_CONFIG_SUCCESS"), "TYPE" => "OK");
+    \Bitrix\Main\Application::getInstance()->getSession(
+    )["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"] = array("MESSAGE" => GetMessage("RATING_CONFIG_SUCCESS"), "TYPE" => "OK");
 }
 
 
@@ -171,10 +210,36 @@ if (!$bTypeChange) {
     foreach ($arSites as $site) {
         $arRatingVoteShow[$site['ID']] = COption::GetOptionString("main", "rating_vote_show", "N", $site['ID']);
         $arRatingVoteType[$site['ID']] = COption::GetOptionString("main", "rating_vote_type", "standart", $site['ID']);
-        $arRatingVoteTemplate[$site['ID']] = COption::GetOptionString("main", "rating_vote_template", $arRatingVoteType[$site['ID']] == 'like' ? 'like' : 'standart', $site['ID']);
-        $arRatingTextLikeY[$site['ID']] = COption::GetOptionString("main", "rating_text_like_y", GetMessage("RATING_SETTINGS_FRM_BUTTON_LIKE_Y_DEFAULT"), $site['ID']);
-        $arRatingTextLikeN[$site['ID']] = COption::GetOptionString("main", "rating_text_like_n", GetMessage("RATING_SETTINGS_FRM_BUTTON_LIKE_N_DEFAULT"), $site['ID']);
-        $arRatingTextLikeD[$site['ID']] = COption::GetOptionString("main", "rating_text_like_d", GetMessage("RATING_SETTINGS_FRM_BUTTON_LIKE_D_DEFAULT"), $site['ID']);
+        $arRatingVoteTemplate[$site['ID']] = COption::GetOptionString(
+            "main",
+            "rating_vote_template",
+            $arRatingVoteType[$site['ID']] == 'like' ? 'like' : 'standart',
+            $site['ID']
+        );
+        $arRatingTextLikeY[$site['ID']] = COption::GetOptionString(
+            "main",
+            "rating_text_like_y",
+            GetMessage(
+                "RATING_SETTINGS_FRM_BUTTON_LIKE_Y_DEFAULT"
+            ),
+            $site['ID']
+        );
+        $arRatingTextLikeN[$site['ID']] = COption::GetOptionString(
+            "main",
+            "rating_text_like_n",
+            GetMessage(
+                "RATING_SETTINGS_FRM_BUTTON_LIKE_N_DEFAULT"
+            ),
+            $site['ID']
+        );
+        $arRatingTextLikeD[$site['ID']] = COption::GetOptionString(
+            "main",
+            "rating_text_like_d",
+            GetMessage(
+                "RATING_SETTINGS_FRM_BUTTON_LIKE_D_DEFAULT"
+            ),
+            $site['ID']
+        );
     }
 }
 
@@ -183,16 +248,21 @@ $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/ratings.css");
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
 // displaying a message on the action taken
-if (is_array($_SESSION["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"])) {
-    CAdminMessage::ShowMessage($_SESSION["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"]);
-    $_SESSION["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"] = false;
+if (is_array(\Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"])) {
+    CAdminMessage::ShowMessage(
+        \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"]
+    );
+    \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_SUCCESS"] = false;
 }
-if (is_array($_SESSION["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"])) {
-    CAdminMessage::ShowMessage($_SESSION["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"]);
-    $_SESSION["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"] = false;
+if (is_array(\Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"])) {
+    CAdminMessage::ShowMessage(
+        \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"]
+    );
+    \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_CONFIG_CLEAR_DATA"] = false;
 }
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aTabs = array(
     array("DIV" => "edit1", "TAB" => GetMessage("RATING_SETTINGS_TAB_WEIGHT"), "TITLE" => ''),
@@ -212,8 +282,24 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         <tr>
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_WEIGHT_TYPE') ?>:</td>
             <td>
-                <?= InputType("radio", 'RATING_WEIGHT_TYPE', 'auto', $sRatingWeightType, false, GetMessage('RATING_SETTINGS_FRM_TYPE_AUTO'), "onclick=\"jsTypeChanged('form1')\""); ?>
-                <?= InputType("radio", 'RATING_WEIGHT_TYPE', 'manual', $sRatingWeightType, false, GetMessage('RATING_SETTINGS_FRM_TYPE_MANUAL'), "onclick=\"jsTypeChanged('form1')\""); ?>
+                <?= InputType(
+                    "radio",
+                    'RATING_WEIGHT_TYPE',
+                    'auto',
+                    $sRatingWeightType,
+                    false,
+                    GetMessage('RATING_SETTINGS_FRM_TYPE_AUTO'),
+                    "onclick=\"jsTypeChanged('form1')\""
+                ); ?>
+                <?= InputType(
+                    "radio",
+                    'RATING_WEIGHT_TYPE',
+                    'manual',
+                    $sRatingWeightType,
+                    false,
+                    GetMessage('RATING_SETTINGS_FRM_TYPE_MANUAL'),
+                    "onclick=\"jsTypeChanged('form1')\""
+                ); ?>
             </td>
         </tr>
         <?
@@ -226,7 +312,13 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         ?>
         <tr>
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_ID') ?>:</td>
-            <td><?= SelectBoxFromArray("RATING_ID", $arRatingsList, $ratingId, "", "onChange=\"jsTypeChanged('form1')\""); ?></td>
+            <td><?= SelectBoxFromArray(
+                    "RATING_ID",
+                    $arRatingsList,
+                    $ratingId,
+                    "",
+                    "onChange=\"jsTypeChanged('form1')\""
+                ); ?></td>
         </tr>
         <?
         if ($sRatingWeightType == 'auto') {
@@ -236,20 +328,39 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
 
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_COMMUNITY_SIZE_USER') ?>:</td>
-                <td><?= ($communitySize > 0 ? $communitySize : GetMessage('RATING_SETTINGS_FRM_COMMUNITY_SIZE_ZERO')) ?></td>
+                <td><?= ($communitySize > 0 ? $communitySize : GetMessage(
+                        'RATING_SETTINGS_FRM_COMMUNITY_SIZE_ZERO'
+                    )) ?></td>
             </tr>
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_NORMALIZATION_TYPE') ?>:</td>
                 <td>
-                    <?= InputType("radio", 'RATING_NORMALIZATION_TYPE', 'auto', $sRatingNormalizationType, false, GetMessage('MAIN_YES'), "onclick=\"jsNormType('hide')\""); ?>
-                    <?= InputType("radio", 'RATING_NORMALIZATION_TYPE', 'manual', $sRatingNormalizationType, false, GetMessage('MAIN_NO'), "onclick=\"jsNormType('show')\""); ?>
+                    <?= InputType(
+                        "radio",
+                        'RATING_NORMALIZATION_TYPE',
+                        'auto',
+                        $sRatingNormalizationType,
+                        false,
+                        GetMessage('MAIN_YES'),
+                        "onclick=\"jsNormType('hide')\""
+                    ); ?>
+                    <?= InputType(
+                        "radio",
+                        'RATING_NORMALIZATION_TYPE',
+                        'manual',
+                        $sRatingNormalizationType,
+                        false,
+                        GetMessage('MAIN_NO'),
+                        "onclick=\"jsNormType('show')\""
+                    ); ?>
                 </td>
             </tr>
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_NORMALIZATION') ?>:</td>
                 <td><input type="text" size="2" value="<?= $ratingNormalization ?>" name="RATING_NORMALIZATION"
-                           id="rating_settings_rating_normalization">
-                    / <?= GetMessage('RATING_SETTINGS_FRM_COMMUNITY_SIZE') ?></td>
+                           id="rating_settings_rating_normalization"> / <?= GetMessage(
+                        'RATING_SETTINGS_FRM_COMMUNITY_SIZE'
+                    ) ?></td>
             </tr>
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_COUNT_VOTE') ?>:</td>
@@ -259,8 +370,22 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT') ?>:</td>
                 <td>
-                    <?= InputType("radio", 'RATING_AUTHORITY_WEIGHT', 'Y', $sRatingAuthrorityWeight, false, GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT_Y')); ?>
-                    <?= InputType("radio", 'RATING_AUTHORITY_WEIGHT', 'N', $sRatingAuthrorityWeight, false, GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT_N')); ?>
+                    <?= InputType(
+                        "radio",
+                        'RATING_AUTHORITY_WEIGHT',
+                        'Y',
+                        $sRatingAuthrorityWeight,
+                        false,
+                        GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT_Y')
+                    ); ?>
+                    <?= InputType(
+                        "radio",
+                        'RATING_AUTHORITY_WEIGHT',
+                        'N',
+                        $sRatingAuthrorityWeight,
+                        false,
+                        GetMessage('RATING_SETTINGS_FRM_AUTHORITY_WEIGHT_N')
+                    ); ?>
                 </td>
             </tr>
             <?
@@ -306,7 +431,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
                         <div id="rating_settings_weight_<?= $conditionCount ?>">
                             <? if ($conditionCount == $conditionMaxCount):?>
                                 <span><?= GetMessage('RATING_SETTINGS_FRM_FROM') ?> <input type="text" size="6"
-                                                                                           value="<?= ($res['RATING_FROM'] == -1000000 ? 0 : floatVal($res['RATING_FROM'] - 0.0001)) ?>"
+                                                                                           value="<?= ($res['RATING_FROM'] == -1000000 ? 0 : floatVal(
+                                                                                               $res['RATING_FROM'] - 0.0001
+                                                                                           )) ?>"
                                                                                            id="rating_settings_weight_<?= $conditionCount ?>_from"
                                                                                            name="CONFIG[<?= $conditionCount ?>][RATING_FROM]"
                                                                                            class="rating_settings_from"
@@ -337,9 +464,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
                     <?
                     } ?>
                     <div id="rating_settings_weight_add" rel="<?= $conditionMaxCount ?>"><span class="settings_add"><a
-                                    href="#add"
-                                    onclick="jsAddRatingWeight();return false;"><?= GetMessage('RATING_SETTINGS_FRM_ADD') ?></a></span>
-                    </div>
+                                    href="#add" onclick="jsAddRatingWeight();return false;"><?= GetMessage(
+                                    'RATING_SETTINGS_FRM_ADD'
+                                ) ?></a></span></div>
                 </td>
             </tr>
             <?
@@ -361,27 +488,101 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
                         <tr>
                             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_VOTE_SHOW') ?>:</td>
                             <td>
-                                <?= InputType("radio", 'RATING_VOTE_SHOW[' . $subLang . ']', 'Y', $arRatingVoteShow[$subLang], false, GetMessage('MAIN_YES')); ?>
-                                <?= InputType("radio", 'RATING_VOTE_SHOW[' . $subLang . ']', 'N', $arRatingVoteShow[$subLang], false, GetMessage('MAIN_NO')); ?>
+                                <?= InputType(
+                                    "radio",
+                                    'RATING_VOTE_SHOW[' . $subLang . ']',
+                                    'Y',
+                                    $arRatingVoteShow[$subLang],
+                                    false,
+                                    GetMessage('MAIN_YES')
+                                ); ?>
+                                <?= InputType(
+                                    "radio",
+                                    'RATING_VOTE_SHOW[' . $subLang . ']',
+                                    'N',
+                                    $arRatingVoteShow[$subLang],
+                                    false,
+                                    GetMessage('MAIN_NO')
+                                ); ?>
                             </td>
                         </tr>
                         <tr>
                             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_VOTE_TYPE') ?>:</td>
                             <td>
-                                <?= InputType("radio", 'RATING_VOTE_TYPE[' . $subLang . ']', 'like', $arRatingVoteType[$subLang], false, GetMessage('RATING_SETTINGS_FRM_V_TYPE_LIKE'), "onclick=\"jsVoteTypeChanged('like', '" . $subLang . "', '" . ($arRatingVoteTemplate[$subLang] == 'like' ? 'like' : 'like_graphic') . "')\""); ?>
-                                <?= InputType("radio", 'RATING_VOTE_TYPE[' . $subLang . ']', 'standart', $arRatingVoteType[$subLang], false, GetMessage('RATING_SETTINGS_FRM_V_TYPE_STANDART'), "onclick=\"jsVoteTypeChanged('standart', '" . $subLang . "', '" . ($arRatingVoteTemplate[$subLang] == 'standart' ? 'standart' : 'standart_text') . "')\""); ?>
+                                <?= InputType(
+                                    "radio",
+                                    'RATING_VOTE_TYPE[' . $subLang . ']',
+                                    'like',
+                                    $arRatingVoteType[$subLang],
+                                    false,
+                                    GetMessage('RATING_SETTINGS_FRM_V_TYPE_LIKE'),
+                                    "onclick=\"jsVoteTypeChanged('like', '" . $subLang . "', '" . ($arRatingVoteTemplate[$subLang] == 'like' ? 'like' : 'like_graphic') . "')\""
+                                ); ?>
+                                <?= InputType(
+                                    "radio",
+                                    'RATING_VOTE_TYPE[' . $subLang . ']',
+                                    'standart',
+                                    $arRatingVoteType[$subLang],
+                                    false,
+                                    GetMessage('RATING_SETTINGS_FRM_V_TYPE_STANDART'),
+                                    "onclick=\"jsVoteTypeChanged('standart', '" . $subLang . "', '" . ($arRatingVoteTemplate[$subLang] == 'standart' ? 'standart' : 'standart_text') . "')\""
+                                ); ?>
                             </td>
                         </tr>
                         <tr>
                             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_VOTE_TEMPLATE') ?>:</td>
                             <td>
                                 <div id="rating_vote_type_like_<?= $subLang ?>">
-                                    <?= InputType("radio", 'RATING_VOTE_TEMPLATE[' . $subLang . ']', 'like', $arRatingVoteTemplate[$subLang], false, '<span style="display:inline-block;width: 120px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/like.png" title="' . GetMessage('RATING_SETTINGS_FRM_V_TPL_TEXT') . '" style="position: absolute;"/></span>', "", "rating_vote_template_like_" . $subLang); ?>
-                                    <?= InputType("radio", 'RATING_VOTE_TEMPLATE[' . $subLang . ']', 'like_graphic', $arRatingVoteTemplate[$subLang], false, '<span style="display:inline-block;width: 118px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/like_graphic.png" title="' . GetMessage('RATING_SETTINGS_FRM_V_TPL_GRAPHIC') . '" style="position: absolute;"/></span>', "", "rating_vote_template_like_graphic_" . $subLang); ?>
+                                    <?= InputType(
+                                        "radio",
+                                        'RATING_VOTE_TEMPLATE[' . $subLang . ']',
+                                        'like',
+                                        $arRatingVoteTemplate[$subLang],
+                                        false,
+                                        '<span style="display:inline-block;width: 120px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/like.png" title="' . GetMessage(
+                                            'RATING_SETTINGS_FRM_V_TPL_TEXT'
+                                        ) . '" style="position: absolute;"/></span>',
+                                        "",
+                                        "rating_vote_template_like_" . $subLang
+                                    ); ?>
+                                    <?= InputType(
+                                        "radio",
+                                        'RATING_VOTE_TEMPLATE[' . $subLang . ']',
+                                        'like_graphic',
+                                        $arRatingVoteTemplate[$subLang],
+                                        false,
+                                        '<span style="display:inline-block;width: 118px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/like_graphic.png" title="' . GetMessage(
+                                            'RATING_SETTINGS_FRM_V_TPL_GRAPHIC'
+                                        ) . '" style="position: absolute;"/></span>',
+                                        "",
+                                        "rating_vote_template_like_graphic_" . $subLang
+                                    ); ?>
                                 </div>
                                 <div id="rating_vote_type_standart_<?= $subLang ?>">
-                                    <?= InputType("radio", 'RATING_VOTE_TEMPLATE[' . $subLang . ']', 'standart_text', $arRatingVoteTemplate[$subLang], false, '<span style="display:inline-block;width: 172px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/standart_text.png" title="' . GetMessage('RATING_SETTINGS_FRM_V_TPL_TEXT') . '" style="position: absolute;"/></span>', "", "rating_vote_template_standart_text_" . $subLang); ?>
-                                    <?= InputType("radio", 'RATING_VOTE_TEMPLATE[' . $subLang . ']', 'standart', $arRatingVoteTemplate[$subLang], false, '<span style="display:inline-block;width: 80px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/standart.png" title="' . GetMessage('RATING_SETTINGS_FRM_V_TPL_GRAPHIC') . '" style="position: absolute;"/></span>', "", "rating_vote_template_standart_" . $subLang); ?>
+                                    <?= InputType(
+                                        "radio",
+                                        'RATING_VOTE_TEMPLATE[' . $subLang . ']',
+                                        'standart_text',
+                                        $arRatingVoteTemplate[$subLang],
+                                        false,
+                                        '<span style="display:inline-block;width: 172px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/standart_text.png" title="' . GetMessage(
+                                            'RATING_SETTINGS_FRM_V_TPL_TEXT'
+                                        ) . '" style="position: absolute;"/></span>',
+                                        "",
+                                        "rating_vote_template_standart_text_" . $subLang
+                                    ); ?>
+                                    <?= InputType(
+                                        "radio",
+                                        'RATING_VOTE_TEMPLATE[' . $subLang . ']',
+                                        'standart',
+                                        $arRatingVoteTemplate[$subLang],
+                                        false,
+                                        '<span style="display:inline-block;width: 80px;height: 16px"><img src="/bitrix/images/main/rating/' . LANGUAGE_ID . '/standart.png" title="' . GetMessage(
+                                            'RATING_SETTINGS_FRM_V_TPL_GRAPHIC'
+                                        ) . '" style="position: absolute;"/></span>',
+                                        "",
+                                        "rating_vote_template_standart_" . $subLang
+                                    ); ?>
                                 </div>
                             </td>
                         </tr>
@@ -411,7 +612,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
             <td colspan="2">
                 <?= BeginNote() ?>
                 <?= GetMessage('RATING_SETTINGS_FRM_CACHE') ?> <a
-                        href="/bitrix/admin/cache.php?lang=<?= LANGUAGE_ID ?>&tabControl_active_tab=fedit2"><?= GetMessage('RATING_SETTINGS_FRM_CACHE_LINK') ?></a>.
+                        href="/bitrix/admin/cache.php?lang=<?= LANGUAGE_ID ?>&tabControl_active_tab=fedit2"><?= GetMessage(
+                        'RATING_SETTINGS_FRM_CACHE_LINK'
+                    ) ?></a>.
                 <?= EndNote() ?>
             </td>
         </tr>
@@ -432,8 +635,24 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         <tr>
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_AUTO_ASSIGN') ?>:</td>
             <td>
-                <?= InputType("radio", 'RATING_ASSIGN_TYPE', 'auto', $sRatingAssignType, false, GetMessage('MAIN_YES'), "onclick=\"jsAutoAssign('show')\""); ?>
-                <?= InputType("radio", 'RATING_ASSIGN_TYPE', 'manual', $sRatingAssignType, false, GetMessage('MAIN_NO'), "onclick=\"jsAutoAssign('hide')\""); ?>
+                <?= InputType(
+                    "radio",
+                    'RATING_ASSIGN_TYPE',
+                    'auto',
+                    $sRatingAssignType,
+                    false,
+                    GetMessage('MAIN_YES'),
+                    "onclick=\"jsAutoAssign('show')\""
+                ); ?>
+                <?= InputType(
+                    "radio",
+                    'RATING_ASSIGN_TYPE',
+                    'manual',
+                    $sRatingAssignType,
+                    false,
+                    GetMessage('MAIN_NO'),
+                    "onclick=\"jsAutoAssign('hide')\""
+                ); ?>
             </td>
         </tr>
         <?
@@ -441,16 +660,18 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         $arRatingVoteGroupIdList2 = Array();
         $arRatingVoteGroupIdList2["REFERENCE"][] = "";
         $arRatingVoteGroupIdList2["REFERENCE_ID"][] = 0;
-        $rsGroups = CGroup::GetList($by = "c_sort", $order = "asc", $filter = array());
+        $rsGroups = CGroup::GetList();
         while ($arGroup = $rsGroups->Fetch()) {
-            if ($arGroup['ID'] == 2)
+            if ($arGroup['ID'] == 2) {
                 continue;
+            }
 
             $arRatingVoteGroupIdList["REFERENCE"][] = $arGroup["NAME"];
             $arRatingVoteGroupIdList["REFERENCE_ID"][] = $arGroup["ID"];
 
-            if ($arGroup['ID'] == 1)
+            if ($arGroup['ID'] == 1) {
                 continue;
+            }
 
             $arRatingVoteGroupIdList2["REFERENCE"][] = $arGroup["NAME"];
             $arRatingVoteGroupIdList2["REFERENCE_ID"][] = $arGroup["ID"];
@@ -460,10 +681,13 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         $arRatingVoteAuthorityGroupID = array();
         $arGroups = CRatings::GetVoteGroupEx();
         foreach ($arGroups as $group) {
-            if ($group['TYPE'] == 'R')
+            if ($group['TYPE'] == 'R') {
                 $arRatingVoteGroupID[] = $group["GROUP_ID"];
-            else if ($group['TYPE'] == 'A')
-                $arRatingVoteAuthorityGroupID[] = $group["GROUP_ID"];
+            } else {
+                if ($group['TYPE'] == 'A') {
+                    $arRatingVoteAuthorityGroupID[] = $group["GROUP_ID"];
+                }
+            }
         }
         ?>
         <tr class="heading">
@@ -471,20 +695,35 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         </tr>
         <tr>
             <td width="50%" valign="top"><?= GetMessage('RATING_SETTINGS_FRM_RATING_VOTE_GROUP_ID') ?>:</td>
-            <td><?= SelectBoxMFromArray("RATING_VOTE_GROUP_ID[]", $arRatingVoteGroupIdList, $arRatingVoteGroupID, "", true, 5); ?></td>
+            <td><?= SelectBoxMFromArray(
+                    "RATING_VOTE_GROUP_ID[]",
+                    $arRatingVoteGroupIdList,
+                    $arRatingVoteGroupID,
+                    "",
+                    true,
+                    5
+                ); ?></td>
         </tr>
         <tr id="rating_settings_auto_assign_1_1">
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_AUTO_ASSIGN') ?>:</td>
-            <td><?= SelectBoxFromArray("RATING_ASSIGN_RATING_GROUP", $arRatingVoteGroupIdList2, $ratingAssignRatingGroup); ?></td>
+            <td><?= SelectBoxFromArray(
+                    "RATING_ASSIGN_RATING_GROUP",
+                    $arRatingVoteGroupIdList2,
+                    $ratingAssignRatingGroup
+                ); ?></td>
         </tr>
         <tr id="rating_settings_auto_assign_1_2">
             <td width="50%"></td>
             <td>
-                <?= (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_1') : GetMessage('RATING_SETTINGS_FRM_ASSIGN_AUTHORITY')) ?>
-                : <input name="RATING_ASSIGN_RATING_GROUP_ADD" value="<?= $ratingAssignRatingGroupAdd ?>"
-                         style="width:45px;" type="text"><br> <?= GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_2') ?>:
-                <input name="RATING_ASSIGN_RATING_GROUP_DELETE" value="<?= $ratingAssignRatingGroupDelete ?>"
-                       style="width:45px;" type="text">
+                <?= (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                    'RATING_SETTINGS_FRM_ASSIGN_VOTE_1'
+                ) : GetMessage('RATING_SETTINGS_FRM_ASSIGN_AUTHORITY')) ?>: <input name="RATING_ASSIGN_RATING_GROUP_ADD"
+                                                                                   value="<?= $ratingAssignRatingGroupAdd ?>"
+                                                                                   style="width:45px;"
+                                                                                   type="text"><br> <?= GetMessage(
+                    'RATING_SETTINGS_FRM_ASSIGN_VOTE_2'
+                ) ?>: <input name="RATING_ASSIGN_RATING_GROUP_DELETE" value="<?= $ratingAssignRatingGroupDelete ?>"
+                             style="width:45px;" type="text">
             </td>
         </tr>
         <tr class="heading">
@@ -492,17 +731,30 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         </tr>
         <tr>
             <td width="50%" valign="top"><?= GetMessage('RATING_SETTINGS_FRM_RATING_VOTE_AUTHORITY_GROUP_ID') ?></td>
-            <td><?= SelectBoxMFromArray("RATING_VOTE_AUTHORITY_GROUP_ID[]", $arRatingVoteGroupIdList, $arRatingVoteAuthorityGroupID, "", true, 5); ?></td>
+            <td><?= SelectBoxMFromArray(
+                    "RATING_VOTE_AUTHORITY_GROUP_ID[]",
+                    $arRatingVoteGroupIdList,
+                    $arRatingVoteAuthorityGroupID,
+                    "",
+                    true,
+                    5
+                ); ?></td>
         </tr>
         <tr id="rating_settings_auto_assign_2_1">
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_AUTO_ASSIGN') ?>:</td>
-            <td><?= SelectBoxFromArray("RATING_ASSIGN_AUTHORITY_GROUP", $arRatingVoteGroupIdList2, $ratingAssignAuthorityGroup); ?></td>
+            <td><?= SelectBoxFromArray(
+                    "RATING_ASSIGN_AUTHORITY_GROUP",
+                    $arRatingVoteGroupIdList2,
+                    $ratingAssignAuthorityGroup
+                ); ?></td>
         </tr>
         <tr id="rating_settings_auto_assign_2_2">
             <td width="50%"></td>
-            <td> <?= (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_1') : GetMessage('RATING_SETTINGS_FRM_ASSIGN_AUTHORITY')) ?>
-                <input name="RATING_ASSIGN_AUTHORITY_GROUP_ADD" value="<?= $ratingAssignAuthorityGroupAdd ?>"
-                       style="width:45px;" type="text"><br> <?= GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_2') ?>:
+            <td> <?= (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                    'RATING_SETTINGS_FRM_ASSIGN_VOTE_1'
+                ) : GetMessage('RATING_SETTINGS_FRM_ASSIGN_AUTHORITY')) ?><input
+                        name="RATING_ASSIGN_AUTHORITY_GROUP_ADD" value="<?= $ratingAssignAuthorityGroupAdd ?>"
+                        style="width:45px;" type="text"><br> <?= GetMessage('RATING_SETTINGS_FRM_ASSIGN_VOTE_2') ?>:
                 <input name="RATING_ASSIGN_AUTHORITY_GROUP_DELETE" value="<?= $ratingAssignAuthorityGroupDelete ?>"
                        style="width:45px;" type="text"></td>
         </tr>
@@ -512,21 +764,50 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
         <tr>
             <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_START_AUTHORITY') ?>:</td>
             <td><input type="text" size="2" value="<?= $ratingStartValue ?>"
-                       name="RATING_START_AUTHORITY"> <?= ($sRatingWeightType == 'auto' ? 'x ' . GetMessage('RATING_SETTINGS_FRM_RATING_NORMALIZATION') : '') ?>
-            </td>
+                       name="RATING_START_AUTHORITY"> <?= ($sRatingWeightType == 'auto' ? 'x ' . GetMessage(
+                        'RATING_SETTINGS_FRM_RATING_NORMALIZATION'
+                    ) : '') ?></td>
         </tr>
         <tr>
             <td width="50%" valign="top" style="padding-top: 9px;"><?= GetMessage('RATING_SETTINGS_FRM_DEF_VALUE') ?>:
             </td>
             <td>
-                <?= InputType("radio", 'RATING_AUTHORITY_DEFAULT', '1', '', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_1')); ?>
+                <?= InputType(
+                    "radio",
+                    'RATING_AUTHORITY_DEFAULT',
+                    '1',
+                    '',
+                    false,
+                    GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_1')
+                ); ?>
                 <?
                 if (IsModuleInstalled("forum")) {
-                    echo '<br>' . InputType("radio", 'RATING_AUTHORITY_DEFAULT', '2', '', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_2'));
-                    echo '<br>' . InputType("radio", 'RATING_AUTHORITY_DEFAULT', '3', '', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_3'));
+                    echo '<br>' . InputType(
+                            "radio",
+                            'RATING_AUTHORITY_DEFAULT',
+                            '2',
+                            '',
+                            false,
+                            GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_2')
+                        );
+                    echo '<br>' . InputType(
+                            "radio",
+                            'RATING_AUTHORITY_DEFAULT',
+                            '3',
+                            '',
+                            false,
+                            GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_3')
+                        );
                 }
                 ?>
-                <br><?= InputType("radio", 'RATING_AUTHORITY_DEFAULT', '0', '0', false, GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_4')); ?>
+                <br><?= InputType(
+                    "radio",
+                    'RATING_AUTHORITY_DEFAULT',
+                    '0',
+                    '0',
+                    false,
+                    GetMessage('RATING_SETTINGS_FRM_DEF_VALUE_4')
+                ); ?>
             </td>
         </tr>
         <? if ($USER->IsAdmin()): ?>
@@ -535,9 +816,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
             </tr>
             <tr>
                 <td width="50%"><?= GetMessage('RATING_SETTINGS_FRM_RATING_CLEAR_DATA') ?>:</td>
-                <td><input type="checkbox" name="CLEAR_DATA" value="Y"
-                           onclick="return confirm('<?= GetMessage("RATING_SETTINGS_FRM_RATING_CLEAR_DATA_CONFIRM") ?>')? true: false">
-                </td>
+                <td><input type="checkbox" name="CLEAR_DATA" value="Y" onclick="return confirm('<?= GetMessage(
+                        "RATING_SETTINGS_FRM_RATING_CLEAR_DATA_CONFIRM"
+                    ) ?>')? true: false"></td>
             </tr>
         <?
         endif;
@@ -547,7 +828,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
                class="adm-btn-save">
         <input type="button" name="cancel" value="<?= GetMessage("RATING_SETTINGS_BUTTON_RESET") ?>"
                title="<?= GetMessage("RATING_SETTINGS_BUTTON_RESET_TITLE") ?>"
-               onclick="window.location='<?= (strpos($_REQUEST["addurl"], '/') === 0 ? htmlspecialcharsbx(CUtil::addslashes($_REQUEST["addurl"])) : "rating_settings.php?lang=" . LANG) ?>'">
+               onclick="window.location='<?= (mb_strpos($_REQUEST["addurl"], '/') === 0 ? htmlspecialcharsbx(
+                   CUtil::addslashes($_REQUEST["addurl"])
+               ) : "rating_settings.php?lang=" . LANG) ?>'">
         <?
         $editTab->End();
         ?>
@@ -605,10 +888,18 @@ $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
             // Create new DOM object
             var el = document.createElement('div');
             el.id = 'rating_settings_weight_' + div_settings_next;
-            el.innerHTML = '<span><?=GetMessage('RATING_SETTINGS_FRM_TO')?> <input type="text" size="7" value="' + div_settings_to + '" id="rating_settings_weight_' + div_settings_next + '_to" name="CONFIG[' + div_settings_next + '][RATING_TO]" onchange="jsChangeRatingWeight()"></span>\
-						<span><?=GetMessage('RATING_SETTINGS_FRM_WEIGHT')?> <input type="text" size="7" value="' + div_settings_weight + '" id="rating_settings_weight_' + div_settings_next + '_weight" name="CONFIG[' + div_settings_next + '][WEIGHT]"></span>\
-						<span><?=GetMessage('RATING_SETTINGS_FRM_COUNT')?> <input type="text" size="6" value="' + div_settings_count + '" id="rating_settings_weight_' + div_settings_next + '_count" name="CONFIG[' + div_settings_next + '][COUNT]"></span>\
-						<a href="#delete" onclick="jsDeleteRatingWeight(' + div_settings_next + ');return false;"><img src="/bitrix/themes/.default/images/cross.gif" title="<?=GetMessage('RATING_SETTINGS_FRM_DELETE')?>" border="0" align="absmiddle"></a>';
+            el.innerHTML = '<span><?=GetMessage(
+                'RATING_SETTINGS_FRM_TO'
+            )?> <input type="text" size="7" value="' + div_settings_to + '" id="rating_settings_weight_' + div_settings_next + '_to" name="CONFIG[' + div_settings_next + '][RATING_TO]" onchange="jsChangeRatingWeight()"></span>\
+						<span><?=GetMessage(
+                'RATING_SETTINGS_FRM_WEIGHT'
+            )?> <input type="text" size="7" value="' + div_settings_weight + '" id="rating_settings_weight_' + div_settings_next + '_weight" name="CONFIG[' + div_settings_next + '][WEIGHT]"></span>\
+						<span><?=GetMessage(
+                'RATING_SETTINGS_FRM_COUNT'
+            )?> <input type="text" size="6" value="' + div_settings_count + '" id="rating_settings_weight_' + div_settings_next + '_count" name="CONFIG[' + div_settings_next + '][COUNT]"></span>\
+						<a href="#delete" onclick="jsDeleteRatingWeight(' + div_settings_next + ');return false;"><img src="/bitrix/themes/.default/images/cross.gif" title="<?=GetMessage(
+                'RATING_SETTINGS_FRM_DELETE'
+            )?>" border="0" align="absmiddle"></a>';
             BX('rating_settings_weight').insertBefore(el, div_settings_end);
 
             div_add_button.setAttribute('rel', div_settings_next);

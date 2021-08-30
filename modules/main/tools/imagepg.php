@@ -6,17 +6,20 @@ function htmlspecialchars_plus($str)
     return str_replace("+", "&#43;", htmlspecialchars($str));
 }
 
-if (!isset($_GET["img"]) || !is_string($_GET["img"]))
+if (!isset($_GET["img"]) || !is_string($_GET["img"])) {
     die();
+}
 
-if (isset($_GET["alt"]) && is_string($_GET["alt"]))
+if (isset($_GET["alt"]) && is_string($_GET["alt"])) {
     $alt = htmlspecialchars_plus($_GET["alt"]);
-else
+} else {
     $alt = "";
+}
 
 $img = $_GET["img"];
-if (substr($img, 0, 1) !== "/" && strtolower(substr($img, 0, 4) !== "http"))
-    $img = "/" . $img; // some browsers run javascript: in img src tag
+if (mb_substr($img, 0, 1) !== "/" && mb_strtolower(mb_substr($img, 0, 4) !== "http")) {
+    $img = "/" . $img;
+} // some browsers run javascript: in img src tag
 ?>
 <html>
 <head>

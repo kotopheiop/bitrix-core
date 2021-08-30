@@ -1,8 +1,8 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/contractor.php");
 
-class CCatalogContractor
-    extends CAllCatalogContractor
+class CCatalogContractor extends CAllCatalogContractor
 {
     /** Add new store in table b_catalog_contractor,
      * @static
@@ -13,33 +13,58 @@ class CCatalogContractor
     {
         global $DB;
 
-        if (array_key_exists('DATE_CREATE', $arFields))
+        if (array_key_exists('DATE_CREATE', $arFields)) {
             unset($arFields['DATE_CREATE']);
-        if (array_key_exists('DATE_MODIFY', $arFields))
+        }
+        if (array_key_exists('DATE_MODIFY', $arFields)) {
             unset($arFields['DATE_MODIFY']);
+        }
 
         $arFields['~DATE_MODIFY'] = $DB->GetNowFunction();
         $arFields['~DATE_CREATE'] = $DB->GetNowFunction();
 
-        if (!self::checkFields('ADD', $arFields))
+        if (!self::checkFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_contractor", $arFields);
 
         $strSql = "INSERT INTO b_catalog_contractor (" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
 
-        $res = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        if (!$res) {
             return false;
+        }
         $lastId = intval($DB->LastID());
         return $lastId;
     }
 
-    public static function getList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function getList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
-        if (empty($arSelectFields))
-            $arSelectFields = array("ID", "PERSON_TYPE", "PERSON_NAME", "PERSON_LASTNAME", "PERSON_MIDDLENAME", "EMAIL", "PHONE", "POST_INDEX", "COUNTRY", "CITY", "COMPANY", "ADDRESS", "INN", "KPP");
+        if (empty($arSelectFields)) {
+            $arSelectFields = array(
+                "ID",
+                "PERSON_TYPE",
+                "PERSON_NAME",
+                "PERSON_LASTNAME",
+                "PERSON_MIDDLENAME",
+                "EMAIL",
+                "PHONE",
+                "POST_INDEX",
+                "COUNTRY",
+                "CITY",
+                "COMPANY",
+                "ADDRESS",
+                "INN",
+                "KPP"
+            );
+        }
 
         $arFields = array(
             "ID" => array("FIELD" => "CC.ID", "TYPE" => "int"),
@@ -66,25 +91,31 @@ class CCatalogContractor
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_contractor CC " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_contractor CC " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -93,16 +124,19 @@ class CCatalogContractor
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_contractor CC " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

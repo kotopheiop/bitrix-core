@@ -75,7 +75,7 @@ class Log
             if (
                 $postFieldList["MICRO"] != "Y"
                 && isset($postFieldList["TITLE"])
-                && strlen($postFieldList["TITLE"]) > 0
+                && $postFieldList["TITLE"] <> ''
             ) {
                 $content .= \blogTextParser::killAllTags($postFieldList["TITLE"]) . " ";
             }
@@ -101,11 +101,13 @@ class Log
             }
 
             if (!empty($postFieldList['UF_BLOG_POST_URL_PRV'])) {
-                $metadata = \Bitrix\Main\UrlPreview\UrlMetadataTable::getRowById($postFieldList['UF_BLOG_POST_URL_PRV']);
+                $metadata = \Bitrix\Main\UrlPreview\UrlMetadataTable::getRowById(
+                    $postFieldList['UF_BLOG_POST_URL_PRV']
+                );
                 if (
                     $metadata
                     && isset($metadata['TITLE'])
-                    && strlen($metadata['TITLE']) > 0
+                    && $metadata['TITLE'] <> ''
                 ) {
                     $content .= ' ' . $metadata['TITLE'];
                 }
@@ -142,7 +144,7 @@ class Log
                     $tagList[] = '#' . $category["NAME"];
                 }
                 if (!empty($tagList)) {
-                    $content .= ' ' . join(' ', $tagList);
+                    $content .= ' ' . implode(' ', $tagList);
                 }
             }
         }

@@ -169,7 +169,6 @@ abstract class Base
         if ($this->getPostfix()) {
             $this->getPostfix()->render();
         }
-
     }
 
     /**

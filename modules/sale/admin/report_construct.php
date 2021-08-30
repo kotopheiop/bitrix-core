@@ -1,12 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions <= "D")
+if ($saleModulePermissions <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -54,8 +56,13 @@ $fEditMode = ($ID > 0) ? true : false;
 // If editing report that exists, then beforehand we gets its parameters.
 $arRepParams = array();
 if ($fEditMode || $fCopyMode) {
-    if ($fEditMode) $repID = $ID;
-    else if ($fCopyMode) $repID = $copyID;
+    if ($fEditMode) {
+        $repID = $ID;
+    } else {
+        if ($fCopyMode) {
+            $repID = $copyID;
+        }
+    }
 
     if (!($arRepParams = Bitrix\Report\ReportTable::getById($repID)->fetch())) {
         $errorMessage .= GetMessage("SALE_REPORT_CONSTRUCT_ERROR_EDIT_REPORT_ON_GET_PARAMS") . '<br>';
@@ -87,12 +94,16 @@ if ($rep_owner = $_REQUEST['rep_owner']) {
     try {
         // filter rep_owner value
         $matches = array();
-        $rep_owner = substr($rep_owner, 0, 50);
-        if (preg_match('/^[A-Z_][A-Z0-9_-]*[A-Z0-9_]$/i', $rep_owner, $matches)) $rep_owner = $matches[0];
-        else $rep_owner = '';
+        $rep_owner = mb_substr($rep_owner, 0, 50);
+        if (preg_match('/^[A-Z_][A-Z0-9_-]*[A-Z0-9_]$/i', $rep_owner, $matches)) {
+            $rep_owner = $matches[0];
+        } else {
+            $rep_owner = '';
+        }
 
-        if (!$rep_owner || !in_array($rep_owner, CBaseSaleReportHelper::getOwners()))
+        if (!$rep_owner || !in_array($rep_owner, CBaseSaleReportHelper::getOwners())) {
             throw new Exception(GetMessage('REPORT_UNKNOWN_ERROR'));
+        }
 
         if (!$fCriticalError) {
             // set owner id
@@ -122,7 +133,9 @@ if ($fEditMode) {
     $rep_owner = $arRepParams['OWNER_ID'];
 }
 
-if ($arParams['ACTION'] == 'create' && !$arParams['REPORT_HELPER_CLASS']) $fSelectHelperMode = true;
+if ($arParams['ACTION'] == 'create' && !$arParams['REPORT_HELPER_CLASS']) {
+    $fSelectHelperMode = true;
+}
 //</editor-fold>
 
 // <editor-fold defaultstate="collapsed" desc="POST action">
@@ -142,7 +155,7 @@ if ($_REQUEST['cancel']) {
 $siteList = CBaseSaleReportHelper::getSiteList();
 
 if (isset($_REQUEST['F_SALE_SITE'])) {
-    $siteId = substr($_REQUEST['F_SALE_SITE'], 0, 2);
+    $siteId = mb_substr($_REQUEST['F_SALE_SITE'], 0, 2);
     if (array_key_exists($siteId, $siteList)) {
         $siteCookieId = CBaseSaleReportHelper::getSiteCookieId();
         setcookie($siteCookieId, $siteId, time() + 365 * 24 * 3600);
@@ -153,7 +166,7 @@ if (isset($_REQUEST['F_SALE_SITE'])) {
 } else {
     $siteCookieId = CBaseSaleReportHelper::getSiteCookieId();
     if (isset($_COOKIE[$siteCookieId])) {
-        $siteId = substr($_COOKIE[$siteCookieId], 0, 2);
+        $siteId = mb_substr($_COOKIE[$siteCookieId], 0, 2);
         if (array_key_exists($siteId, $siteList)) {
             $arParams['F_SALE_SITE'] = $siteId;
             CBaseSaleReportHelper::setDefaultSiteId($siteId);
@@ -166,7 +179,9 @@ if ($_REQUEST['REPORT_AJAX'] === 'Y') {
     $arResponse = array();
     if (is_array($_REQUEST['filterTypes'])) {
         $result = CBaseSaleReportHelper::getAjaxResponse($_REQUEST['filterTypes']);
-        if (is_array($result)) $arResponse = $result;
+        if (is_array($result)) {
+            $arResponse = $result;
+        }
     }
     header("Content-Type: application/x-javascript; charset=" . LANG_CHARSET);
     echo CUtil::PhpToJSObject($arResponse);
@@ -182,7 +197,9 @@ if (!isset($arParams['F_SALE_SITE'])) {
 
 // Page header
 $rep_title = ($fEditMode) ? GetMessage("SALE_REPORT_EDIT_TITLE") : GetMessage("SALE_REPORT_CONSTRUCT_TITLE");
-if (isset($arParams['TITLE']) && !empty($arParams['TITLE'])) $rep_title .= ' "' . $arParams['TITLE'] . '"';
+if (isset($arParams['TITLE']) && !empty($arParams['TITLE'])) {
+    $rep_title .= ' "' . $arParams['TITLE'] . '"';
+}
 $APPLICATION->SetTitle($rep_title);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -228,8 +245,9 @@ if (!$fCriticalError) {
                     <input type="hidden" name="ID" value="<?= $ID ?>"/>
                     <?php if (!$fSelectHelperMode && $arParams['REPORT_HELPER_CLASS']) : ?>
                         <input type="hidden" name="rep_owner" value="<?= $rep_owner ?>"/>
-                        <input type="hidden" name="rep_referer"
-                               value="<?= htmlspecialcharsbx(!empty($rep_referer) ? $rep_referer : $_SERVER['HTTP_REFERER']) ?>"/>
+                        <input type="hidden" name="rep_referer" value="<?= htmlspecialcharsbx(
+                            !empty($rep_referer) ? $rep_referer : $_SERVER['HTTP_REFERER']
+                        ) ?>"/>
                     <?php else : ?>
                         <input type="hidden" name="rep_referer"
                                value="<?= htmlspecialcharsbx($_SERVER['HTTP_REFERER']) ?>"/>
@@ -253,12 +271,16 @@ if (!$fCriticalError) {
                                 padding: 5px 0 6px 4px;
                             }
 						</style>
-						<span class="reports-title-label"><?= GetMessage('SALE_REPORT_HELPER_SELECTOR_LABEL_TEXT') . ':' ?></span>
+						<span class="reports-title-label"><?= GetMessage(
+                                'SALE_REPORT_HELPER_SELECTOR_LABEL_TEXT'
+                            ) . ':' ?></span>
 						<select id="sale-report-helper-selector" name="rep_owner" class="filter-dropdown">
 							<?php foreach (CBaseSaleReportHelper::getOwners() as $ownerId) : ?>
                                 <?php $ownerText = GetMessage('SALE_REPORT_HELPER_NAME_' . $ownerId); ?>
                                 <?php if ($ownerText) : ?>
-                                    <option value="<?= htmlspecialcharsbx($ownerId) ?>"><?php echo htmlspecialcharsbx($ownerText); ?></option>
+                                    <option value="<?= htmlspecialcharsbx($ownerId) ?>"><?php echo htmlspecialcharsbx(
+                                            $ownerText
+                                        ); ?></option>
                                 <?php endif; ?>
                             <?php endforeach; ?>
 						</select>
@@ -299,7 +321,9 @@ if (!$fCriticalError) {
 							<select class="report-filter-select" name="value">
 								<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
 								<? foreach (CBaseSaleReportHelper::getSiteList() as $kID => $vSiteName): ?>
-                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vSiteName) ?></option>
+                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                            $vSiteName
+                                        ) ?></option>
                                 <? endforeach; ?>
 							</select>
 						</span>
@@ -308,7 +332,9 @@ if (!$fCriticalError) {
 							<select class="report-filter-select" name="value">
 								<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
 								<? foreach (CBaseSaleReportHelper::getGenders() as $kID => $vName): ?>
-                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vName) ?></option>
+                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                            $vName
+                                        ) ?></option>
                                 <? endforeach; ?>
 							</select>
 						</span>
@@ -320,7 +346,9 @@ if (!$fCriticalError) {
 								<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                     <? if ($v['LID'] === $siteId): ?>
-                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                                $v['NAME']
+                                            ) ?></option>
                                     <? endif; ?>
                                 <? endforeach; ?>
 							</select>
@@ -333,7 +361,9 @@ if (!$fCriticalError) {
 								<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                     <? if ($v['LID'] === $siteId): ?>
-                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                                $v['NAME']
+                                            ) ?></option>
                                     <? endif; ?>
                                 <? endforeach; ?>
 							</select>
@@ -346,7 +376,9 @@ if (!$fCriticalError) {
 								<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                     <? if ($v['LID'] === $siteId): ?>
-                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                                $v['NAME']
+                                            ) ?></option>
                                     <? endif; ?>
                                 <? endforeach; ?>
 							</select>
@@ -356,7 +388,9 @@ if (!$fCriticalError) {
 							<select class="report-filter-select" name="value">
 								<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
 								<? foreach (CBaseSaleReportHelper::getStatusList() as $kID => $vStatusName): ?>
-                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vStatusName) ?></option>
+                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                            $vStatusName
+                                        ) ?></option>
                                 <? endforeach; ?>
 							</select>
 						</span>
@@ -365,7 +399,9 @@ if (!$fCriticalError) {
 							<select class="report-filter-select" name="value">
 								<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
 								<? foreach (CBaseSaleReportHelper::getSiteList() as $kID => $vSiteName): ?>
-                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vSiteName) ?></option>
+                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx(
+                                            $vSiteName
+                                        ) ?></option>
                                 <? endforeach; ?>
 							</select>
 						</span>
@@ -480,8 +516,9 @@ if (!$fCriticalError) {
                                     <span name="report-filter-value-control-StoreProduct:SALE_PRODUCT">
 							<select class="report-filter-select" name="value" tid="Section" multiple="multiple"
                                     size="5">
-								<option value=""
-                                        selected="selected"><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+								<option value="" selected="selected"><?= GetMessage(
+                                        'REPORT_IGNORE_FILTER_VALUE'
+                                    ) ?></option>
 								<? foreach (CBaseSaleReportHelper::getProductStores() as $k => $v): ?>
                                     <option value="<?= htmlspecialcharsbx($k) ?>"><?= htmlspecialcharsbx($v) ?></option>
                                 <? endforeach; ?>
@@ -521,8 +558,9 @@ if (!$fCriticalError) {
 
                                     <span name="report-filter-value-control-\Bitrix\Main\User"
                                           callback="RTFilter_chooseSALEUSER">
-							<a class="report-select-popup-link" caller="true"
-                               style="cursor: pointer;"><?= GetMessage('REPORT_CHOOSE') ?></a>
+							<a class="report-select-popup-link" caller="true" style="cursor: pointer;"><?= GetMessage(
+                                    'REPORT_CHOOSE'
+                                ) ?></a>
 							<input type="hidden" name="value"/>
 						</span>
                                     <script type="text/javascript">
@@ -573,8 +611,9 @@ if (!$fCriticalError) {
 
                                     <span name="report-filter-value-control-\Bitrix\Main\Group"
                                           callback="RTFilter_chooseGroup">
-							<a class="report-select-popup-link" caller="true"
-                               style="cursor: pointer;"><?= GetMessage('REPORT_CHOOSE') ?></a>
+							<a class="report-select-popup-link" caller="true" style="cursor: pointer;"><?= GetMessage(
+                                    'REPORT_CHOOSE'
+                                ) ?></a>
 							<input type="hidden" name="value"/>
 						</span>
                                     <script type="text/javascript">
@@ -636,14 +675,22 @@ if (!$fCriticalError) {
                         <input id="report-save-button" class="adm-btn-save"
                                type="submit" name="save"
                                value="<?
-                               if ($fEditMode) echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL_ON_EDIT');
-                               elseif ($fSelectHelperMode) echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL_ON_SELECT_HELPER');
-                               else echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL');
+                               if ($fEditMode) {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL_ON_EDIT');
+                               } elseif ($fSelectHelperMode) {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL_ON_SELECT_HELPER');
+                               } else {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_LABEL');
+                               }
                                ?>"
                                title="<?
-                               if ($fEditMode) echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE_ON_EDIT');
-                               elseif ($fSelectHelperMode) echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE_ON_SELECT_HELPER');
-                               else echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE');
+                               if ($fEditMode) {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE_ON_EDIT');
+                               } elseif ($fSelectHelperMode) {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE_ON_SELECT_HELPER');
+                               } else {
+                                   echo GetMessage('SALE_REPORT_CONSTRUCT_BUTTON_SAVE_TITLE');
+                               }
                                ?>"/>&nbsp
                         <input class="adm-btn"
                                type="submit" name="cancel"

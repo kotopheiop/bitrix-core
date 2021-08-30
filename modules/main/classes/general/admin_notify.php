@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CAdminNotify
@@ -10,9 +11,7 @@ class CAdminNotify
     {
         global $CACHE_MANAGER;
 
-        $by = 'lid';
-        $order = 'asc';
-        $rsLangs = CLanguage::GetList($by, $order);
+        $rsLangs = CLanguage::GetList('lid', 'asc');
         while ($arLang = $rsLangs->Fetch()) {
             $CACHE_MANAGER->Clean("admin_notify_list_" . $arLang['LANGUAGE_ID']);
         }
@@ -24,13 +23,15 @@ class CAdminNotify
         global $DB;
         $err_mess = (self::err_mess()) . '<br />Function: Add<br />Line: ';
 
-        if (!self::CheckFields($arFields))
+        if (!self::CheckFields($arFields)) {
             return false;
+        }
 
-        if (!is_set($arFields['ENABLE_CLOSE']))
+        if (!is_set($arFields['ENABLE_CLOSE'])) {
             $arFields['ENABLE_CLOSE'] = 'Y';
+        }
 
-        if (is_set($arFields['TAG']) && strlen(trim($arFields['TAG'])) > 0) {
+        if (is_set($arFields['TAG']) && trim($arFields['TAG']) <> '') {
             $arFields['TAG'] = trim($arFields['TAG']);
             self::DeleteByTag($arFields['TAG']);
         } else {
@@ -38,8 +39,12 @@ class CAdminNotify
         }
 
         $arFields['PUBLIC_SECTION'] = (isset($arFields['PUBLIC_SECTION']) && $arFields['PUBLIC_SECTION'] == 'Y' ? 'Y' : 'N');
-        if (!isset($arFields['NOTIFY_TYPE']) || !in_array($arFields['NOTIFY_TYPE'], array(self::TYPE_NORMAL, self::TYPE_ERROR)))
+        if (!isset($arFields['NOTIFY_TYPE']) || !in_array(
+                $arFields['NOTIFY_TYPE'],
+                array(self::TYPE_NORMAL, self::TYPE_ERROR)
+            )) {
             $arFields['NOTIFY_TYPE'] = self::TYPE_NORMAL;
+        }
 
         $arFields_i = array(
             'MODULE_ID' => is_set($arFields['MODULE_ID']) ? trim($arFields['MODULE_ID']) : "",
@@ -72,14 +77,21 @@ class CAdminNotify
     {
         $aMsg = array();
 
-        if (is_set($arFields, 'MODULE_ID') && trim($arFields['MODULE_ID']) == '')
+        if (is_set($arFields, 'MODULE_ID') && trim($arFields['MODULE_ID']) == '') {
             $aMsg[] = array('id' => 'MODULE_ID', 'text' => GetMessage('MAIN_AN_ERROR_MODULE_ID'));
-        if (is_set($arFields, 'TAG') && trim($arFields['TAG']) == '')
+        }
+        if (is_set($arFields, 'TAG') && trim($arFields['TAG']) == '') {
             $aMsg[] = array('id' => 'TAG', 'text' => GetMessage('MAIN_AN_ERROR_TAG'));
-        if (!is_set($arFields, 'MESSAGE') || trim($arFields['MESSAGE']) == '')
+        }
+        if (!is_set($arFields, 'MESSAGE') || trim($arFields['MESSAGE']) == '') {
             $aMsg[] = array('id' => 'MESSAGE', 'text' => GetMessage('MAIN_AN_ERROR_MESSAGE'));
-        if (is_set($arFields, 'ENABLE_CLOSE') && !($arFields['ENABLE_CLOSE'] == 'Y' || $arFields['ENABLE_CLOSE'] == 'N'))
+        }
+        if (is_set(
+                $arFields,
+                'ENABLE_CLOSE'
+            ) && !($arFields['ENABLE_CLOSE'] == 'Y' || $arFields['ENABLE_CLOSE'] == 'N')) {
             $aMsg[] = array('id' => 'ENABLE_CLOSE', 'text' => GetMessage('MAIN_AN_ERROR_ENABLE_CLOSE'));
+        }
 
         if (!empty($aMsg)) {
             $e = new CAdminException($aMsg);
@@ -95,8 +107,9 @@ class CAdminNotify
         global $DB;
         $err_mess = (self::err_mess()) . '<br />Function: Delete<br />Line: ';
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         $strSql = "DELETE FROM b_admin_notify_lang WHERE NOTIFY_ID = " . $ID;
         $DB->Query($strSql, false, $err_mess . __LINE__);
@@ -113,7 +126,9 @@ class CAdminNotify
         global $DB;
         $err_mess = (self::err_mess()) . '<br />Function: DeleteByModule<br />Line: ';
 
-        $strSql = "DELETE FROM b_admin_notify_lang WHERE NOTIFY_ID IN (SELECT ID FROM b_admin_notify WHERE MODULE_ID = '" . $DB->ForSQL($moduleId) . "')";
+        $strSql = "DELETE FROM b_admin_notify_lang WHERE NOTIFY_ID IN (SELECT ID FROM b_admin_notify WHERE MODULE_ID = '" . $DB->ForSQL(
+                $moduleId
+            ) . "')";
         $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $strSql = "DELETE FROM b_admin_notify WHERE MODULE_ID = '" . $DB->ForSQL($moduleId) . "'";
@@ -129,10 +144,13 @@ class CAdminNotify
         $err_mess = (self::err_mess()) . '<br />Function: DeleteByTag<br />Line: ';
 
         $tagId = (string)$tagId;
-        if ($tagId == '')
+        if ($tagId == '') {
             return false;
+        }
 
-        $strSql = "DELETE FROM b_admin_notify_lang WHERE NOTIFY_ID IN (SELECT ID FROM b_admin_notify WHERE TAG like '%" . $DB->ForSQL($tagId) . "%')";
+        $strSql = "DELETE FROM b_admin_notify_lang WHERE NOTIFY_ID IN (SELECT ID FROM b_admin_notify WHERE TAG like '%" . $DB->ForSQL(
+                $tagId
+            ) . "%')";
         $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $strSql = "DELETE FROM b_admin_notify WHERE TAG like '%" . $DB->ForSQL($tagId) . "%'";
@@ -147,21 +165,28 @@ class CAdminNotify
         global $CACHE_MANAGER;
         $arNotify = false;
 
-        if ($CACHE_MANAGER->Read(86400, "admin_notify_list_" . LANGUAGE_ID))
+        if ($CACHE_MANAGER->Read(86400, "admin_notify_list_" . LANGUAGE_ID)) {
             $arNotify = $CACHE_MANAGER->Get("admin_notify_list_" . LANGUAGE_ID);
+        }
 
         if ($arNotify === false) {
             $arNotify = Array();
             $CBXSanitizer = new CBXSanitizer;
-            $CBXSanitizer->AddTags(array(
-                'a' => array('href', 'style'),
-                'b' => array(), 'u' => array(),
-                'i' => array(), 'br' => array(),
-                'span' => array('style'),
-            ));
+            $CBXSanitizer->AddTags(
+                array(
+                    'a' => array('href', 'style'),
+                    'b' => array(),
+                    'u' => array(),
+                    'i' => array(),
+                    'br' => array(),
+                    'span' => array('style'),
+                )
+            );
             $dbRes = self::GetList();
             while ($ar = $dbRes->Fetch()) {
-                $ar["MESSAGE"] = $CBXSanitizer->SanitizeHtml(('' != $ar['MESSAGE_LANG'] ? $ar['MESSAGE_LANG'] : $ar['MESSAGE']));
+                $ar["MESSAGE"] = $CBXSanitizer->SanitizeHtml(
+                    ('' != $ar['MESSAGE_LANG'] ? $ar['MESSAGE_LANG'] : $ar['MESSAGE'])
+                );
                 $arNotify[] = $ar;
             }
             $CACHE_MANAGER->Set("admin_notify_list_" . LANGUAGE_ID, $arNotify);
@@ -184,12 +209,15 @@ class CAdminNotify
         $strSqlSearch = '';
         $err_mess = (self::err_mess()) . '<br />Function: GetList<br />Line: ';
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
-        if (!isset($arFilter['LID']))
+        }
+        if (!isset($arFilter['LID'])) {
             $arFilter['LID'] = LANGUAGE_ID;
-        if (!isset($arFilter['PUBLIC_SECTION']))
+        }
+        if (!isset($arFilter['PUBLIC_SECTION'])) {
             $arFilter['PUBLIC_SECTION'] = 'N';
+        }
 
         $strFrom = '';
         $strSelect = "AN.*";
@@ -198,8 +226,10 @@ class CAdminNotify
             $filter_keys = array_keys($arFilter);
             for ($i = 0, $ic = count($filter_keys); $i < $ic; $i++) {
                 $val = $arFilter[$filter_keys[$i]];
-                if (strlen($val) <= 0 || $val == 'NOT_REF') continue;
-                switch (strtoupper($filter_keys[$i])) {
+                if ((string)$val == '' || $val == 'NOT_REF') {
+                    continue;
+                }
+                switch (mb_strtoupper($filter_keys[$i])) {
                     case 'ID':
                         $arSqlSearch[] = GetFilterQuery('AN.ID', $val, 'N');
                         break;
@@ -217,7 +247,9 @@ class CAdminNotify
                         break;
                     case 'LID':
                         $strSelect .= ", ANL.MESSAGE as MESSAGE_LANG";
-                        $strFrom = 'LEFT JOIN b_admin_notify_lang ANL ON (AN.ID = ANL.NOTIFY_ID AND ANL.LID = \'' . $DB->ForSQL($val) . '\')';
+                        $strFrom = 'LEFT JOIN b_admin_notify_lang ANL ON (AN.ID = ANL.NOTIFY_ID AND ANL.LID = \'' . $DB->ForSQL(
+                                $val
+                            ) . '\')';
                         break;
                     case 'PUBLIC_SECTION':
                         $arSqlSearch[] = ($val == 'Y') ? "AN.PUBLIC_SECTION='Y'" : "AN.PUBLIC_SECTION='N'";
@@ -227,8 +259,8 @@ class CAdminNotify
 
         $sOrder = '';
         foreach ($arSort as $key => $val) {
-            $ord = (strtoupper($val) <> 'ASC' ? 'DESC' : 'ASC');
-            switch (strtoupper($key)) {
+            $ord = (mb_strtoupper($val) <> 'ASC' ? 'DESC' : 'ASC');
+            switch (mb_strtoupper($key)) {
                 case 'ID':
                     $sOrder .= ', AN.ID ' . $ord;
                     break;
@@ -241,8 +273,9 @@ class CAdminNotify
             }
         }
 
-        if (strlen($sOrder) <= 0)
+        if ($sOrder == '') {
             $sOrder = 'AN.ID DESC';
+        }
 
         $strSqlOrder = ' ORDER BY ' . TrimEx($sOrder, ',');
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);

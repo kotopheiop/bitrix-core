@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServMyMailRu extends CSocServAuth
@@ -18,9 +19,18 @@ class CSocServMyMailRu extends CSocServAuth
     public function GetFormHtml($arParams)
     {
         $url = $this->getUrl();
-        if ($arParams["FOR_INTRANET"])
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)"');
-        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)" class="bx-ss-button mymailru-button"></a><span class="bx-spacer"></span><span>' . GetMessage("socserv_mailru_note") . '</span>';
+        if ($arParams["FOR_INTRANET"]) {
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 580, 400)"'
+            );
+        }
+        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                CUtil::JSEscape($url)
+            ) . '\', 580, 400)" class="bx-ss-button mymailru-button"></a><span class="bx-spacer"></span><span>' . GetMessage(
+                "socserv_mailru_note"
+            ) . '</span>';
     }
 
     public function GetOnClickJs()
@@ -37,7 +47,10 @@ class CSocServMyMailRu extends CSocServAuth
         $gAuth = new CMailRuOAuthInterface($appID, $appSecret);
 
         $redirect_uri = CSocServUtil::GetCurUrl('auth_service_id=' . self::ID);
-        $state = 'site_id=' . SITE_ID . '&backurl=' . ($GLOBALS["APPLICATION"]->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl")));
+        $state = 'site_id=' . SITE_ID . '&backurl=' . ($GLOBALS["APPLICATION"]->GetCurPageParam(
+                'check_key=' . $_SESSION["UNIQUE_KEY"],
+                array("logout", "auth_service_error", "auth_service_id", "backurl")
+            ));
 
         return $gAuth->GetAuthUrl($redirect_uri, $state);
     }
@@ -52,7 +65,10 @@ class CSocServMyMailRu extends CSocServAuth
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey()) {
             $bProcessState = true;
 
-            $redirect_uri = CSocServUtil::GetCurUrl('auth_service_id=' . self::ID, array("code", "state", "check_key", "backurl"));
+            $redirect_uri = CSocServUtil::GetCurUrl(
+                'auth_service_id=' . self::ID,
+                array("code", "state", "check_key", "backurl")
+            );
             $appID = trim(self::GetOption("mailru_id"));
             $appSecret = trim(self::GetOption("mailru_secret_key"));
 
@@ -73,10 +89,11 @@ class CSocServMyMailRu extends CSocServAuth
                         $email = $arMRUser['0']['email'];
                     }
                     if (isset($arMRUser['0']['sex']) && $arMRUser['0']['sex'] != '') {
-                        if ($arMRUser['0']['sex'] == '0')
+                        if ($arMRUser['0']['sex'] == '0') {
                             $gender = 'M';
-                        elseif ($arMRUser['0']['sex'] == '1')
+                        } elseif ($arMRUser['0']['sex'] == '1') {
                             $gender = 'F';
+                        }
                     }
 
                     $arFields = array(
@@ -89,15 +106,22 @@ class CSocServMyMailRu extends CSocServAuth
                         'PERSONAL_GENDER' => $gender,
                     );
 
-                    if (isset($arMRUser['0']['birthday']))
-                        if ($date = MakeTimeStamp($arMRUser['0']['birthday'], "DD.MM.YYYY"))
+                    if (isset($arMRUser['0']['birthday'])) {
+                        if ($date = MakeTimeStamp($arMRUser['0']['birthday'], "DD.MM.YYYY")) {
                             $arFields["PERSONAL_BIRTHDAY"] = ConvertTimeStamp($date);
-                    if (isset($arMRUser['0']['pic_190']) && self::CheckPhotoURI($arMRUser['0']['pic_190']))
-                        if ($arPic = CFile::MakeFileArray($arMRUser['0']['pic_190'] . '?name=/' . md5($arMRUser['0']['pic_190']) . '.jpg'))
+                        }
+                    }
+                    if (isset($arMRUser['0']['pic_190']) && self::CheckPhotoURI($arMRUser['0']['pic_190'])) {
+                        if ($arPic = CFile::MakeFileArray(
+                            $arMRUser['0']['pic_190'] . '?name=/' . md5($arMRUser['0']['pic_190']) . '.jpg'
+                        )) {
                             $arFields["PERSONAL_PHOTO"] = $arPic;
+                        }
+                    }
                     $arFields["PERSONAL_WWW"] = $arMRUser['0']['link'];
-                    if (strlen(SITE_ID) > 0)
+                    if (SITE_ID <> '') {
                         $arFields["SITE_ID"] = SITE_ID;
+                    }
                     $bSuccess = $this->AuthorizeUser($arFields);
                 }
             }
@@ -112,13 +136,27 @@ class CSocServMyMailRu extends CSocServAuth
             $arState = array();
             parse_str($_REQUEST["state"], $arState);
 
-            if (isset($arState['backurl']))
+            if (isset($arState['backurl'])) {
                 $url = parse_url($arState['backurl'], PHP_URL_PATH);
+            }
         }
 
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key");
-        if ($bSuccess !== true)
-            $url = $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key"
+        );
+        if ($bSuccess !== true) {
+            $url = $GLOBALS['APPLICATION']->GetCurPageParam(
+                ('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess),
+                $aRemove
+            );
+        }
 
         echo '
 <script type="text/javascript">
@@ -162,16 +200,22 @@ class CMailRuOAuthInterface
 
     public function GetAccessToken($redirect_uri)
     {
-        if ($this->code === false)
+        if ($this->code === false) {
             return false;
+        }
 
-        $result = CHTTP::sPostHeader(self::TOKEN_URL, array(
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "code" => $this->code,
-            "redirect_uri" => $redirect_uri,
-            "grant_type" => "authorization_code",
-        ), array(), $this->httpTimeout);
+        $result = CHTTP::sPostHeader(
+            self::TOKEN_URL,
+            array(
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "code" => $this->code,
+                "redirect_uri" => $redirect_uri,
+                "grant_type" => "authorization_code",
+            ),
+            array(),
+            $this->httpTimeout
+        );
 
         $arResult = CUtil::JsObjectToPhp($result);
 
@@ -187,12 +231,22 @@ class CMailRuOAuthInterface
 
     public function GetCurrentUser()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
-        $sign = md5("app_id=" . $this->appID . "method=users.getInfosecure=1session_key=" . $this->access_token . $this->appSecret);
-        $result = CHTTP::sGetHeader(self::CONTACTS_URL . '?method=users.getInfo&secure=1&app_id=' . $this->appID . '&session_key=' . urlencode($this->access_token) . '&sig=' . $sign, array(), $this->httpTimeout);
-        if (!defined("BX_UTF"))
+        }
+        $sign = md5(
+            "app_id=" . $this->appID . "method=users.getInfosecure=1session_key=" . $this->access_token . $this->appSecret
+        );
+        $result = CHTTP::sGetHeader(
+            self::CONTACTS_URL . '?method=users.getInfo&secure=1&app_id=' . $this->appID . '&session_key=' . urlencode(
+                $this->access_token
+            ) . '&sig=' . $sign,
+            array(),
+            $this->httpTimeout
+        );
+        if (!defined("BX_UTF")) {
             $result = CharsetConverter::ConvertCharset($result, "utf-8", LANG_CHARSET);
+        }
 
         return CUtil::JsObjectToPhp($result);
     }

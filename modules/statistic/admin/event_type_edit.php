@@ -1,15 +1,22 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 IncludeModuleLangFile(__FILE__);
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 $statDB = CDatabase::GetModuleConnection('statistic');
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("STAT_EVENT_TYPE"), "ICON" => "main_user_edit", "TITLE" => GetMessage("STAT_EVENT_TYPE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("STAT_EVENT_TYPE"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("STAT_EVENT_TYPE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -32,17 +39,17 @@ if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && $STAT_RIGHT ==
     $arEvent = $rsEvent->Fetch();
 
     $statDB->PrepareFields("b_stat_event");
-    $sql_KEEP_DAYS = (strlen(trim($KEEP_DAYS)) <= 0) ? "null" : intval($KEEP_DAYS);
+    $sql_KEEP_DAYS = (trim($KEEP_DAYS) == '') ? "null" : intval($KEEP_DAYS);
     $arFields = array(
-        "EVENT1" => (strlen(trim($EVENT1)) > 0) ? $str_EVENT1 : "",
-        "EVENT2" => (strlen(trim($EVENT2)) > 0) ? $str_EVENT2 : "",
+        "EVENT1" => (trim($EVENT1) <> '') ? $str_EVENT1 : "",
+        "EVENT2" => (trim($EVENT2) <> '') ? $str_EVENT2 : "",
         "ADV_VISIBLE" => "'" . $str_ADV_VISIBLE . "'",
         "NAME" => "'" . $str_NAME . "'",
         "DESCRIPTION" => "'" . $str_DESCRIPTION . "'",
         "KEEP_DAYS" => $sql_KEEP_DAYS,
         "C_SORT" => "'" . $str_C_SORT . "'",
         "DIAGRAM_DEFAULT" => "'" . $str_DIAGRAM_DEFAULT . "'",
-        "DYNAMIC_KEEP_DAYS" => (strlen(trim($DYNAMIC_KEEP_DAYS)) <= 0) ? "null" : intval($str_DYNAMIC_KEEP_DAYS)
+        "DYNAMIC_KEEP_DAYS" => (trim($DYNAMIC_KEEP_DAYS) == '') ? "null" : intval($str_DYNAMIC_KEEP_DAYS)
     );
     if ($cEventType->CheckFields($arFields, $ID)) {
         $arFields["EVENT1"] = $arFields["EVENT1"] == "" ? 'null' : "'" . $arFields["EVENT1"] . "'";
@@ -62,13 +69,17 @@ if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && $STAT_RIGHT ==
             $new = "Y";
         }
         $statDB->Commit();
-        if ($apply != "")
-            LocalRedirect("event_type_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "event_type_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam()
+            );
+        } else {
             LocalRedirect("event_type_list.php?lang=" . LANG);
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("STAT_SAVE_ERROR"), $e);
+        }
         $bVarsFromForm = true;
     }
 }
@@ -78,16 +89,19 @@ $str_ADV_VISIBLE = "Y";
 $str_C_SORT = "100";
 if ($ID > 0) {
     $event = CStatEventType::GetByID($ID);
-    if (!($event_arr = $event->ExtractFields("str_")))
+    if (!($event_arr = $event->ExtractFields("str_"))) {
         $ID = 0;
+    }
 }
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $statDB->InitTableVarsForEdit("b_stat_event", "", "str_");
+}
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("STAT_EDIT_RECORD", array("#ID#" => $ID)));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("STAT_NEW_RECORD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -115,12 +129,18 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("STAT_CLEAR"),
         "TITLE" => GetMessage("STAT_RESET_EVENT_TYPE"),
-        "LINK" => "javascript:if(confirm('" . GetMessageJS("STAT_RESET_EVENT_TYPE_CONFIRM") . "'))window.location='event_type_list.php?ID=" . $ID . "&action=clear&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                "STAT_RESET_EVENT_TYPE_CONFIRM"
+            ) . "'))window.location='event_type_list.php?ID=" . $ID . "&action=clear&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
     );
     $aMenu[] = array(
         "TEXT" => GetMessage("STAT_DELETE"),
         "TITLE" => GetMessage("STAT_DELETE_EVENT_TYPE"),
-        "LINK" => "javascript:if(confirm('" . GetMessageJS("STAT_DELETE_EVENT_TYPE_CONFIRM") . "'))window.location='event_type_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                "STAT_DELETE_EVENT_TYPE_CONFIRM"
+            ) . "'))window.location='event_type_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -128,8 +148,9 @@ if ($ID > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
     <form method="POST" action="<?= $APPLICATION->GetCurPage() ?>">

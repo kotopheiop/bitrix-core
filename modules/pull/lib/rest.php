@@ -6,8 +6,9 @@ use Bitrix\Main,
     Bitrix\Main\Localization\Loc;
 use Bitrix\Pull\Rest\GuestAuth;
 
-if (!\Bitrix\Main\Loader::includeModule('rest'))
+if (!\Bitrix\Main\Loader::includeModule('rest')) {
     return;
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -24,22 +25,61 @@ class Rest extends \IRestService
             ),
             'pull_channel' => array(
                 'pull.config.get' => array('callback' => array(__CLASS__, 'configGet'), 'options' => array()),
-                'pull.channel.public.get' => array('callback' => array(__CLASS__, 'channelPublicGet'), 'options' => array()),
-                'pull.channel.public.list' => array('callback' => array(__CLASS__, 'channelPublicList'), 'options' => array()),
+                'pull.channel.public.get' => array(
+                    'callback' => array(__CLASS__, 'channelPublicGet'),
+                    'options' => array()
+                ),
+                'pull.channel.public.list' => array(
+                    'callback' => array(__CLASS__, 'channelPublicList'),
+                    'options' => array()
+                ),
             ),
             'mobile' => Array(
-                'mobile.counter.types.get' => array('callback' => array(__CLASS__, 'counterTypesGet'), 'options' => array()),
+                'mobile.counter.types.get' => array(
+                    'callback' => array(__CLASS__, 'counterTypesGet'),
+                    'options' => array()
+                ),
                 'mobile.counter.get' => array('callback' => array(__CLASS__, 'counterGet'), 'options' => array()),
-                'mobile.counter.config.get' => array('callback' => array(__CLASS__, 'counterConfigGet'), 'options' => array()),
-                'mobile.counter.config.set' => array('callback' => array(__CLASS__, 'counterConfigSet'), 'options' => array()),
+                'mobile.counter.config.get' => array(
+                    'callback' => array(__CLASS__, 'counterConfigGet'),
+                    'options' => array()
+                ),
+                'mobile.counter.config.set' => array(
+                    'callback' => array(__CLASS__, 'counterConfigSet'),
+                    'options' => array()
+                ),
 
                 'mobile.push.types.get' => array('callback' => array(__CLASS__, 'pushTypesGet'), 'options' => array()),
-                'mobile.push.config.get' => array('callback' => array(__CLASS__, 'pushConfigGet'), 'options' => array()),
-                'mobile.push.config.set' => array('callback' => array(__CLASS__, 'pushConfigSet'), 'options' => array()),
-                'mobile.push.status.get' => array('callback' => array(__CLASS__, 'pushStatusGet'), 'options' => array()),
-                'mobile.push.status.set' => array('callback' => array(__CLASS__, 'pushStatusSet'), 'options' => array()),
-                'mobile.push.smartfilter.status.get' => array('callback' => array(__CLASS__, 'pushSmartfilterStatusGet'), 'options' => array()),
-                'mobile.push.smartfilter.status.set' => array('callback' => array(__CLASS__, 'pushSmartfilterStatusSet'), 'options' => array()),
+                'mobile.push.config.get' => array(
+                    'callback' => array(__CLASS__, 'pushConfigGet'),
+                    'options' => array()
+                ),
+                'mobile.push.config.set' => array(
+                    'callback' => array(__CLASS__, 'pushConfigSet'),
+                    'options' => array()
+                ),
+                'mobile.push.status.get' => array(
+                    'callback' => array(__CLASS__, 'pushStatusGet'),
+                    'options' => array()
+                ),
+                'mobile.push.status.set' => array(
+                    'callback' => array(__CLASS__, 'pushStatusSet'),
+                    'options' => array()
+                ),
+                'mobile.push.smartfilter.status.get' => array(
+                    'callback' => array(
+                        __CLASS__,
+                        'pushSmartfilterStatusGet'
+                    ),
+                    'options' => array()
+                ),
+                'mobile.push.smartfilter.status.set' => array(
+                    'callback' => array(
+                        __CLASS__,
+                        'pushSmartfilterStatusSet'
+                    ),
+                    'options' => array()
+                ),
             )
         );
     }
@@ -52,7 +92,11 @@ class Rest extends \IRestService
         if ($params['APPLICATION'] == 'Y') {
             $clientId = $server->getClientId();
             if (!$clientId) {
-                throw new \Bitrix\Rest\RestException("Get application public channel available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+                throw new \Bitrix\Rest\RestException(
+                    "Get application public channel available only for application authorization.",
+                    "WRONG_AUTH_TYPE",
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
             $type = $clientId;
         }
@@ -66,7 +110,11 @@ class Rest extends \IRestService
 
         $config = \Bitrix\Pull\Channel::getPublicId($configParams);
         if (!$config) {
-            throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+            throw new \Bitrix\Rest\RestException(
+                "Push & Pull server is not configured",
+                "SERVER_ERROR",
+                \CRestServer::STATUS_INTERNAL
+            );
         }
 
         return $config;
@@ -80,7 +128,11 @@ class Rest extends \IRestService
         if ($params['APPLICATION'] == 'Y') {
             $clientId = $server->getClientId();
             if (!$clientId) {
-                throw new \Bitrix\Rest\RestException("Get application public channel available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+                throw new \Bitrix\Rest\RestException(
+                    "Get application public channel available only for application authorization.",
+                    "WRONG_AUTH_TYPE",
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
             $type = $clientId;
         }
@@ -99,7 +151,11 @@ class Rest extends \IRestService
         }
 
         if (empty($users)) {
-            throw new \Bitrix\Rest\RestException("A wrong format for the USERS field is passed", "INVALID_FORMAT", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "A wrong format for the USERS field is passed",
+                "INVALID_FORMAT",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $configParams = Array();
@@ -109,7 +165,11 @@ class Rest extends \IRestService
 
         $config = \Bitrix\Pull\Channel::getPublicIds($configParams);
         if (!$config) {
-            throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+            throw new \Bitrix\Rest\RestException(
+                "Push & Pull server is not configured",
+                "SERVER_ERROR",
+                \CRestServer::STATUS_INTERNAL
+            );
         }
 
         return $config;
@@ -121,7 +181,11 @@ class Rest extends \IRestService
 
         $clientId = $server->getClientId();
         if (!$clientId) {
-            throw new \Bitrix\Rest\RestException("Get access to application config available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+            throw new \Bitrix\Rest\RestException(
+                "Get access to application config available only for application authorization.",
+                "WRONG_AUTH_TYPE",
+                \CRestServer::STATUS_FORBIDDEN
+            );
         }
 
         $configParams = Array();
@@ -132,7 +196,11 @@ class Rest extends \IRestService
 
         $config = \Bitrix\Pull\Config::get($configParams);
         if (!$config) {
-            throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+            throw new \Bitrix\Rest\RestException(
+                "Push & Pull server is not configured",
+                "SERVER_ERROR",
+                \CRestServer::STATUS_INTERNAL
+            );
         }
 
         return $config;
@@ -144,7 +212,11 @@ class Rest extends \IRestService
 
         $clientId = $server->getClientId();
         if (!$clientId) {
-            throw new \Bitrix\Rest\RestException("Get access to application config available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+            throw new \Bitrix\Rest\RestException(
+                "Get access to application config available only for application authorization.",
+                "WRONG_AUTH_TYPE",
+                \CRestServer::STATUS_FORBIDDEN
+            );
         }
 
         global $USER;
@@ -155,33 +227,45 @@ class Rest extends \IRestService
                 $params['USER_ID'] = \CUtil::JsObjectToPhp($params['USER_ID']);
             }
 
-            if (is_array($params['USER_ID'])) {
-                foreach ($params['USER_ID'] as $userId) {
-                    $userId = intval($userId);
-                    if ($userId > 0) {
-                        $users[$userId] = $userId;
-                    }
-                }
-                $users = array_values($users);
+            if (!isset($params['USER_ID'])) {
+                $users = [Event::SHARED_CHANNEL];
             } else {
-                $users = (int)$params['USER_ID'];
+                if (is_array($params['USER_ID'])) {
+                    foreach ($params['USER_ID'] as $userId) {
+                        $userId = intval($userId);
+                        if ($userId > 0) {
+                            $users[$userId] = $userId;
+                        }
+                    }
+                    $users = array_values($users);
+                } else {
+                    $users = (int)$params['USER_ID'];
+                }
             }
         } else {
             if (isset($params['USER_ID'])) {
                 if ($params['USER_ID'] === $USER->GetId()) {
                     $users = $USER->GetId();
                 } else {
-                    throw new \Bitrix\Rest\RestException("Only admin can send notifications to other channels", "USER_ID_ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+                    throw new \Bitrix\Rest\RestException(
+                        "Only admin can send notifications to other channels",
+                        "USER_ID_ACCESS_ERROR",
+                        \CRestServer::STATUS_WRONG_REQUEST
+                    );
                 }
             } else {
-                $users = Event::SHARED_CHANNEL;
+                $users = [Event::SHARED_CHANNEL];
             }
         }
 
         if (isset($params['MODULE_ID'])) {
             $moduleId = $params['MODULE_ID'];
             if (preg_match("/[^a-z0-9._]/", $moduleId)) {
-                throw new \Bitrix\Rest\RestException("Module ID format error", "MODULE_ID_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+                throw new \Bitrix\Rest\RestException(
+                    "Module ID format error",
+                    "MODULE_ID_ERROR",
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
         } else {
             $moduleId = 'application';
@@ -189,7 +273,11 @@ class Rest extends \IRestService
 
         $command = $params['COMMAND'];
         if (!preg_match("/^[\d\w:_|\.\-]+$/", $command)) {
-            throw new \Bitrix\Rest\RestException("Command format error", "COMMAND_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "Command format error",
+                "COMMAND_ERROR",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         if (isset($params['PARAMS'])) {
@@ -199,17 +287,25 @@ class Rest extends \IRestService
 
             $eventParams = $params['PARAMS'];
             if (!is_array($eventParams)) {
-                throw new \Bitrix\Rest\RestException("Params format error", "PARAMS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+                throw new \Bitrix\Rest\RestException(
+                    "Params format error",
+                    "PARAMS_ERROR",
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
         } else {
             $eventParams = [];
         }
 
-        Event::add($users, array(
-            'module_id' => $moduleId,
-            'command' => $command,
-            'params' => $eventParams,
-        ), $clientId);
+        Event::add(
+            $users,
+            array(
+                'module_id' => $moduleId,
+                'command' => $command,
+                'params' => $eventParams,
+            ),
+            $clientId
+        );
 
         return true;
     }
@@ -220,11 +316,19 @@ class Rest extends \IRestService
 
         $clientId = $server->getClientId();
         if (!$clientId) {
-            throw new \Bitrix\Rest\RestException("Send push notifications available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+            throw new \Bitrix\Rest\RestException(
+                "Send push notifications available only for application authorization.",
+                "WRONG_AUTH_TYPE",
+                \CRestServer::STATUS_FORBIDDEN
+            );
         }
 
         if (!self::isAdmin()) {
-            throw new \Bitrix\Rest\RestException("You do not have access to send push notifications", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "You do not have access to send push notifications",
+                "ACCESS_ERROR",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $users = Array();
@@ -244,8 +348,10 @@ class Rest extends \IRestService
             $users = (int)$params['USER_ID'];
         }
 
-        if (!$params['TEXT'] || strlen($params['TEXT']) <= 0) {
-            throw new \Bitrix\Rest\RestException("Text can't be empty", "TEXT_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+        if (!$params['TEXT'] || $params['TEXT'] == '') {
+            throw new \Bitrix\Rest\RestException(
+                "Text can't be empty", "TEXT_ERROR", \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $result = \Bitrix\Rest\AppTable::getList(
@@ -261,7 +367,11 @@ class Rest extends \IRestService
             )
         )->fetch();
         if (empty($result['APP_NAME'])) {
-            throw new \Bitrix\Rest\RestException("For send push-notification application name can't be empty", "EMPTY_APP_NAME", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "For send push-notification application name can't be empty",
+                "EMPTY_APP_NAME",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $appName = $result['APP_NAME'];
@@ -277,7 +387,8 @@ class Rest extends \IRestService
             }
         }
 
-        Push::add($users,
+        Push::add(
+            $users,
             [
                 'module_id' => 'im',
                 'push' =>
@@ -291,7 +402,8 @@ class Rest extends \IRestService
                                 "senderMessage" => $text,
                             ],
                     ]
-            ]);
+            ]
+        );
 
         return true;
     }
@@ -301,17 +413,27 @@ class Rest extends \IRestService
         $params = array_change_key_case($params, CASE_UPPER);
 
         if ($server->getAuthType() === \Bitrix\Rest\OAuth\Auth::AUTH_TYPE) {
-            throw new \Bitrix\Rest\RestException("Method not available for OAuth authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+            throw new \Bitrix\Rest\RestException(
+                "Method not available for OAuth authorization.",
+                "WRONG_AUTH_TYPE",
+                \CRestServer::STATUS_FORBIDDEN
+            );
         }
 
         global $USER;
         $guestMode = defined("PULL_USER_ID") && (int)PULL_USER_ID != 0;
         if ($server->getAuthType() === GuestAuth::AUTH_TYPE && $guestMode) {
             $userId = (int)PULL_USER_ID;
-        } else if ($USER->IsAuthorized()) {
-            $userId = $USER->getId();
         } else {
-            throw new \Bitrix\Rest\RestException("Method not available for guest session at the moment.", "AUTHORIZE_ERROR", \CRestServer::STATUS_FORBIDDEN);
+            if ($USER->IsAuthorized()) {
+                $userId = $USER->getId();
+            } else {
+                throw new \Bitrix\Rest\RestException(
+                    "Method not available for guest session at the moment.",
+                    "AUTHORIZE_ERROR",
+                    \CRestServer::STATUS_FORBIDDEN
+                );
+            }
         }
 
         $configParams = Array();
@@ -322,7 +444,11 @@ class Rest extends \IRestService
 
         $config = \Bitrix\Pull\Config::get($configParams);
         if (!$config) {
-            throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+            throw new \Bitrix\Rest\RestException(
+                "Push & Pull server is not configured",
+                "SERVER_ERROR",
+                \CRestServer::STATUS_INTERNAL
+            );
         }
 
         return $config;
@@ -389,7 +515,11 @@ class Rest extends \IRestService
         }
 
         if (!is_array($params['CONFIG']) || empty($params['CONFIG'])) {
-            throw new \Bitrix\Rest\RestException("New config is not specified", "CONFIG_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "New config is not specified",
+                "CONFIG_ERROR",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         \Bitrix\Pull\MobileCounter::setConfig($params['CONFIG']);
@@ -413,7 +543,6 @@ class Rest extends \IRestService
 
         $result = Array();
         foreach ($config as $moduleId => $module) {
-
             $types = Array();
             foreach ($module['TYPES'] as $typeId => $typeConfig) {
                 if ($withUserValues) {
@@ -460,7 +589,11 @@ class Rest extends \IRestService
         }
 
         if (!is_array($params['CONFIG']) || empty($params['CONFIG'])) {
-            throw new \Bitrix\Rest\RestException("New config is not specified", "CONFIG_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+            throw new \Bitrix\Rest\RestException(
+                "New config is not specified",
+                "CONFIG_ERROR",
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $newConfig = Array();
@@ -514,7 +647,11 @@ class Rest extends \IRestService
 
     public static function notImplemented($params, $n, \CRestServer $server)
     {
-        throw new \Bitrix\Rest\RestException("Method isn't implemented yet", "NOT_IMPLEMENTED", \CRestServer::STATUS_NOT_FOUND);
+        throw new \Bitrix\Rest\RestException(
+            "Method isn't implemented yet",
+            "NOT_IMPLEMENTED",
+            \CRestServer::STATUS_NOT_FOUND
+        );
     }
 
     private static function isAdmin()

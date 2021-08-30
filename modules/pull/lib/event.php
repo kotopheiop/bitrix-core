@@ -9,6 +9,8 @@ class Event
 {
     const SHARED_CHANNEL = 0;
 
+    private static $backgroundContext = false;
+
     private static $messages = array();
     private static $deferredMessages = array();
     private static $push = array();
@@ -17,7 +19,12 @@ class Event
     public static function add($recipient, array $parameters, $channelType = \CPullChannel::TYPE_PRIVATE)
     {
         if (!isset($parameters['module_id'])) {
-            self::$error = new Error(__METHOD__, 'EVENT_PARAMETERS_FORMAT', Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'), $parameters);
+            self::$error = new Error(
+                __METHOD__,
+                'EVENT_PARAMETERS_FORMAT',
+                Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'),
+                $parameters
+            );
             return false;
         }
 
@@ -30,11 +37,18 @@ class Event
 
         if (isset($parameters['command']) && !empty($parameters['command'])) {
             $result = self::addEvent($recipient, $parameters, $channelType);
-        } else if (isset($parameters['push']) || isset($parameters['pushParamsCallback'])) {
-            $result = self::addPush($recipient, $parameters);
         } else {
-            self::$error = new Error(__METHOD__, 'EVENT_PARAMETERS_FORMAT', Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'), $parameters);
-            return false;
+            if (isset($parameters['push']) || isset($parameters['pushParamsCallback'])) {
+                $result = self::addPush($recipient, $parameters);
+            } else {
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_PARAMETERS_FORMAT',
+                    Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'),
+                    $parameters
+                );
+                return false;
+            }
         }
 
         return $result;
@@ -48,10 +62,12 @@ class Event
 
         $entities = self::getEntitiesByType($recipient);
         if (!$entities) {
-            self::$error = new Error(__METHOD__, 'RECIPIENT_FORMAT', Loc::getMessage('PULL_EVENT_RECIPIENT_FORMAT_ERROR'), Array(
+            self::$error = new Error(
+                __METHOD__, 'RECIPIENT_FORMAT', Loc::getMessage('PULL_EVENT_RECIPIENT_FORMAT_ERROR'), Array(
                 'recipient' => $recipient,
                 'eventParameters' => $parameters
-            ));
+            )
+            );
 
             return false;
         }
@@ -96,7 +112,10 @@ class Event
         }
 
 
-        if (defined('BX_CHECK_AGENT_START') && !defined('BX_WITH_ON_AFTER_EPILOG')) {
+        if (
+            self::$backgroundContext
+            || defined('BX_CHECK_AGENT_START') && !defined('BX_WITH_ON_AFTER_EPILOG')
+        ) {
             self::send();
         }
 
@@ -119,8 +138,12 @@ class Event
         unset($parameters['hasCallback']);
 
         if ($destination[$eventCode]) {
-            $destination[$eventCode]['users'] = array_unique(array_merge($destination[$eventCode]['users'], array_values($channels)));
-            $destination[$eventCode]['channels'] = array_unique(array_merge($destination[$eventCode]['channels'], array_keys($channels)));
+            $destination[$eventCode]['users'] = array_unique(
+                array_merge($destination[$eventCode]['users'], array_values($channels))
+            );
+            $destination[$eventCode]['channels'] = array_unique(
+                array_merge($destination[$eventCode]['channels'], array_keys($channels))
+            );
         } else {
             $destination[$eventCode]['event'] = $parameters;
             $destination[$eventCode]['users'] = array_unique(array_values($channels));
@@ -131,10 +154,12 @@ class Event
     private static function addPush($users, $parameters)
     {
         if (!\CPullOptions::GetPushStatus()) {
-            self::$error = new Error(__METHOD__, 'PUSH_DISABLED', Loc::getMessage('PULL_EVENT_PUSH_DISABLED_ERROR'), Array(
+            self::$error = new Error(
+                __METHOD__, 'PUSH_DISABLED', Loc::getMessage('PULL_EVENT_PUSH_DISABLED_ERROR'), Array(
                 'recipient' => $users,
                 'eventParameters' => $parameters
-            ));
+            )
+            );
 
             return false;
         }
@@ -150,10 +175,12 @@ class Event
         }
 
         if (empty($users)) {
-            self::$error = new Error(__METHOD__, 'RECIPIENT_FORMAT', Loc::getMessage('PULL_EVENT_RECIPIENT_FORMAT_ERROR'), Array(
+            self::$error = new Error(
+                __METHOD__, 'RECIPIENT_FORMAT', Loc::getMessage('PULL_EVENT_RECIPIENT_FORMAT_ERROR'), Array(
                 'recipient' => $users,
                 'eventParameters' => $parameters
-            ));
+            )
+            );
 
             return false;
         }
@@ -162,12 +189,19 @@ class Event
             if (!isset($parameters['push']['skip_users'])) {
                 $parameters['push']['skip_users'] = Array();
             }
-            $parameters['push']['skip_users'] = array_merge($parameters['skip_users'], $parameters['push']['skip_users']);
+            $parameters['push']['skip_users'] = array_merge(
+                $parameters['skip_users'],
+                $parameters['push']['skip_users']
+            );
         }
 
         if (!empty($parameters['push']['type'])) {
             foreach ($users as $userId) {
-                if (!\Bitrix\Pull\Push::getConfigTypeStatus($parameters['module_id'], $parameters['push']['type'], $userId)) {
+                if (!\Bitrix\Pull\Push::getConfigTypeStatus(
+                    $parameters['module_id'],
+                    $parameters['push']['type'],
+                    $userId
+                )) {
                     $parameters['push']['skip_users'][] = $userId;
                 }
             }
@@ -180,7 +214,9 @@ class Event
 
         $pushCode = self::getParamsCode($parameters['push']);
         if (self::$push[$pushCode]) {
-            self::$push[$pushCode]['users'] = array_unique(array_merge(self::$push[$pushCode]['users'], array_values($users)));
+            self::$push[$pushCode]['users'] = array_unique(
+                array_merge(self::$push[$pushCode]['users'], array_values($users))
+            );
         } else {
             $hasPushCallback = $parameters['hasPushCallback'];
             unset($parameters['hasPushCallback']);
@@ -191,7 +227,10 @@ class Event
             self::$push[$pushCode]['users'] = array_unique(array_values($users));
         }
 
-        if (defined('BX_CHECK_AGENT_START') && !defined('BX_WITH_ON_AFTER_EPILOG')) {
+        if (
+            self::$backgroundContext
+            || defined('BX_CHECK_AGENT_START') && !defined('BX_WITH_ON_AFTER_EPILOG')
+        ) {
             self::send();
         }
 
@@ -202,8 +241,14 @@ class Event
     {
         foreach (self::$deferredMessages as $eventCode => $message) {
             $callback = $message['event']['paramsCallback'];
-            if (Main\Loader::includeModule($callback['module_id']) && method_exists($callback['class'], $callback['method'])) {
-                $messageParameters = call_user_func_array([$callback['class'], $callback['method']], [$callback['params']]);
+            if (Main\Loader::includeModule($callback['module_id']) && method_exists(
+                    $callback['class'],
+                    $callback['method']
+                )) {
+                $messageParameters = call_user_func_array(
+                    [$callback['class'], $callback['method']],
+                    [$callback['params']]
+                );
                 self::addMessage(self::$messages, $message['channels'], $messageParameters);
             }
         }
@@ -221,14 +266,17 @@ class Event
 
     private static function executePushEvent($parameters)
     {
-        if (!defined('BX_PULL_EPILOG_AFTER') && $parameters['hasPushCallback']) {
+        if (!self::$backgroundContext && $parameters['hasPushCallback']) {
             return null;
         }
 
         $data = Array();
         if ($parameters['hasPushCallback']) {
             Main\Loader::includeModule($parameters['push']['pushParamsCallback']['module_id']);
-            if (method_exists($parameters['push']['pushParamsCallback']['class'], $parameters['push']['pushParamsCallback']['method'])) {
+            if (method_exists(
+                $parameters['push']['pushParamsCallback']['class'],
+                $parameters['push']['pushParamsCallback']['method']
+            )) {
                 $data = call_user_func_array(
                     array(
                         $parameters['push']['pushParamsCallback']['class'],
@@ -265,27 +313,30 @@ class Event
         }
 
         $manager = new \CPushManager();
-        $manager->AddQueue(Array(
-            'USER_ID' => $users,
-            'SKIP_USERS' => is_array($data['skip_users']) ? $data['skip_users'] : Array(),
-            'MESSAGE' => $data['message'],
-            'PARAMS' => $data['params'],
-            'ADVANCED_PARAMS' => $data['advanced_params'],
-            'BADGE' => $data['badge'],
-            'SOUND' => $data['sound'],
-            'TAG' => $data['tag'],
-            'SUB_TAG' => $data['sub_tag'],
-            'APP_ID' => $data['app_id'],
-            'SEND_IMMEDIATELY' => $data['send_immediately'],
-            'IMPORTANT' => $data['important'],
-        ));
+        $manager->AddQueue(
+            Array(
+                'USER_ID' => $users,
+                'SKIP_USERS' => is_array($data['skip_users']) ? $data['skip_users'] : Array(),
+                'MESSAGE' => $data['message'],
+                'EXPIRY' => $data['expiry'],
+                'PARAMS' => $data['params'],
+                'ADVANCED_PARAMS' => $data['advanced_params'],
+                'BADGE' => $data['badge'],
+                'SOUND' => $data['sound'],
+                'TAG' => $data['tag'],
+                'SUB_TAG' => $data['sub_tag'],
+                'APP_ID' => $data['app_id'],
+                'SEND_IMMEDIATELY' => $data['send_immediately'],
+                'IMPORTANT' => $data['important'],
+            )
+        );
 
         return true;
     }
 
     public static function send()
     {
-        if (defined('BX_PULL_EPILOG_AFTER')) {
+        if (self::$backgroundContext) {
             self::processDeferredMessages();
         }
 
@@ -370,17 +421,14 @@ class Event
 
     public static function onAfterEpilog()
     {
-        define('BX_PULL_EPILOG_AFTER', true);
-
-        if (defined("BX_FORK_AGENTS_AND_EVENTS_FUNCTION")) {
-            if (\CMain::forkActions(array(__CLASS__, "send"))) {
-                return true;
-            }
-        }
-
-        self::send();
-
+        Main\Application::getInstance()->addBackgroundJob([__CLASS__, "sendInBackground"]);
         return true;
+    }
+
+    public static function sendInBackground()
+    {
+        self::$backgroundContext = true;
+        self::send();
     }
 
     public static function getChannelIds($users, $type = \CPullChannel::TYPE_PRIVATE)
@@ -391,10 +439,6 @@ class Event
 
         $result = Array();
         foreach ($users as $userId) {
-            if ($userId === 0 && $type == \CPullChannel::TYPE_PRIVATE) {
-                $channelType = \CPullChannel::TYPE_SHARED;
-            }
-
             $data = \CPullChannel::Get($userId, true, false, $type);
             if ($data) {
                 $result[$data['CHANNEL_ID']] = $userId;
@@ -411,12 +455,14 @@ class Event
         }
 
         $result = Array();
-        $orm = \Bitrix\Pull\Model\ChannelTable::getList(array(
-            'select' => Array('USER_ID', 'CHANNEL_ID', 'USER_ACTIVE' => 'USER.ACTIVE'),
-            'filter' => Array(
-                '=CHANNEL_ID' => $channels
+        $orm = \Bitrix\Pull\Model\ChannelTable::getList(
+            array(
+                'select' => Array('USER_ID', 'CHANNEL_ID', 'USER_ACTIVE' => 'USER.ACTIVE'),
+                'filter' => Array(
+                    '=CHANNEL_ID' => $channels
+                )
             )
-        ));
+        );
         while ($row = $orm->fetch()) {
             if ($row['USER_ID'] > 0 && $row['USER_ACTIVE'] == 'N') {
                 continue;
@@ -433,23 +479,29 @@ class Event
         if (
             !isset($parameters['command']) || empty($parameters['command'])
         ) {
-            self::$error = new Error(__METHOD__, 'EVENT_PARAMETERS_FORMAT', Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'), $parameters);
+            self::$error = new Error(
+                __METHOD__,
+                'EVENT_PARAMETERS_FORMAT',
+                Loc::getMessage('PULL_EVENT_PARAMETERS_FORMAT_ERROR'),
+                $parameters
+            );
             return false;
         }
 
-        $parameters['module_id'] = strtolower($parameters['module_id']);
-        if (isset($parameters['expire'])) {
-            $parameters['expire'] = intval($parameters['expire']);
-        } else {
-            $parameters['expire'] = 86400;
-        }
+        $parameters['module_id'] = mb_strtolower($parameters['module_id']);
+        $parameters['expiry'] = (int)($parameters['expiry'] ?? 86400);
 
         if (isset($parameters['paramsCallback'])) {
             if (
                 empty($parameters['paramsCallback']['class'])
                 || empty($parameters['paramsCallback']['method'])
             ) {
-                self::$error = new Error(__METHOD__, 'EVENT_CALLBACK_FORMAT', Loc::getMessage('PULL_EVENT_CALLBACK_FORMAT_ERROR'), $parameters);
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_CALLBACK_FORMAT',
+                    Loc::getMessage('PULL_EVENT_CALLBACK_FORMAT_ERROR'),
+                    $parameters
+                );
                 return false;
             }
 
@@ -460,7 +512,12 @@ class Event
             Main\Loader::includeModule($parameters['paramsCallback']['module_id']);
 
             if (!method_exists($parameters['paramsCallback']['class'], $parameters['paramsCallback']['method'])) {
-                self::$error = new Error(__METHOD__, 'EVENT_CALLBACK_NOT_FOUND', Loc::getMessage('PULL_EVENT_CALLBACK_FORMAT_ERROR'), $parameters);
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_CALLBACK_NOT_FOUND',
+                    Loc::getMessage('PULL_EVENT_CALLBACK_FORMAT_ERROR'),
+                    $parameters
+                );
                 return false;
             }
             if (!isset($parameters['paramsCallback']['params'])) {
@@ -493,14 +550,19 @@ class Event
 
     private static function preparePushParameters($parameters)
     {
-        $parameters['module_id'] = strtolower($parameters['module_id']);
+        $parameters['module_id'] = mb_strtolower($parameters['module_id']);
 
         if (isset($parameters['pushParamsCallback'])) {
             if (
                 empty($parameters['pushParamsCallback']['class'])
                 || empty($parameters['pushParamsCallback']['method'])
             ) {
-                self::$error = new Error(__METHOD__, 'EVENT_PUSH_CALLBACK_FORMAT', Loc::getMessage('PULL_EVENT_PUSH_CALLBACK_FORMAT_ERROR'), $parameters);
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_PUSH_CALLBACK_FORMAT',
+                    Loc::getMessage('PULL_EVENT_PUSH_CALLBACK_FORMAT_ERROR'),
+                    $parameters
+                );
                 return false;
             }
 
@@ -510,8 +572,16 @@ class Event
 
             Main\Loader::includeModule($parameters['pushParamsCallback']['module_id']);
 
-            if (!method_exists($parameters['pushParamsCallback']['class'], $parameters['pushParamsCallback']['method'])) {
-                self::$error = new Error(__METHOD__, 'EVENT_PUSH_CALLBACK_NOT_FOUND', Loc::getMessage('PULL_EVENT_PUSH_CALLBACK_FORMAT_ERROR'), $parameters);
+            if (!method_exists(
+                $parameters['pushParamsCallback']['class'],
+                $parameters['pushParamsCallback']['method']
+            )) {
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_PUSH_CALLBACK_NOT_FOUND',
+                    Loc::getMessage('PULL_EVENT_PUSH_CALLBACK_FORMAT_ERROR'),
+                    $parameters
+                );
                 return false;
             }
             if (!isset($parameters['pushParamsCallback']['params'])) {
@@ -529,7 +599,12 @@ class Event
             }
 
             if (empty($parameters['push'])) {
-                self::$error = new Error(__METHOD__, 'EVENT_PUSH_PARAMETERS_FORMAT', Loc::getMessage('PULL_EVENT_PUSH_PARAMETERS_FORMAT_ERROR'), $parameters);
+                self::$error = new Error(
+                    __METHOD__,
+                    'EVENT_PUSH_PARAMETERS_FORMAT',
+                    Loc::getMessage('PULL_EVENT_PUSH_PARAMETERS_FORMAT_ERROR'),
+                    $parameters
+                );
                 return false;
             }
         }
@@ -553,6 +628,7 @@ class Event
 
             unset($paramsWithoutTime['extra']['server_time']);
             unset($paramsWithoutTime['extra']['server_time_unix']);
+            unset($paramsWithoutTime['advanced_params']['filterCallback']);
 
             return serialize($paramsWithoutTime);
         }
@@ -583,13 +659,15 @@ class Event
         $bytes = 0;
 
         if (is_string($variable)) {
-            $bytes += strlen($variable);
-        } else if (is_array($variable)) {
-            foreach ($variable as $value) {
-                $bytes += self::getBytes($value);
-            }
+            $bytes += mb_strlen($variable);
         } else {
-            $bytes += strlen((string)$variable);
+            if (is_array($variable)) {
+                foreach ($variable as $value) {
+                    $bytes += self::getBytes($value);
+                }
+            } else {
+                $bytes += mb_strlen((string)$variable);
+            }
         }
 
         return $bytes;
@@ -597,7 +675,7 @@ class Event
 
     private static function isChannelEntity($entity)
     {
-        return is_string($entity) && strlen($entity) == 32;
+        return is_string($entity) && mb_strlen($entity) == 32;
     }
 
     public static function getLastError()

@@ -75,9 +75,11 @@ class Json
     {
         if ($data instanceof \JsonSerializable) {
             $data = $data->jsonSerialize();
-        } else if (is_iterable($data)) {
-            foreach ($data as $key => $value) {
-                self::serializeJson($data[$key]);
+        } else {
+            if (is_iterable($data)) {
+                foreach ($data as $key => $value) {
+                    self::serializeJson($data[$key]);
+                }
             }
         }
     }

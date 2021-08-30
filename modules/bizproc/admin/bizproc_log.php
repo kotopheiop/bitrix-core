@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/prolog.php");
@@ -14,7 +15,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 $errorMessage = "";
 
 $ID = trim($_REQUEST["ID"]);
-$adminMode = (strtoupper($_REQUEST["admin_mode"]) == "Y");
+$adminMode = (mb_strtoupper($_REQUEST["admin_mode"]) == "Y");
 
 $arWorkflowState = CBPStateService::GetWorkflowState($ID);
 
@@ -26,7 +27,11 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
         CBPCanUserOperateOperation::ViewWorkflow,
         $GLOBALS["USER"]->GetID(),
         $arWorkflowState["DOCUMENT_ID"],
-        array("WorkflowId" => $ID, "DocumentStates" => array($ID => $arWorkflowState), "UserGroups" => $GLOBALS["USER"]->GetUserGroupArray())
+        array(
+            "WorkflowId" => $ID,
+            "DocumentStates" => array($ID => $arWorkflowState),
+            "UserGroups" => $GLOBALS["USER"]->GetUserGroupArray()
+        )
     );
     if (!$bCanView) {
         $APPLICATION->SetTitle(GetMessage("BPABL_ERROR"));
@@ -37,8 +42,9 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
     }
 
     $backUrl = "/" . ltrim(trim($_REQUEST["back_url"]), "\\/");
-    if (strlen($backUrl) <= 0)
+    if ($backUrl == '') {
         $backUrl = CBPDocument::GetDocumentAdminPage($arWorkflowState["DOCUMENT_ID"]);
+    }
 
     $aMenu = array(
         array(
@@ -53,7 +59,12 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("BPABL_TITLE")));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("BPABL_WF_TAB"), "ICON" => "bizproc", "TITLE" => GetMessage("BPABL_TAB_TITLE"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("BPABL_WF_TAB"),
+            "ICON" => "bizproc",
+            "TITLE" => GetMessage("BPABL_TAB_TITLE")
+        )
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -80,11 +91,14 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
     <tr>
         <td align="right" valign="top" width="50%"><?= GetMessage("BPABL_STATE_NAME") ?>:</td>
         <td width="50%" valign="top"><?
-            if (strlen($arWorkflowState["STATE_NAME"]) > 0) {
-                if (strlen($arWorkflowState["STATE_TITLE"]) > 0)
-                    echo htmlspecialcharsbx($arWorkflowState["STATE_TITLE"]) . " (" . htmlspecialcharsbx($arWorkflowState["STATE_NAME"]) . ")";
-                else
+            if ($arWorkflowState["STATE_NAME"] <> '') {
+                if ($arWorkflowState["STATE_TITLE"] <> '') {
+                    echo htmlspecialcharsbx($arWorkflowState["STATE_TITLE"]) . " (" . htmlspecialcharsbx(
+                            $arWorkflowState["STATE_NAME"]
+                        ) . ")";
+                } else {
                     echo htmlspecialcharsbx($arWorkflowState["STATE_NAME"]);
+                }
             } else {
                 echo "&nbsp;";
             }
@@ -125,7 +139,7 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
                             $strMessageTemplate = GetMessage("BPABL_TYPE_6");
                     }
 
-                    $name = (strlen($track["ACTION_TITLE"]) > 0 ? $track["ACTION_TITLE"] . " (" . $track["ACTION_NAME"] . ")" : $track["ACTION_NAME"]);
+                    $name = ($track["ACTION_TITLE"] <> '' ? $track["ACTION_TITLE"] . " (" . $track["ACTION_NAME"] . ")" : $track["ACTION_NAME"]);
 
                     switch ($track["EXECUTION_STATUS"]) {
                         case CBPActivityExecutionStatus::Initialized:
@@ -167,7 +181,7 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
                             $status = GetMessage("BPABL_RES_6");
                     }
 
-                    $note = ((strlen($track["ACTION_NOTE"]) > 0) ? ": " . $track["ACTION_NOTE"] : "");
+                    $note = (($track["ACTION_NOTE"] <> '') ? ": " . $track["ACTION_NOTE"] : "");
 
                     $note = CBPTrackingService::parseStringParameter($note);
 
@@ -178,24 +192,34 @@ if (!is_array($arWorkflowState) || count($arWorkflowState) <= 0) {
                     );
                     echo "<br />";
                 }
-                echo "<br><a href=\"" . htmlspecialcharsbx($APPLICATION->GetCurPageParam("admin_mode=N", array("admin_mode"))) . "\">" . GetMessage("BPABL_RES2SIMPLEMODE") . "</a>";
+                echo "<br><a href=\"" . htmlspecialcharsbx(
+                        $APPLICATION->GetCurPageParam("admin_mode=N", array("admin_mode"))
+                    ) . "\">" . GetMessage("BPABL_RES2SIMPLEMODE") . "</a>";
             } else {
                 $dbResult = CBPTrackingService::GetList(
                     array("ID" => "ASC"),
-                    array("WORKFLOW_ID" => $ID, "TYPE" => array(
-                        CBPTrackingType::Report,
-                        CBPTrackingType::Custom,
-                        CBPTrackingType::FaultActivity,
-                        CBPTrackingType::Error
-                    )),
+                    array(
+                        "WORKFLOW_ID" => $ID,
+                        "TYPE" => array(
+                            CBPTrackingType::Report,
+                            CBPTrackingType::Custom,
+                            CBPTrackingType::FaultActivity,
+                            CBPTrackingType::Error
+                        )
+                    ),
                     false,
                     false,
                     array("ID", "MODIFIED", "ACTION_NOTE")
                 );
-                while ($arResult = $dbResult->GetNext())
-                    echo "<i>" . $arResult["MODIFIED"] . "</i><br>" . CBPTrackingService::parseStringParameter($arResult["ACTION_NOTE"]) . "<br><br>";
+                while ($arResult = $dbResult->GetNext()) {
+                    echo "<i>" . $arResult["MODIFIED"] . "</i><br>" . CBPTrackingService::parseStringParameter(
+                            $arResult["ACTION_NOTE"]
+                        ) . "<br><br>";
+                }
 
-                echo "<a href=\"" . htmlspecialcharsbx($APPLICATION->GetCurPageParam("admin_mode=Y", array("admin_mode"))) . "\">" . GetMessage("BPABL_RES2ADMINMODE") . "</a>";
+                echo "<a href=\"" . htmlspecialcharsbx(
+                        $APPLICATION->GetCurPageParam("admin_mode=Y", array("admin_mode"))
+                    ) . "\">" . GetMessage("BPABL_RES2ADMINMODE") . "</a>";
             }
             ?>
         </td>

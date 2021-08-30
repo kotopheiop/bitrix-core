@@ -56,10 +56,16 @@ class PathIndexCollection
         self::$useTranslationRepository = Main\Localization\Translation::useTranslationRepository();
         if (self::$useTranslationRepository) {
             self::$translationRepositoryLanguages = Translate\Config::getTranslationRepositoryLanguages();
-            self::$translationRepositoryRoot = rtrim(Main\Localization\Translation::getTranslationRepositoryPath(), '/');
+            self::$translationRepositoryRoot = rtrim(
+                Main\Localization\Translation::getTranslationRepositoryPath(),
+                '/'
+            );
 
             // only active languages
-            self::$translationEnabledLanguages = array_intersect(self::$translationRepositoryLanguages, self::$enabledLanguages);
+            self::$translationEnabledLanguages = array_intersect(
+                self::$translationRepositoryLanguages,
+                self::$enabledLanguages
+            );
         }
     }
 
@@ -91,8 +97,11 @@ class PathIndexCollection
      *
      * @return int
      */
-    public function collect(Translate\Filter $filter = null, Translate\Controller\ITimeLimit $timer = null, Translate\Filter $seek = null)
-    {
+    public function collect(
+        Translate\Filter $filter = null,
+        Translate\Controller\ITimeLimit $timer = null,
+        Translate\Filter $seek = null
+    ) {
         self::configure();
 
         if (isset($filter, $filter->path)) {
@@ -116,11 +125,13 @@ class PathIndexCollection
             $pathFilter['>ID'] = $seek->pathLangId;
         }
 
-        $cachePathLangRes = Index\Internals\PathLangTable::getList(array(
-            'filter' => $pathFilter,
-            'order' => array('ID' => 'ASC'),
-            'select' => ['ID', 'PATH'],
-        ));
+        $cachePathLangRes = Index\Internals\PathLangTable::getList(
+            array(
+                'filter' => $pathFilter,
+                'order' => array('ID' => 'ASC'),
+                'select' => ['ID', 'PATH'],
+            )
+        );
         $processedItemCount = 0;
         while ($pathLang = $cachePathLangRes->fetch()) {
             $this->collectFilePath($pathLang['PATH']);
@@ -207,7 +218,7 @@ class PathIndexCollection
                             if (in_array($name, Translate\IGNORE_FS_NAMES)) {
                                 continue;
                             }
-                            if (substr($name, -4) !== '.php') {
+                            if (mb_substr($name, -4) !== '.php') {
                                 continue;
                             }
                             if (!is_file($fullPath)) {
@@ -237,8 +248,11 @@ class PathIndexCollection
 
                                 if ($langSettings instanceof Translate\Settings) {
                                     $settings = $langSettings->getOptions($relPath);
-                                    if (!empty($settings['languages'])) {
-                                        $nodeData['OBLIGATORY_LANGS'] = implode(',', $settings['languages']);
+                                    if (!empty($settings[Translate\Settings::OPTION_LANGUAGES])) {
+                                        $nodeData['OBLIGATORY_LANGS'] = implode(
+                                            ',',
+                                            $settings[Translate\Settings::OPTION_LANGUAGES]
+                                        );
                                     }
                                 }
 
@@ -278,7 +292,10 @@ class PathIndexCollection
                     if (self::$useTranslationRepository) {
                         // translation Repository
                         foreach ($this->checkLanguages as $langId) {
-                            $fullPathLang = Main\Localization\Translation::convertLangPath($parentFullPath . '/' . $langId, $langId);
+                            $fullPathLang = Main\Localization\Translation::convertLangPath(
+                                $parentFullPath . '/' . $langId,
+                                $langId
+                            );
                             if (file_exists($fullPathLang)) {
                                 $childrenList[] = $fullPathLang;
                             }
@@ -348,8 +365,11 @@ class PathIndexCollection
 
                             if ($langSettings instanceof Translate\Settings) {
                                 $settings = $langSettings->getOptions($relPath);
-                                if (!empty($settings['languages'])) {
-                                    $nodeData['OBLIGATORY_LANGS'] = implode(',', $settings['languages']);
+                                if (!empty($settings[Translate\Settings::OPTION_LANGUAGES])) {
+                                    $nodeData['OBLIGATORY_LANGS'] = implode(
+                                        ',',
+                                        $settings[Translate\Settings::OPTION_LANGUAGES]
+                                    );
                                 }
                             }
 
@@ -371,7 +391,14 @@ class PathIndexCollection
                             echo "\tIndex id: {$pathId}\n";
                         }
 
-                        $processedItemCount += $lookForLangDirectory($fullPath, $relPath, $pathId, $isLang, $parentLangId, $depthLevel + 1);// go deeper
+                        $processedItemCount += $lookForLangDirectory(
+                            $fullPath,
+                            $relPath,
+                            $pathId,
+                            $isLang,
+                            $parentLangId,
+                            $depthLevel + 1
+                        );// go deeper
                         $processedItemCount++;
                     }
                 }
@@ -379,14 +406,21 @@ class PathIndexCollection
                 return $processedItemCount;
             };
 
-        $processedItemCount = $lookForLangDirectory($fullPath, $relPath, $topPathId, $isTopLang, $topLangId, $topDepthLevel + 1);
+        $processedItemCount = $lookForLangDirectory(
+            $fullPath,
+            $relPath,
+            $topPathId,
+            $isTopLang,
+            $topLangId,
+            $topDepthLevel + 1
+        );
 
         if ($isTopLang && isset($langSettings)) {
             /** @var Translate\Settings $langSettings */
             $settings = $langSettings->getOptions('*');
-            if (!empty($settings) && !empty($settings['languages'])) {
+            if (!empty($settings) && !empty($settings[Translate\Settings::OPTION_LANGUAGES])) {
                 Index\Internals\PathIndexTable::bulkUpdate(
-                    ['OBLIGATORY_LANGS' => implode(',', $settings['languages'])],
+                    ['OBLIGATORY_LANGS' => implode(',', $settings[Translate\Settings::OPTION_LANGUAGES])],
                     [
                         'LOGIC' => 'OR',
                         '=PATH' => $relPath,
@@ -398,7 +432,7 @@ class PathIndexCollection
                 if (strpos($settingPath, '*') !== false && $settingPath !== '*' && !empty($settings['languages'])) {
                     $settingPath = str_replace('*', '', $settingPath);
                     Index\Internals\PathIndexTable::bulkUpdate(
-                        ['OBLIGATORY_LANGS' => implode(',', $settings['languages'])],
+                        ['OBLIGATORY_LANGS' => implode(',', $settings[Translate\Settings::OPTION_LANGUAGES])],
                         [
                             'LOGIC' => 'OR',
                             '=PATH' => $relPath . '/#LANG_ID#/' . $settingPath,
@@ -408,9 +442,9 @@ class PathIndexCollection
                 }
             }
             foreach ($langSettings as $settingPath => $settings) {
-                if (substr($settingPath, -4) === '.php' && !empty($settings['languages'])) {
+                if (mb_substr($settingPath, -4) === '.php' && !empty($settings[Translate\Settings::OPTION_LANGUAGES])) {
                     Index\Internals\PathIndexTable::bulkUpdate(
-                        ['OBLIGATORY_LANGS' => implode(',', $settings['languages'])],
+                        ['OBLIGATORY_LANGS' => implode(',', $settings[Translate\Settings::OPTION_LANGUAGES])],
                         ['=PATH' => $relPath . '/#LANG_ID#/' . $settingPath]
                     );
                 }
@@ -446,10 +480,12 @@ class PathIndexCollection
             }
             $ancestorsPathSearch[] = $searchPath;
         }
-        $pathRes = Index\Internals\PathIndexTable::getList([
-            'select' => ['ID', 'DEPTH_LEVEL', 'IS_LANG', 'PATH'],
-            'filter' => ['=PATH' => $ancestorsPathSearch],
-        ]);
+        $pathRes = Index\Internals\PathIndexTable::getList(
+            [
+                'select' => ['ID', 'DEPTH_LEVEL', 'IS_LANG', 'PATH'],
+                'filter' => ['=PATH' => $ancestorsPathSearch],
+            ]
+        );
         while ($pathInx = $pathRes->fetch()) {
             $pathInx['IS_LANG'] = ($pathInx['IS_LANG'] == 'Y');
             $this->ancestorsPaths[$pathInx['PATH']] = $pathInx;
@@ -486,7 +522,7 @@ class PathIndexCollection
                 'PARENT_ID' => $searchParentId,
                 'DEPTH_LEVEL' => $searchDepthLevel,
                 'IS_LANG' => $isLang ? 'Y' : 'N',
-                'IS_DIR' => (substr($part, -4) === '.php' ? 'N' : 'Y'),
+                'IS_DIR' => (mb_substr($part, -4) === '.php' ? 'N' : 'Y'),
             );
 
             $pathInx = Index\Internals\PathIndexTable::add($nodeData);
@@ -518,10 +554,12 @@ class PathIndexCollection
         if (!isset($this->immediateChildren[$parentId])) {
             $this->immediateChildren[$parentId] = array();
 
-            $nodeRes = Index\Internals\PathIndexTable::getList(array(
-                'filter' => ['=PARENT_ID' => $parentId],
-                'select' => ['ID', 'PATH'],
-            ));
+            $nodeRes = Index\Internals\PathIndexTable::getList(
+                array(
+                    'filter' => ['=PARENT_ID' => $parentId],
+                    'select' => ['ID', 'PATH'],
+                )
+            );
             while ($nodeInx = $nodeRes->fetch()) {
                 $this->immediateChildren[$parentId][$nodeInx['PATH']] = (int)$nodeInx['ID'];
             }
@@ -541,21 +579,25 @@ class PathIndexCollection
      */
     private function getAncestors($nodeId, $topNodeId = -1)
     {
-        $nodeRes = Index\Internals\PathIndexTable::getList([
-            'filter' => ['=ID' => (int)$nodeId],
-        ]);
+        $nodeRes = Index\Internals\PathIndexTable::getList(
+            [
+                'filter' => ['=ID' => (int)$nodeId],
+            ]
+        );
 
         $result = array();
         if ($nodeInx = $nodeRes->fetchObject()) {
             $result[$nodeInx->getId()] = $nodeInx;
 
             if ((int)$nodeInx->getParentId() > 0) {
-                $nodeRes = Index\Internals\PathIndexTable::getList([
-                    'filter' => [
-                        '=DESCENDANTS.PARENT_ID' => $nodeInx->getId(),//ancestor
-                    ],
-                    'order' => ['DESCENDANTS.DEPTH_LEVEL' => 'DESC'],
-                ]);
+                $nodeRes = Index\Internals\PathIndexTable::getList(
+                    [
+                        'filter' => [
+                            '=DESCENDANTS.PARENT_ID' => $nodeInx->getId(),//ancestor
+                        ],
+                        'order' => ['DESCENDANTS.DEPTH_LEVEL' => 'DESC'],
+                    ]
+                );
                 while ($nodeInx = $nodeRes->fetchObject()) {
                     $result[$nodeInx->getId()] = $nodeInx;
 
@@ -579,13 +621,15 @@ class PathIndexCollection
      */
     public function arrangeTree()
     {
-        $pathList = Index\Internals\PathIndexTable::getList([
-            'filter' => [
-                '=PARENT_ID' => 0,
-                '=IS_DIR' => 'Y',
-            ],
-            'select' => ['ID'],
-        ]);
+        $pathList = Index\Internals\PathIndexTable::getList(
+            [
+                'filter' => [
+                    '=PARENT_ID' => 0,
+                    '=IS_DIR' => 'Y',
+                ],
+                'select' => ['ID'],
+            ]
+        );
 
         while ($path = $pathList->fetch()) {
             Index\Internals\PathIndexTable::arrangeTree($path['ID']);
@@ -669,12 +713,14 @@ class PathIndexCollection
         $searchPath = isset($filter, $filter->path) ? $filter->path : '';
 
         if (!empty($searchPath)) {
-            $pathStartRes = Index\Internals\PathIndexTable::getList([
-                'filter' => [
-                    '=PATH' => $searchPath,
-                ],
-                'select' => ['ID', 'PATH'],
-            ]);
+            $pathStartRes = Index\Internals\PathIndexTable::getList(
+                [
+                    'filter' => [
+                        '=PATH' => $searchPath,
+                    ],
+                    'select' => ['ID', 'PATH'],
+                ]
+            );
             if ($path = $pathStartRes->fetchObject()) {
                 $relPathParts = explode('/', trim($path->getPath(), '/'));
 
@@ -688,24 +734,26 @@ class PathIndexCollection
                         );
                     }
                 }
-
                 //todo: else select sub nodes
             }
-
         } else {
-            $pathModulesRes = Index\Internals\PathIndexTable::getList([
-                'filter' => [
-                    '=PATH' => '/bitrix/modules',
-                ],
-                'select' => ['ID'],
-            ]);
-            while ($pathModules = $pathModulesRes->fetch()) {
-                $pathList = Index\Internals\PathIndexTable::getList([
+            $pathModulesRes = Index\Internals\PathIndexTable::getList(
+                [
                     'filter' => [
-                        '=PARENT_ID' => $pathModules['ID'],
+                        '=PATH' => '/bitrix/modules',
                     ],
-                    'select' => ['ID', 'PATH'],
-                ]);
+                    'select' => ['ID'],
+                ]
+            );
+            while ($pathModules = $pathModulesRes->fetch()) {
+                $pathList = Index\Internals\PathIndexTable::getList(
+                    [
+                        'filter' => [
+                            '=PARENT_ID' => $pathModules['ID'],
+                        ],
+                        'select' => ['ID', 'PATH'],
+                    ]
+                );
                 while ($path = $pathList->fetchObject()) {
                     $moduleId = $path->detectModuleId();
                     if ($moduleId !== null) {
@@ -732,12 +780,14 @@ class PathIndexCollection
     {
         // /bitrix/(mobileapp|templates|components|activities|wizards|gadgets|js|..)
         foreach (Translate\ASSIGNMENT_TYPES as $assignmentId) {
-            $pathEntryRes = Index\Internals\PathIndexTable::getList([
-                'filter' => [
-                    '=PATH' => '/bitrix/' . $assignmentId,
-                ],
-                'select' => ['ID', 'PATH'],
-            ]);
+            $pathEntryRes = Index\Internals\PathIndexTable::getList(
+                [
+                    'filter' => [
+                        '=PATH' => '/bitrix/' . $assignmentId,
+                    ],
+                    'select' => ['ID', 'PATH'],
+                ]
+            );
             while ($path = $pathEntryRes->fetchObject()) {
                 Index\Internals\PathIndexTable::bulkUpdate(
                     ['ASSIGNMENT' => $assignmentId],
@@ -746,20 +796,24 @@ class PathIndexCollection
             }
         }
 
-        $pathModulesRes = Index\Internals\PathIndexTable::getList([
-            'filter' => [
-                '=PATH' => '/bitrix/modules',
-            ],
-            'select' => ['ID'],
-        ]);
-        while ($pathModules = $pathModulesRes->fetch()) {
-            $pathList = Index\Internals\PathIndexTable::getList([
+        $pathModulesRes = Index\Internals\PathIndexTable::getList(
+            [
                 'filter' => [
-                    '=PARENT_ID' => $pathModules['ID'],
-                    '!=MODULE_ID' => null,
+                    '=PATH' => '/bitrix/modules',
                 ],
-                'select' => ['ID', 'PATH', 'MODULE_ID'],
-            ]);
+                'select' => ['ID'],
+            ]
+        );
+        while ($pathModules = $pathModulesRes->fetch()) {
+            $pathList = Index\Internals\PathIndexTable::getList(
+                [
+                    'filter' => [
+                        '=PARENT_ID' => $pathModules['ID'],
+                        '!=MODULE_ID' => null,
+                    ],
+                    'select' => ['ID', 'PATH', 'MODULE_ID'],
+                ]
+            );
             while ($modulePath = $pathList->fetchObject()) {
                 $moduleId = $modulePath->getModuleId();
 
@@ -781,13 +835,15 @@ class PathIndexCollection
                         // /bitrix/modules/[moduleName]/install/public/templates/[templateName]
                         $filterPaths[] = '/bitrix/modules/' . $moduleId . '/install/public/' . $assignmentId;
                     }
-                    $pathEntryRes = Index\Internals\PathIndexTable::getList([
-                        'filter' => [
-                            '=PATH' => $filterPaths,
-                            '=DESCENDANTS.PARENT_ID' => $modulePath->getId(),
-                        ],
-                        'select' => ['ID', 'PATH'],
-                    ]);
+                    $pathEntryRes = Index\Internals\PathIndexTable::getList(
+                        [
+                            'filter' => [
+                                '=PATH' => $filterPaths,
+                                '=DESCENDANTS.PARENT_ID' => $modulePath->getId(),
+                            ],
+                            'select' => ['ID', 'PATH'],
+                        ]
+                    );
                     while ($path = $pathEntryRes->fetchObject()) {
                         Index\Internals\PathIndexTable::bulkUpdate(
                             ['ASSIGNMENT' => $assignmentId],

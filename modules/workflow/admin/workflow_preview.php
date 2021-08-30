@@ -11,7 +11,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($WORKFLOW_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -48,7 +50,7 @@ if ($ID > 0 && check_bitrix_sessid()) {
         $z = CWorkflow::GetByID($ID);
         $zr = $z->Fetch();
         $prolog = $zr["PROLOG"];
-        if (strlen($prolog) > 0) {
+        if ($prolog <> '') {
             $title = $zr["TITLE"];
             $prolog = SetPrologTitle($prolog, $title);
         }
@@ -64,10 +66,11 @@ if ($ID > 0 && check_bitrix_sessid()) {
         );
         $DB->Insert("b_workflow_preview", $arFields, $err_mess . __LINE__);
         // redirect to preview saved
-        if (file_exists($_SERVER["DOCUMENT_ROOT"] . $filename))
+        if (file_exists($_SERVER["DOCUMENT_ROOT"] . $filename)) {
             LocalRedirect($filename);
-        else
+        } else {
             LocalRedirect("/bitrix/admin/workflow_list.php?lang=" . LANG);
+        }
     }
 }
 

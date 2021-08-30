@@ -22,9 +22,11 @@ class UserSignature extends Base
         \CUtil::decodeUriComponent($unsafeFields);
 
         if (($limit = Main\Config\Option::get('mail', 'user_signatures_limit', static::USER_SIGNATURES_LIMIT)) > 0) {
-            $count = UserSignatureTable::getCount(array(
-                'USER_ID' => CurrentUser::get()->getId(),
-            ));
+            $count = UserSignatureTable::getCount(
+                array(
+                    'USER_ID' => CurrentUser::get()->getId(),
+                )
+            );
             if ($count >= $limit) {
                 Loc::loadMessages(__FILE__);
                 $this->errorCollection[] = new Error(Loc::getMessage('MAIL_USER_SIGNATURE_LIMIT'));

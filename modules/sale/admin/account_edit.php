@@ -10,8 +10,9 @@ $listUrl = $selfFolderUrl . "sale_account_admin.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Loader::includeModule('sale');
 
@@ -21,22 +22,25 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "U" && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && $saleModulePermissions >= "U" && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     if ($ID <= 0) {
-        if ($saleModulePermissions < "W")
+        if ($saleModulePermissions < "W") {
             $errorMessage .= GetMessage("SAE_NO_PERMS2ADD") . ".<br>";
+        }
 
-        $USER_ID = IntVal($USER_ID);
-        if ($USER_ID <= 0)
+        $USER_ID = intval($USER_ID);
+        if ($USER_ID <= 0) {
             $errorMessage .= GetMessage("SAE_EMPTY_USER") . ".<br>";
+        }
 
         $CURRENCY = Trim($CURRENCY);
-        if (strlen($CURRENCY) <= 0)
+        if ($CURRENCY == '') {
             $errorMessage .= GetMessage("SAE_EMPTY_CURRENCY") . ".<br>";
+        }
 
         if ($errorMessage == '') {
             $arFilter = array(
@@ -49,16 +53,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $saleModulePe
                 $arFilter,
                 array()
             );
-            if (IntVal($num) > 0)
-                $errorMessage .= str_replace("#USER#", $USER_ID, str_replace("#CURRENCY#", $CURRENCY, GetMessage("SAE_ALREADY_EXISTS"))) . ".<br>";
+            if (intval($num) > 0) {
+                $errorMessage .= str_replace(
+                        "#USER#",
+                        $USER_ID,
+                        str_replace("#CURRENCY#", $CURRENCY, GetMessage("SAE_ALREADY_EXISTS"))
+                    ) . ".<br>";
+            }
         }
 
         if ($errorMessage == '') {
             $OLD_BUDGET = 0.0;
         }
     } else {
-        if (!($arOldUserAccount = CSaleUserAccount::GetByID($ID)))
+        if (!($arOldUserAccount = CSaleUserAccount::GetByID($ID))) {
             $errorMessage .= str_replace("#ID#", $ID, GetMessage("SAE_NO_ACCOUNT")) . ".<br>";
+        }
 
         if ($errorMessage == '') {
             $USER_ID = $arOldUserAccount["USER_ID"];
@@ -74,8 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $saleModulePe
             array("USER_ID" => $USER_ID, "CURRENCY" => $CURRENCY)
         );
         $arUserAccount = $dbUserAccount->Fetch();
-        if (is_array($arUserAccount))
+        if (is_array($arUserAccount)) {
             $currentLocked = $arUserAccount["LOCKED"];
+        }
 
         $allowUpdate = false;
         $CURRENT_BUDGET = str_replace(",", ".", $CURRENT_BUDGET);
@@ -91,46 +102,51 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $saleModulePe
 
         if ($allowUpdate) {
             if (!CSaleUserAccount::UpdateAccount($USER_ID, $updateSum, $CURRENCY, "MANUAL", 0, $CHANGE_REASON)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . ".<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SAE_ERROR_SAVING") . ".<br>";
+                }
             }
         }
     }
 
     if ($errorMessage == '' AND $currentLocked != "") {
-        if ($_POST["UNLOCK"] == "Y")
+        if ($_POST["UNLOCK"] == "Y") {
             CSaleUserAccount::UnLock($USER_ID, $CURRENCY);
+        }
 
-        if ($_POST["UNLOCK"] == "N" OR ($currentLocked == "Y" AND !isset($_POST["UNLOCK"])))
+        if ($_POST["UNLOCK"] == "N" OR ($currentLocked == "Y" AND !isset($_POST["UNLOCK"]))) {
             CSaleUserAccount::Lock($USER_ID, $CURRENCY);
+        }
     }
 
     if ($errorMessage == '') {
         $arUserAccount = CSaleUserAccount::GetByUserID($USER_ID, $CURRENCY);
-        if (DoubleVal($arUserAccount["CURRENT_BUDGET"]) != $CURRENT_BUDGET)
+        if (DoubleVal($arUserAccount["CURRENT_BUDGET"]) != $CURRENT_BUDGET) {
             $errorMessage .= GetMessage("SAE_ERROR_SAVING_SUM") . ".<br>";
+        }
     }
 
     if ($errorMessage == '') {
-        $ID = IntVal($arUserAccount["ID"]);
+        $ID = intval($arUserAccount["ID"]);
 
         $arFields = array(
             "=TIMESTAMP_X" => $DB->GetNowFunction(),
-            "NOTES" => ((strlen($NOTES) > 0) ? $NOTES : False)
+            "NOTES" => (($NOTES <> '') ? $NOTES : false)
         );
         if (!CSaleUserAccount::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ".<br>";
-            else
+            } else {
                 $errorMessage .= GetMessage("SAE_ERROR_SAVING_COMMENT") . ".<br>";
+            }
         }
     }
 
     if ($errorMessage == '') {
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
-        if (strlen($apply) <= 0) {
+        if ($apply == '') {
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         }
@@ -140,10 +156,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $saleModulePe
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("SAE_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SAE_ADDING"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -152,16 +169,30 @@ $dbAccount = CSaleUserAccount::GetList(
     array("ID" => $ID),
     false,
     false,
-    array("ID", "USER_ID", "CURRENT_BUDGET", "CURRENCY", "LOCKED", "NOTES", "TIMESTAMP_X", "DATE_LOCKED", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME")
+    array(
+        "ID",
+        "USER_ID",
+        "CURRENT_BUDGET",
+        "CURRENCY",
+        "LOCKED",
+        "NOTES",
+        "TIMESTAMP_X",
+        "DATE_LOCKED",
+        "USER_LOGIN",
+        "USER_NAME",
+        "USER_LAST_NAME"
+    )
 );
 if (!$dbAccount->ExtractFields("str_")) {
-    if ($saleModulePermissions < "W")
+    if ($saleModulePermissions < "W") {
         $errorMessage .= GetMessage("SAE_NO_PERMS2ADD") . ".<br>";
+    }
     $ID = 0;
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_user_account", "", "str_");
+}
 
 $aMenu = array(
     array(
@@ -185,7 +216,8 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
     );
 
     if ($saleModulePermissions >= "W") {
-        $deleteUrl = "" . $selfFolderUrl . "sale_account_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+        $deleteUrl = "" . $selfFolderUrl . "sale_account_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb";
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -193,7 +225,9 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
         }
         $aMenu[] = array(
             "TEXT" => GetMessage("SAEN_DELETE_ACCOUNT"),
-            $buttonAction => "javascript:if(confirm('" . GetMessage("SAEN_DELETE_ACCOUNT_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if(confirm('" . GetMessage(
+                    "SAEN_DELETE_ACCOUNT_CONFIRM"
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -202,8 +236,11 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($errorMessage != '')
-    CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAE_ERROR"), "HTML" => true));
+if ($errorMessage != '') {
+    CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAE_ERROR"), "HTML" => true)
+    );
+}
 $actionUrl = $APPLICATION->GetCurPage() . "?ID=" . $ID . "&lang=" . LANGUAGE_ID;
 $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 ?>
@@ -213,7 +250,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <?= bitrix_sessid_post() ?><?
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SAEN_TAB_ACCOUNT"), "ICON" => "sale", "TITLE" => GetMessage("SAEN_TAB_ACCOUNT_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SAEN_TAB_ACCOUNT"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SAEN_TAB_ACCOUNT_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -268,8 +310,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <td>
                     <input type="checkbox" name="UNLOCK" value="Y"<? if ($str_LOCKED != "Y") echo " disabled" ?>>
                     <?
-                    if ($str_LOCKED == "Y")
+                    if ($str_LOCKED == "Y") {
                         echo GetMessage("SAE_LOCKED") . $str_DATE_LOCKED . ")";
+                    }
                     ?>
                 </td>
             </tr>

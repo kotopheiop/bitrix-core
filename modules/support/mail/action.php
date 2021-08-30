@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 if (CModule::IncludeModule("support")):
     ?>
@@ -10,17 +11,17 @@ if (CModule::IncludeModule("support")):
                     <div class="adm-list-control"><input type="radio" name="W_SUPPORT_USER_FIND"
                                                          value="Y" <? if ($W_SUPPORT_USER_FIND != "N") echo "checked" ?>
                                                          id="W_SUPPORT_USER_FIND_1"></div>
-                    <div class="adm-list-label"><label
-                                for="W_SUPPORT_USER_FIND_1"><? echo GetMessage("SUPPORT_MAIL_DEF_REGISTERED_Y") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="W_SUPPORT_USER_FIND_1"><? echo GetMessage(
+                                "SUPPORT_MAIL_DEF_REGISTERED_Y"
+                            ) ?></label></div>
                 </div>
                 <div class="adm-list-item">
                     <div class="adm-list-control"><input type="radio" name="W_SUPPORT_USER_FIND"
                                                          value="N" <? if ($W_SUPPORT_USER_FIND == "N") echo "checked" ?>
                                                          id="W_SUPPORT_USER_FIND_2"></div>
-                    <div class="adm-list-label"><label
-                                for="W_SUPPORT_USER_FIND_2"><? echo GetMessage("SUPPORT_MAIL_DEF_REGISTERED_N") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="W_SUPPORT_USER_FIND_2"><? echo GetMessage(
+                                "SUPPORT_MAIL_DEF_REGISTERED_N"
+                            ) ?></label></div>
                 </div>
             </div>
         </td>
@@ -35,25 +36,25 @@ if (CModule::IncludeModule("support")):
                     <div class="adm-list-control"><input type="radio" name="W_SUPPORT_SEC"
                                                          value="email" <? if ($W_SUPPORT_SEC != "all" && $W_SUPPORT_SEC != "domain") echo "checked" ?>
                                                          id="w_support_sec_1"></div>
-                    <div class="adm-list-label"><label
-                                for="w_support_sec_1"><? echo GetMessage("SUPPORT_MAIL_ADD_TO_OPENED_T_EMAIL") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="w_support_sec_1"><? echo GetMessage(
+                                "SUPPORT_MAIL_ADD_TO_OPENED_T_EMAIL"
+                            ) ?></label></div>
                 </div>
                 <div class="adm-list-item">
                     <div class="adm-list-control"><input type="radio" name="W_SUPPORT_SEC"
                                                          value="domain" <? if ($W_SUPPORT_SEC == "domain") echo "checked" ?>
                                                          id="w_support_sec_2"></div>
-                    <div class="adm-list-label"><label
-                                for="w_support_sec_2"><? echo GetMessage("SUPPORT_MAIL_ADD_TO_OPENED_T_DOMAIN") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="w_support_sec_2"><? echo GetMessage(
+                                "SUPPORT_MAIL_ADD_TO_OPENED_T_DOMAIN"
+                            ) ?></label></div>
                 </div>
                 <div class="adm-list-item">
                     <div class="adm-list-control"><input type="radio" name="W_SUPPORT_SEC"
                                                          value="all"<? if ($W_SUPPORT_SEC == "all") echo " checked" ?>
                                                          id="w_support_sec_3"></div>
-                    <div class="adm-list-label"><label
-                                for="w_support_sec_3"><? echo GetMessage("SUPPORT_MAIL_ADD_TO_OPENED_T_ANY") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="w_support_sec_3"><? echo GetMessage(
+                                "SUPPORT_MAIL_ADD_TO_OPENED_T_ANY"
+                            ) ?></label></div>
                 </div>
             </div>
             <br>
@@ -62,9 +63,9 @@ if (CModule::IncludeModule("support")):
                     <div class="adm-list-control"><input type="checkbox" name="W_SUPPORT_ADD_MESSAGE_AS_HIDDEN"
                                                          value="Y" <? if ($W_SUPPORT_ADD_MESSAGE_AS_HIDDEN == "Y") echo "checked" ?>
                                                          id="w_support_add_message_as_hidden"></div>
-                    <div class="adm-list-label"><label
-                                for="w_support_add_message_as_hidden"><? echo GetMessage("SUPPORT_MAIL_HIDDEN") ?></label>
-                    </div>
+                    <div class="adm-list-label"><label for="w_support_add_message_as_hidden"><? echo GetMessage(
+                                "SUPPORT_MAIL_HIDDEN"
+                            ) ?></label></div>
                 </div>
             </div>
         </td>
@@ -81,8 +82,18 @@ if (CModule::IncludeModule("support")):
             if (!isset($W_SUPPORT_SUBJECT)) {
                 $w_subject = "";
                 $arrTemplate = array();
-                $db_res = CEventMessage::GetList($o, $b, Array("ACTIVE" => "Y", "EVENT_NAME" => "TICKET_NEW_FOR_AUTHOR || TICKET_NEW_FOR_TECHSUPPORT || TICKET_CHANGE_FOR_TECHSUPPORT || TICKET_CHANGE_BY_AUTHOR_FOR_AUTHOR || TICKET_CHANGE_BY_SUPPORT_FOR_AUTHOR", "LID" => $MAILBOX_LID));
-                while ($ar_res = $db_res->Fetch()) $arrTemplate[] = $ar_res["SUBJECT"];
+                $db_res = CEventMessage::GetList(
+                    '',
+                    '',
+                    Array(
+                        "ACTIVE" => "Y",
+                        "EVENT_NAME" => "TICKET_NEW_FOR_AUTHOR || TICKET_NEW_FOR_TECHSUPPORT || TICKET_CHANGE_FOR_TECHSUPPORT || TICKET_CHANGE_BY_AUTHOR_FOR_AUTHOR || TICKET_CHANGE_BY_SUPPORT_FOR_AUTHOR",
+                        "LID" => $MAILBOX_LID
+                    )
+                );
+                while ($ar_res = $db_res->Fetch()) {
+                    $arrTemplate[] = $ar_res["SUBJECT"];
+                }
                 $arrTemplate = array_unique($arrTemplate);
                 if (is_array($arrTemplate) && count($arrTemplate) > 0) {
                     foreach ($arrTemplate as $subject) {
@@ -95,13 +106,14 @@ if (CModule::IncludeModule("support")):
                 }
             }
             ?>
-            <textarea name="W_SUPPORT_SUBJECT" style="width:80%;height:200px;"
-                      wrap="off"><?= htmlspecialcharsbx($W_SUPPORT_SUBJECT) ?></textarea></td>
+            <textarea name="W_SUPPORT_SUBJECT" style="width:80%;height:200px;" wrap="off"><?= htmlspecialcharsbx(
+                    $W_SUPPORT_SUBJECT
+                ) ?></textarea></td>
     </tr>
     <?
     $arrSiteRef = array();
     $arrSiteID = array();
-    $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+    $rs = CSite::GetList();
     while ($ar = $rs->Fetch()) {
         $arrSiteRef[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
         $arrSiteID[] = $ar["ID"];
@@ -110,20 +122,36 @@ if (CModule::IncludeModule("support")):
     <tr>
         <td><? echo GetMessage("SUPPORT_MAIL_CONNECT_TICKET_WITH_SITE") ?></td>
         <td><?
-            echo SelectBoxFromArray("W_SUPPORT_SITE_ID", array("reference" => $arrSiteRef, "reference_id" => $arrSiteID), htmlspecialcharsbx($W_SUPPORT_SITE_ID), GetMessage("SUPPORT_MAIL_MAILBOX"), "onChange=\"DictionaryList(this[this.selectedIndex].value)\" "); ?></td>
+            echo SelectBoxFromArray(
+                "W_SUPPORT_SITE_ID",
+                array("reference" => $arrSiteRef, "reference_id" => $arrSiteID),
+                htmlspecialcharsbx($W_SUPPORT_SITE_ID),
+                GetMessage("SUPPORT_MAIL_MAILBOX"),
+                "onChange=\"DictionaryList(this[this.selectedIndex].value)\" "
+            ); ?></td>
     </tr>
 
     <tr>
         <td><? echo GetMessage("SUPPORT_MAIL_ADD_TO_CATEGORY") ?></td>
         <td valign="top">
-            <?= SelectBox("W_SUPPORT_CATEGORY", CTicket::GetRefBookValues("C", $W_SUPPORT_SITE_ID), " ", $W_SUPPORT_CATEGORY); ?>
+            <?= SelectBox(
+                "W_SUPPORT_CATEGORY",
+                CTicket::GetRefBookValues("C", $W_SUPPORT_SITE_ID),
+                " ",
+                $W_SUPPORT_CATEGORY
+            ); ?>
         </td>
     </tr>
 
     <tr>
         <td><? echo GetMessage("SUPPORT_MAIL_ADD_WITH_CRITICALITY") ?></td>
         <td valign="top">
-            <?= SelectBox("W_SUPPORT_CRITICALITY", CTicket::GetRefBookValues("K", $W_SUPPORT_SITE_ID), " ", $W_SUPPORT_CRITICALITY); ?>
+            <?= SelectBox(
+                "W_SUPPORT_CRITICALITY",
+                CTicket::GetRefBookValues("K", $W_SUPPORT_SITE_ID),
+                " ",
+                $W_SUPPORT_CRITICALITY
+            ); ?>
         </td>
     </tr>
     <script type="text/javascript">
@@ -138,12 +166,20 @@ if (CModule::IncludeModule("support")):
         arCriticality["<?=$sid?>"] = Array(<?
             $rs = CTicket::GetRefBookValues("K", $sid);
             echo "Array('NOT_REF', ' ')";
-            while ($ar = $rs->Fetch()) echo ", Array('" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+            while ($ar = $rs->Fetch()) {
+                echo ", Array('" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . AddSlashes(
+                        htmlspecialcharsbx($ar["REFERENCE"])
+                    ) . "')";
+            }
             ?>);
         arCategory["<?=$sid?>"] = Array(<?
             $rs = CTicket::GetRefBookValues("C", $sid);
             echo "Array('NOT_REF', ' ')";
-            while ($ar = $rs->Fetch()) echo ", Array('" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+            while ($ar = $rs->Fetch()) {
+                echo ", Array('" . AddSlashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . AddSlashes(
+                        htmlspecialcharsbx($ar["REFERENCE"])
+                    ) . "')";
+            }
             ?>);
         <?
         endforeach;

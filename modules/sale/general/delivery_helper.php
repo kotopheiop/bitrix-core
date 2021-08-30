@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 /**
@@ -16,16 +17,20 @@ class CSaleDeliveryHelper
         static $arRegions = array();
         $flipIndex = intval($bFlip);
 
-        if (isset($arRegions[$countryId][$flipIndex]))
+        if (isset($arRegions[$countryId][$flipIndex])) {
             return $arRegions[$countryId][$flipIndex];
+        }
 
         if (CSaleLocation::isLocationProMigrated()) {
             $types = array();
-            $res = \Bitrix\Sale\Location\TypeTable::getList(array(
-                'select' => array('ID', 'CODE')
-            ));
-            while ($item = $res->fetch())
+            $res = \Bitrix\Sale\Location\TypeTable::getList(
+                array(
+                    'select' => array('ID', 'CODE')
+                )
+            );
+            while ($item = $res->fetch()) {
                 $types[$item['CODE']] = $item['ID'];
+            }
 
             $filter = array(
                 array(
@@ -57,15 +62,18 @@ class CSaleDeliveryHelper
                 $filter['=PARENTS.ID'] = $countryId;
             }
 
-            $dbRegionList = \Bitrix\Sale\Location\LocationTable::getList(array(
-                'filter' => $filter,
-                'select' => array('ID', 'CODE', 'NAME_LANG' => 'NAME.NAME'),
-                'order' => array('NAME.NAME' => 'asc')
-            ));
+            $dbRegionList = \Bitrix\Sale\Location\LocationTable::getList(
+                array(
+                    'filter' => $filter,
+                    'select' => array('ID', 'CODE', 'NAME_LANG' => 'NAME.NAME'),
+                    'order' => array('NAME.NAME' => 'asc')
+                )
+            );
         } else {
             $arFilterRegion = array();
-            if (intval($countryId) > 0)
+            if (intval($countryId) > 0) {
                 $arFilterRegion["COUNTRY_ID"] = $countryId;
+            }
 
             $dbRegionList = CSaleLocation::GetRegionList(array("NAME_LANG" => "ASC"), $arFilterRegion, LANGUAGE_ID);
         }
@@ -77,7 +85,7 @@ class CSaleDeliveryHelper
                 $key = 'CODE';
             }
 
-            if ($key == 'CODE' && strlen($arRegionList['CODE']) <= 0) {
+            if ($key == 'CODE' && $arRegionList['CODE'] == '') {
                 continue;
             }
 
@@ -94,7 +102,7 @@ class CSaleDeliveryHelper
 
         $dId = $dpId = false;
 
-        if (strpos($deliveryId, ":") !== false) {
+        if (mb_strpos($deliveryId, ":") !== false) {
             $arId = explode(":", $deliveryId);
             $dId = $arId[0];
             $dpId = $arId[1];
@@ -104,8 +112,9 @@ class CSaleDeliveryHelper
 
         $arResult["SID"] = $dId;
 
-        if ($dpId !== false)
+        if ($dpId !== false) {
             $arResult["PROFILE"] = $dpId;
+        }
 
         return $arResult;
     }
@@ -114,18 +123,20 @@ class CSaleDeliveryHelper
     {
         $retVal = false;
 
-        if (isset($arField['VALUE']))
+        if (isset($arField['VALUE'])) {
             $retVal = $arField['VALUE'];
-        elseif (isset($arField['DEFAULT']))
+        } elseif (isset($arField['DEFAULT'])) {
             $retVal = $arField['DEFAULT'];
+        }
 
         return $retVal;
     }
 
     public static function getMaxDimensions($arDim1, $arDim2)
     {
-        if (!is_array($arDim1) && !is_array($arDim2))
+        if (!is_array($arDim1) && !is_array($arDim2)) {
             return array();
+        }
 
         $dimCount = 3; //width, height, length
         $arResult = array();
@@ -134,16 +145,19 @@ class CSaleDeliveryHelper
         rsort($arDim2, SORT_NUMERIC);
 
         for ($i = 0; $i < $dimCount; $i++) {
-            if (!isset($arDim1[$i]))
+            if (!isset($arDim1[$i])) {
                 $arDim1[$i] = 0;
+            }
 
-            if (!isset($arDim2[$i]))
+            if (!isset($arDim2[$i])) {
                 $arDim2[$i] = 0;
+            }
 
-            if (floatval($arDim1[$i]) > floatval($arDim2[$i]))
+            if (floatval($arDim1[$i]) > floatval($arDim2[$i])) {
                 $arResult[$i] = $arDim1[$i];
-            else
+            } else {
                 $arResult[$i] = $arDim2[$i];
+            }
         }
 
         return $arResult;
@@ -227,18 +241,22 @@ class CSaleDeliveryHelper
 
             // calculate set parent total volume
             foreach ($arTmpItems as $id => $item) {
-                if (CSaleBasketHelper::isSetItem($item))
+                if (CSaleBasketHelper::isSetItem($item)) {
                     $arTmpItems[$item["SET_PARENT_ID"]]["VOLUME"] += $item["VOLUME"];
+                }
             }
 
             // remove set items params
             foreach ($arTmpItems as $id => $item) {
-                if (CSaleBasketHelper::isSetItem($item))
+                if (CSaleBasketHelper::isSetItem($item)) {
                     unset($arTmpItems[$id]);
+                }
             }
 
             if (!empty($arTmpItems)) {
-                sortByColumn($arTmpItems, array(
+                sortByColumn(
+                    $arTmpItems,
+                    array(
                         "VOLUME" => array(SORT_NUMERIC, SORT_DESC),
                         "WEIGHT" => array(SORT_NUMERIC, SORT_DESC),
                     )
@@ -326,7 +344,9 @@ class CSaleDeliveryHelper
                     );
                 }
 
-                $arResultPacksParams[$packCount - 1]["VOLUME"] = intval($packVolume) > 0 ? $packVolume : $tmpPackageVolume;
+                $arResultPacksParams[$packCount - 1]["VOLUME"] = intval(
+                    $packVolume
+                ) > 0 ? $packVolume : $tmpPackageVolume;
             }
         }
 
@@ -393,28 +413,34 @@ class CSaleDeliveryHelper
     {
         $arBoxes = array();
 
-        if (is_array($arConfig) && strlen($profile) > 0) {
+        if (is_array($arConfig) && $profile <> '') {
             foreach ($arConfig as $key => $value) {
-                if ($profile != $value['GROUP'])
+                if ($profile != $value['GROUP']) {
                     continue;
+                }
 
-                if (!isset($value['MCS_ID']))
+                if (!isset($value['MCS_ID'])) {
                     continue;
+                }
 
-                $boxId = substr($value['MCS_ID'], 4);
-                $subKey = substr($key, 0, 8);
+                $boxId = mb_substr($value['MCS_ID'], 4);
+                $subKey = mb_substr($key, 0, 8);
 
-                if ($subKey == 'BOX_AV_C')
+                if ($subKey == 'BOX_AV_C') {
                     $arBoxes[$boxId]['NAME'] = $value['TITLE'];
+                }
 
-                if ($subKey == 'BOX_AV_L')
+                if ($subKey == 'BOX_AV_L') {
                     $arBoxes[$boxId]['DIMENSIONS'][0] = self::getConfValue($value);
+                }
 
-                if ($subKey == 'BOX_AV_W')
+                if ($subKey == 'BOX_AV_W') {
                     $arBoxes[$boxId]['DIMENSIONS'][1] = self::getConfValue($value);
+                }
 
-                if ($subKey == 'BOX_AV_H')
+                if ($subKey == 'BOX_AV_H') {
                     $arBoxes[$boxId]['DIMENSIONS'][2] = self::getConfValue($value);
+                }
             }
         }
 
@@ -428,19 +454,23 @@ class CSaleDeliveryHelper
         if (is_array($item)) {
             $width = $height = $length = 0;
 
-            if (isset($item["DIMENSIONS"]["WIDTH"]))
+            if (isset($item["DIMENSIONS"]["WIDTH"])) {
                 $width = floatval($item["DIMENSIONS"]["WIDTH"]);
+            }
 
-            if (isset($item["DIMENSIONS"]["HEIGHT"]))
+            if (isset($item["DIMENSIONS"]["HEIGHT"])) {
                 $height = floatval($item["DIMENSIONS"]["HEIGHT"]);
+            }
 
-            if (isset($item["DIMENSIONS"]["LENGTH"]))
+            if (isset($item["DIMENSIONS"]["LENGTH"])) {
                 $length = floatval($item["DIMENSIONS"]["LENGTH"]);
+            }
 
             $volume = $width * $height * $length;
 
-            if ($volume < 0)
+            if ($volume < 0) {
                 $volume = 0;
+            }
         }
 
         return $volume;
@@ -450,8 +480,9 @@ class CSaleDeliveryHelper
     {
         static $locale = array();
 
-        if (empty($locale))
+        if (empty($locale)) {
             $locale = localeconv();
+        }
 
         $pattern = $error = $result = null;
 
@@ -463,16 +494,18 @@ class CSaleDeliveryHelper
             $error = GetMessage("SALE_DHLP_FIELD") . " \"" . $name .
                 "\" " . GetMessage("SALE_DHLP_CONTAIN") . " \"" . $locale["decimal_point"] . "\"";
 
-            if (strlen($locale["thousands_sep"]) > 0)
+            if ($locale["thousands_sep"] <> '') {
                 $error .= " " . GetMessage("SALE_DHLP_SEPARATOR") . " \"" . $locale["thousands_sep"] . "\"";
+            }
             $error .= "<br>\n";
         }
 
         if (!is_null($pattern) && !is_null($error)) {
-            if (preg_match($pattern, $value))
+            if (preg_match($pattern, $value)) {
                 $result = $error;
-            else
+            } else {
                 $result = null;
+            }
         }
 
         return $result;
@@ -494,9 +527,11 @@ class CSaleDeliveryHelper
         }
 
         $dt = new \Bitrix\Main\Type\DateTime();
-        $depList = \Bitrix\Sale\Internals\OrderDeliveryReqTable::getList(array(
-            'filter' => array('=ORDER_ID' => $orderId),
-        ));
+        $depList = \Bitrix\Sale\Internals\OrderDeliveryReqTable::getList(
+            array(
+                'filter' => array('=ORDER_ID' => $orderId),
+            )
+        );
 
         $dep = $depList->fetch();
 
@@ -517,7 +552,7 @@ class CSaleDeliveryHelper
             );
 
             while ($arItem = $dbItemsList->GetNext()) {
-                $arItem["DIMENSIONS"] = unserialize($arItem["~DIMENSIONS"]);
+                $arItem["DIMENSIONS"] = unserialize($arItem["~DIMENSIONS"], ['allowed_classes' => false]);
                 unset($arItem["~DIMENSIONS"]);
                 $arOrder["ITEMS"][] = $arItem;
             }
@@ -546,12 +581,15 @@ class CSaleDeliveryHelper
 
                     $fields = array();
 
-                    if (isset($arResult["TRACKING_NUMBER"]))
+                    if (isset($arResult["TRACKING_NUMBER"])) {
                         $fields["TRACKING_NUMBER"] = $arResult["TRACKING_NUMBER"];
+                    }
 
                     if (isset($arResult["DELIVERY_DOC_NUM"])) {
                         $fields["DELIVERY_DOC_NUM"] = $arResult["DELIVERY_DOC_NUM"];
-                        $fields["DELIVERY_DOC_DATE"] = Date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT", $arOrder["LID"])));
+                        $fields["DELIVERY_DOC_DATE"] = Date(
+                            $DB->DateFormatToPHP(CLang::GetDateFormat("SHORT", $arOrder["LID"]))
+                        );
                     }
 
                     CSaleOrder::Update($orderId, $fields);

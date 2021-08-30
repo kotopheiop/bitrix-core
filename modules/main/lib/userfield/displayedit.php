@@ -5,6 +5,7 @@ namespace Bitrix\Main\UserField;
 /**
  * Bitrix vars
  * @global \CUserTypeManager $USER_FIELD_MANAGER
+ * @deprecated
  */
 class DisplayEdit
     extends Display

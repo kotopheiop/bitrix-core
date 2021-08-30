@@ -194,7 +194,9 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
     {
         $widgetGid = $params['widgetId'];
 
-        $viewController = ViewProvider::getViewByViewKey($params['widget'][$widgetGid]['configurations']['new']['view_type']);
+        $viewController = ViewProvider::getViewByViewKey(
+            $params['widget'][$widgetGid]['configurations']['new']['view_type']
+        );
         if (!$viewController) {
             $this->addError(new Error('No such view controller.'));
             return false;
@@ -226,9 +228,11 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
         $widgetPositions = array('cell_' . rand(999, 99999));
 
         try {
-            $row = \Bitrix\Report\VisualConstructor\Helper\Row::getRowDefaultEntity(array(
-                'cellIds' => $widgetPositions
-            ));
+            $row = \Bitrix\Report\VisualConstructor\Helper\Row::getRowDefaultEntity(
+                array(
+                    'cellIds' => $widgetPositions
+                )
+            );
         } catch (ArgumentException $e) {
             $this->addError(new Error($e->getMessage()));
             return false;
@@ -267,7 +271,10 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
         }
 
         if ($isPattern) {
-            \Bitrix\Report\VisualConstructor\Helper\Widget::saveWidgetAsCurrentUserPattern($widget, $widget->getCategoryKey());
+            \Bitrix\Report\VisualConstructor\Helper\Widget::saveWidgetAsCurrentUserPattern(
+                $widget,
+                $widget->getCategoryKey()
+            );
         }
 
         return $widget;
@@ -300,8 +307,12 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
                 'ORIGINAL_WIDGET_GID' => $params['widgetId'],
                 'WIDGET' => $widget,
                 'BOARD_ID' => $boardId,
-                'PAGE_TITLE' => $mode === 'create' ? Loc::getMessage('REPORT_CREATE_WIDGET_SETTINGS_CONTENT_TITLE') : Loc::getMessage('REPORT_WIDGET_SETTINGS_CONTENT_TITLE'),
-                'SAVE_BUTTON_TITLE' => $mode === 'create' ? Loc::getMessage('REPORT_CREATE_WIDGET_SETTINGS_SAVE_BUTTON_TITLE') : Loc::getMessage('REPORT_WIDGET_SETTINGS_SAVE_BUTTON_TITLE'),
+                'PAGE_TITLE' => $mode === 'create' ? Loc::getMessage(
+                    'REPORT_CREATE_WIDGET_SETTINGS_CONTENT_TITLE'
+                ) : Loc::getMessage('REPORT_WIDGET_SETTINGS_CONTENT_TITLE'),
+                'SAVE_BUTTON_TITLE' => $mode === 'create' ? Loc::getMessage(
+                    'REPORT_CREATE_WIDGET_SETTINGS_SAVE_BUTTON_TITLE'
+                ) : Loc::getMessage('REPORT_WIDGET_SETTINGS_SAVE_BUTTON_TITLE'),
             );
             return new Component($componentName, $templateName, $params);
         } else {
@@ -426,7 +437,7 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
      */
     private function isReportPseudo($reportId)
     {
-        return (strpos($reportId, '_pseudo') === 0);
+        return (mb_strpos($reportId, '_pseudo') === 0);
     }
 
 
@@ -453,8 +464,6 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
                 $widget->addReportHandler($reportHandler);
                 $widget->save();
             }
-
-
         }
     }
 
@@ -487,7 +496,9 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
      */
     public function loadByBoardIdAction($boardId)
     {
-        $preparedObjectForDashboard = \Bitrix\Report\VisualConstructor\Helper\Widget::prepareBoardWithEntitiesByBoardId($boardId);
+        $preparedObjectForDashboard = \Bitrix\Report\VisualConstructor\Helper\Widget::prepareBoardWithEntitiesByBoardId(
+            $boardId
+        );
         return $preparedObjectForDashboard;
     }
 
@@ -511,7 +522,6 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
 
         $widget = \Bitrix\Report\VisualConstructor\Entity\Widget::getCurrentUserWidgetByGId($widgetId);
         if ($widget) {
-
             if (!empty($params['rowId']) && $params['rowId'] != $widget->getRow()->getGId()) {
                 $row = DashboardRow::getCurrentUserRowByGId($params['rowId']);
 
@@ -535,7 +545,6 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
             $this->addError(new Error("No widget with id: " . $widgetId));
             return null;
         }
-
     }
 
     /**
@@ -557,7 +566,6 @@ class Widget extends \Bitrix\Report\VisualConstructor\Controller\Base
             $this->addError(new Error('Cant delete row because current user has not own dashboard'));
             return false;
         }
-
     }
 
     /**

@@ -1,7 +1,9 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><!DOCTYPE HTML PUBLIC
-        "-//W3C//DTD HTML 4.0 Transitional//EN">
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><!DOCTYPE HTML PUBLIC
-        "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html xmlns:v="urn:schemas-microsoft-com:vml"
       xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:w="urn:schemas-microsoft-com:office:word"
@@ -66,8 +68,10 @@
 
 <body bgcolor=white lang=RU style='tab-interval:35.4pt'>
 <?
-$page = IntVal($page);
-if ($page <= 0) $page = 1;
+$page = intval($page);
+if ($page <= 0) {
+    $page = 1;
+}
 ?>
 <table height="920" align="center" border="0" cellpadding="0" cellspacing="0">
     <tr valign="top">
@@ -105,10 +109,11 @@ if ($page <= 0) $page = 1;
                         <? if (empty($arParams)) {
                             $userName = $arOrderProps["F_NAME"];
                         } else {
-                            if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                            if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                                 $userName = $arParams["BUYER_COMPANY_NAME"];
-                            else
+                            } else {
                                 $userName = $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                            }
                         } ?>
                         <input class="user" size="50" style="border:0px solid #000000;" type="text"
                                value="<?= $userName ?>	">
@@ -142,8 +147,9 @@ if ($page <= 0) $page = 1;
                     for ($i = 0, $countBasketIds = count($arBasketIDs); $i < $countBasketIds; $i++) {
                         $arBasketTmp = CSaleBasket::GetByID($arBasketIDs[$i]);
 
-                        if (floatval($arBasketTmp["VAT_RATE"]) > 0)
+                        if (floatval($arBasketTmp["VAT_RATE"]) > 0) {
                             $bUseVat = true;
+                        }
 
                         $priceTotal += $arBasketTmp["PRICE"] * $arBasketTmp["QUANTITY"];
 
@@ -156,8 +162,9 @@ if ($page <= 0) $page = 1;
                                 false,
                                 array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
                             );
-                            while ($arBasketProps = $dbBasketProps->GetNext())
+                            while ($arBasketProps = $dbBasketProps->GetNext()) {
                                 $arBasketTmp["PROPS"][$arBasketProps["ID"]] = $arBasketProps;
+                            }
                         }
 
                         $arBasketOrder[] = $arBasketTmp;
@@ -165,12 +172,19 @@ if ($page <= 0) $page = 1;
 
                     //������������ ������ �� ����� �� �������
                     if (floatval($arOrder["DISCOUNT_VALUE"]) > 0) {
-                        $arBasketOrder = GetUniformDestribution($arBasketOrder, $arOrder["DISCOUNT_VALUE"], $priceTotal);
+                        $arBasketOrder = GetUniformDestribution(
+                            $arBasketOrder,
+                            $arOrder["DISCOUNT_VALUE"],
+                            $priceTotal
+                        );
                     }
 
                     //������
                     $arTaxList = array();
-                    $db_tax_list = CSaleOrderTax::GetList(array("APPLY_ORDER" => "ASC"), Array("ORDER_ID" => $ORDER_ID));
+                    $db_tax_list = CSaleOrderTax::GetList(
+                        array("APPLY_ORDER" => "ASC"),
+                        Array("ORDER_ID" => $ORDER_ID)
+                    );
                     $iNds = -1;
                     $i = 0;
                     while ($ar_tax_list = $db_tax_list->Fetch()) {
@@ -178,8 +192,9 @@ if ($page <= 0) $page = 1;
                         // ����������, ����� �� ������� - ���
                         // ��� ������ ����� ��� NDS, ���� ���������� ��������� ���� ������
                         // � ������� ���������������� �������� � ���������
-                        if ($arTaxList[$i]["CODE"] == "NDS")
+                        if ($arTaxList[$i]["CODE"] == "NDS") {
                             $iNds = $i;
+                        }
                         $i++;
                     }
 
@@ -190,8 +205,9 @@ if ($page <= 0) $page = 1;
                         $nds_val = 0;
                         $taxRate = 0;
 
-                        if (floatval($arQuantities[$i]) <= 0)
+                        if (floatval($arQuantities[$i]) <= 0) {
                             $arQuantities[$i] = DoubleVal($arBasket["QUANTITY"]);
+                        }
 
                         $b_AMOUNT = DoubleVal($arBasket["PRICE"]);
 
@@ -203,7 +219,11 @@ if ($page <= 0) $page = 1;
                             $item_price = $b_AMOUNT - $nds_val;
                             $taxRate = $arBasket["VAT_RATE"] * 100;
                         } elseif (!$bUseVat) {
-                            $basket_tax = CSaleOrderTax::CountTaxes($b_AMOUNT * $arQuantities[$i], $arTaxList, $arOrder["CURRENCY"]);
+                            $basket_tax = CSaleOrderTax::CountTaxes(
+                                $b_AMOUNT * $arQuantities[$i],
+                                $arTaxList,
+                                $arOrder["CURRENCY"]
+                            );
                             for ($mi = 0, $countTaxList = count($arTaxList); $mi < $countTaxList; $mi++) {
                                 if ($arTaxList[$mi]["IS_IN_PRICE"] == "Y") {
                                     $item_price -= $arTaxList[$mi]["TAX_VAL"];
@@ -220,17 +240,24 @@ if ($page <= 0) $page = 1;
                                 <?
                                 if (is_array($arBasket["PROPS"]) && $_GET["PROPS_ENABLE"] == "Y") {
                                     foreach ($arBasket["PROPS"] as $vv) {
-                                        if (strlen($vv["VALUE"]) > 0 && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID")
+                                        if ($vv["VALUE"] <> '' && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID") {
                                             echo "<div style=\"font-size:8pt\">" . $vv["NAME"] . ": " . $vv["VALUE"] . "</div>";
+                                        }
                                     }
                                 }
                                 ?>
                             </td>
                             <td align="center"><? echo Bitrix\Sale\BasketItem::formatQuantity($arQuantities[$i]) ?></td>
-                            <td align="right"
-                                nowrap><?= CCurrencyLang::CurrencyFormat($arBasket["PRICE"], $arOrder["CURRENCY"], false); ?></td>
-                            <td align="right"
-                                nowrap><?= CCurrencyLang::CurrencyFormat($arBasket["PRICE"] * $arQuantities[$i], $arOrder["CURRENCY"], false); ?></td>
+                            <td align="right" nowrap><?= CCurrencyLang::CurrencyFormat(
+                                    $arBasket["PRICE"],
+                                    $arOrder["CURRENCY"],
+                                    false
+                                ); ?></td>
+                            <td align="right" nowrap><?= CCurrencyLang::CurrencyFormat(
+                                    $arBasket["PRICE"] * $arQuantities[$i],
+                                    $arOrder["CURRENCY"],
+                                    false
+                                ); ?></td>
                         </tr>
                         <?
                         if (empty($arBasket['SET_PARENT_ID'])) {
@@ -252,7 +279,10 @@ if ($page <= 0) $page = 1;
 
                     <?
                     if ($bUseVat || $arOrder['DELIVERY_VAT_RATE'] <= 0) {
-                        $db_tax_list = CSaleOrderTax::GetList(array("APPLY_ORDER" => "ASC"), Array("ORDER_ID" => $ORDER_ID));
+                        $db_tax_list = CSaleOrderTax::GetList(
+                            array("APPLY_ORDER" => "ASC"),
+                            Array("ORDER_ID" => $ORDER_ID)
+                        );
                         while ($ar_tax_list = $db_tax_list->Fetch()) {
                             ?>
                             <tr>

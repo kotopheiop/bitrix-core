@@ -2,8 +2,15 @@
 
 class CPhrase
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, &$total, &$grby, &$max)
-    {
+    public static function GetList(
+        $by = 's_id',
+        $order = 'desc',
+        $arFilter = [],
+        $is_filtered = null,
+        &$total = 0,
+        &$grby = '',
+        &$max = 0
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
         $group = false;
@@ -15,11 +22,13 @@ class CPhrase
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -40,22 +49,33 @@ class CPhrase
                         $arSqlSearch[] = GetFilterQuery("S.NAME", $val, $match);
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "PH.DATE_HIT >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "PH.DATE_HIT < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "PH.DATE_HIT < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "PHRASE":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        if ($match == "N")
+                        if ($match == "N") {
                             $val = '"' . trim($val, '"') . '"';
+                        }
                         $arSqlSearch[] = GetFilterQuery("PH.PHRASE", $val, $match);
                         break;
                     case "TO":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("PH.URL_TO", $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "PH.URL_TO",
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "TO_404":
                         $arSqlSearch[] = ($val == "Y") ? "PH.URL_TO_404='Y'" : "PH.URL_TO_404='N'";
@@ -66,10 +86,14 @@ class CPhrase
                             $find_group = "P";
                             $strSqlGroup = " GROUP BY PH.PHRASE ";
                             $s = " PH.PHRASE ";
-                        } else $find_group = "S";
+                        } else {
+                            $find_group = "S";
+                        }
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("PH.SITE_ID", $val, $match);
                         break;
@@ -80,23 +104,31 @@ class CPhrase
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         $grby = ($find_group == "P" || $find_group == "S") ? $find_group : "";
 
-        if (strlen($grby) <= 0) {
-            if ($by == "s_id") $strSqlOrder = "ORDER BY PH.ID";
-            elseif ($by == "s_site_id") $strSqlOrder = "ORDER BY PH.SITE_ID";
-            elseif ($by == "s_phrase") $strSqlOrder = "ORDER BY PH.PHRASE";
-            elseif ($by == "s_searcher_id") $strSqlOrder = "ORDER BY PH.SEARCHER_ID";
-            elseif ($by == "s_referer_id") $strSqlOrder = "ORDER BY PH.REFERER_ID";
-            elseif ($by == "s_date_hit") $strSqlOrder = "ORDER BY PH.DATE_HIT";
-            elseif ($by == "s_url_to") $strSqlOrder = "ORDER BY PH.URL_TO";
-            elseif ($by == "s_session_id") $strSqlOrder = "ORDER BY PH.SESSION_ID";
-            else {
-                $by = "s_id";
+        if ($grby == '') {
+            if ($by == "s_id") {
+                $strSqlOrder = "ORDER BY PH.ID";
+            } elseif ($by == "s_site_id") {
+                $strSqlOrder = "ORDER BY PH.SITE_ID";
+            } elseif ($by == "s_phrase") {
+                $strSqlOrder = "ORDER BY PH.PHRASE";
+            } elseif ($by == "s_searcher_id") {
+                $strSqlOrder = "ORDER BY PH.SEARCHER_ID";
+            } elseif ($by == "s_referer_id") {
+                $strSqlOrder = "ORDER BY PH.REFERER_ID";
+            } elseif ($by == "s_date_hit") {
+                $strSqlOrder = "ORDER BY PH.DATE_HIT";
+            } elseif ($by == "s_url_to") {
+                $strSqlOrder = "ORDER BY PH.URL_TO";
+            } elseif ($by == "s_session_id") {
+                $strSqlOrder = "ORDER BY PH.SESSION_ID";
+            } else {
                 $strSqlOrder = "ORDER BY PH.ID";
             }
+
             if ($order != "asc") {
                 $strSqlOrder .= " desc ";
-                $order = "desc";
             }
+
             $strSql = "
 				SELECT /*TOP*/
 					PH.ID,
@@ -117,16 +149,17 @@ class CPhrase
 				" . $strSqlOrder . "
 			";
         } elseif (IsFiltered($strSqlSearch) || $grby == "P") {
-            if ($by == "s_phrase" && $grby == "P") $strSqlOrder = "ORDER BY PH.PHRASE";
-            elseif ($by == "s_searcher_id" && $grby == "S") $strSqlOrder = "ORDER BY PH.SEARCHER_ID";
-            elseif ($by == "s_quantity") $strSqlOrder = "ORDER BY QUANTITY";
-            else {
-                $by = "s_quantity";
+            if ($by == "s_phrase" && $grby == "P") {
+                $strSqlOrder = "ORDER BY PH.PHRASE";
+            } elseif ($by == "s_searcher_id" && $grby == "S") {
+                $strSqlOrder = "ORDER BY PH.SEARCHER_ID";
+            } elseif ($by == "s_quantity") {
+                $strSqlOrder = "ORDER BY QUANTITY";
+            } else {
                 $strSqlOrder = "ORDER BY QUANTITY";
             }
             if ($order != "asc") {
                 $strSqlOrder .= " desc ";
-                $order = "desc";
             }
             $strSql = "
 				SELECT
@@ -181,16 +214,17 @@ class CPhrase
             }
         } else//if ($grby=="S")
         {
-            if ($by == "s_name") $strSqlOrder = "ORDER BY S.ID";
-            elseif ($by == "s_quantity") $strSqlOrder = "ORDER BY QUANTITY";
-            elseif ($by == "s_average_hits") $strSqlOrder = "ORDER BY AVERAGE_HITS";
-            else {
-                $by = "s_quantity";
+            if ($by == "s_name") {
+                $strSqlOrder = "ORDER BY S.ID";
+            } elseif ($by == "s_quantity") {
+                $strSqlOrder = "ORDER BY QUANTITY";
+            } elseif ($by == "s_average_hits") {
+                $strSqlOrder = "ORDER BY AVERAGE_HITS";
+            } else {
                 $strSqlOrder = "ORDER BY QUANTITY";
             }
             if ($order != "asc") {
                 $strSqlOrder .= " desc ";
-                $order = "desc";
             }
             $strSql = "SELECT sum(S.PHRASES) TOTAL, max(S.PHRASES) MAX FROM b_stat_searcher S";
             $c = $DB->Query($strSql, false, $err_mess . __LINE__);
@@ -213,7 +247,7 @@ class CPhrase
         }
 
         $res = $DB->Query(CStatistics::DBTopSql($strSql), false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || $group);
+
         return $res;
     }
 }

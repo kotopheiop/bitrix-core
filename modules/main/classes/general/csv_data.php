@@ -6,8 +6,6 @@
  * @copyright 2001-2014 Bitrix
  */
 
-use Bitrix\Main\Text\BinaryString;
-
 class CCSVData
 {
     var $sFileName;            // full file name
@@ -65,7 +63,7 @@ class CCSVData
 
     function SetDelimiter($delimiter = ";")
     {
-        $this->cDelimiter = (strlen($delimiter) > 1 ? substr($delimiter, 0, 1) : $delimiter);
+        $this->cDelimiter = (mb_strlen($delimiter) > 1 ? mb_substr($delimiter, 0, 1) : $delimiter);
     }
 
     function SetFirstHeader($first_header = false)
@@ -142,7 +140,7 @@ class CCSVData
                 } else {
                     $this->__buffer = fread($this->__file, 1024 * 1024);
                 }
-                $this->__buffer_size = BinaryString::getLength($this->__buffer);
+                $this->__buffer_size = strlen($this->__buffer);
                 $this->__buffer_pos = 0;
             }
 
@@ -205,7 +203,7 @@ class CCSVData
                 } else {
                     $this->__buffer = fread($this->__file, 1024 * 1024);
                 }
-                $this->__buffer_size = BinaryString::getLength($this->__buffer);
+                $this->__buffer_size = strlen($this->__buffer);
                 $this->__buffer_pos = 0;
             }
 
@@ -249,7 +247,7 @@ class CCSVData
             } else {
                 $this->__buffer = fread($this->__file, 1024 * 1024);
             }
-            $this->__buffer_size = BinaryString::getLength($this->__buffer);
+            $this->__buffer_size = strlen($this->__buffer);
             $this->__buffer_pos = 0;
         }
     }
@@ -284,7 +282,7 @@ class CCSVData
         } else {
             $this->__buffer = fread($this->__file, 1024 * 1024);
         }
-        $this->__buffer_size = BinaryString::getLength($this->__buffer);
+        $this->__buffer_size = strlen($this->__buffer);
         $this->__buffer_pos = 0;
     }
 
@@ -298,10 +296,10 @@ class CCSVData
                 if ($i > 0) {
                     $this->sContent .= $this->cDelimiter;
                 }
-                $pos1 = strpos($arFields[$i], $this->cDelimiter);
-                $pos2 = strpos($arFields[$i], "\"");
-                $pos3 = strpos($arFields[$i], "\n");
-                $pos4 = strpos($arFields[$i], "\r");
+                $pos1 = mb_strpos($arFields[$i], $this->cDelimiter);
+                $pos2 = mb_strpos($arFields[$i], "\"");
+                $pos3 = mb_strpos($arFields[$i], "\n");
+                $pos4 = mb_strpos($arFields[$i], "\r");
                 if ($pos1 !== false || $pos2 !== false || $pos3 !== false || $pos4 !== false) {
                     $this->sContent .= "\"";
                     $this->sContent .= str_replace("\"", "\"\"", $arFields[$i]);

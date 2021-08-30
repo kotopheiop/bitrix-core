@@ -15,10 +15,12 @@ class Builder implements IBuilder
      */
     public static function build($lang)
     {
-        return new Normalizer([
-            new CommonNormalizer(),
-            new LanguageNormalizer($lang),
-            new SpaceNormalizer()
-        ]);
+        return new Normalizer(
+            [
+                new CommonNormalizer(),
+                new LanguageNormalizer($lang),
+                new SpaceNormalizer()
+            ]
+        );
     }
 }

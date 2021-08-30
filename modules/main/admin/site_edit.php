@@ -20,8 +20,11 @@ require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/condit
 
 ClearVars();
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('lpa_template_edit'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation(
+        'view_other_settings'
+    ) && !$USER->CanDoOperation('lpa_template_edit')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings') || $USER->CanDoOperation('lpa_template_edit');
 
@@ -34,18 +37,25 @@ $LID = $_REQUEST["LID"];
 $bNew = ($LID == '' || $_REQUEST['new'] == 'Y');
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB"), "ICON" => "site_edit", "TITLE" => GetMessage("MAIN_TAB_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB"),
+        "ICON" => "site_edit",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $arTemplates = array();
 if (!$bNew) {
     $dbSiteRes = CSite::GetTemplateList($LID);
-    while ($arSiteRes = $dbSiteRes->Fetch())
+    while ($arSiteRes = $dbSiteRes->Fetch()) {
         $arTemplates[$arSiteRes["ID"]] = $arSiteRes['CONDITION'];
+    }
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid(
+    )) {
     $arFields = array(
         "ACTIVE" => ($_POST["ACTIVE"] == "Y" ? "Y" : "N"),
         "SORT" => $_POST["SORT"],
@@ -67,10 +77,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         if ($USER->CanDoOperation('edit_php') || $_POST['selected_type'][$key] != 'php') {
             $cond = ConditionCompose($val, $key);
         } else {
-            if (isset($arTemplates[$key]))
+            if (isset($arTemplates[$key])) {
                 $cond = $arTemplates[$key];
-            else
+            } else {
                 continue;
+            }
         }
 
         $arFields["TEMPLATE"][] = array(
@@ -82,23 +93,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 
     if ($bNew) {
         $arFields["LID"] = $LID;
-        if ($_POST["START_SITE_WIZARD"] == "Y")
+        if ($_POST["START_SITE_WIZARD"] == "Y") {
             unset($arFields["TEMPLATE"]);
+        }
     }
 
     $res = false;
     $ber = true;
     if ($bNew && $_POST["START_SITE_WIZARD"] == "Y") {
         if (!array_key_exists("START_SITE_WIZARD_REWRITE", $_POST) || $_POST["START_SITE_WIZARD_REWRITE"] != "Y") {
-            if (strlen($arFields["DOC_ROOT"]) > 0)
+            if ($arFields["DOC_ROOT"] <> '') {
                 $sr = Rel2Abs($_SERVER["DOCUMENT_ROOT"], $arFields["DOC_ROOT"]);
-            else
+            } else {
                 $sr = rtrim($_SERVER["DOCUMENT_ROOT"], "/\\");
+            }
 
             $ber = !file_exists($sr . $_POST["DIR"] . "/index.php");
 
-            if (!$ber)
+            if (!$ber) {
                 $APPLICATION->ThrowException(GetMessage("START_SITE_WIZARD_REWRITE_ERROR"));
+            }
         }
     }
 
@@ -107,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         if (!$bNew) {
             $res = $langs->Update($LID, $arFields);
         } else {
-            $res = (strlen($langs->Add($arFields)) > 0);
+            $res = ($langs->Add($arFields) <> '');
         }
     }
 
@@ -116,14 +130,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
     } else {
         $em = new CEventMessage;
         if ($_POST["SITE_MESSAGE_LINK"] == "C" && $_POST["SITE_MESSAGE_LINK_C_SITE"] <> '') {
-            $db_msg = CEventMessage::GetList($o = "", $b = "", array("SITE_ID" => $_POST["SITE_MESSAGE_LINK_C_SITE"]));
+            $db_msg = CEventMessage::GetList('', '', array("SITE_ID" => $_POST["SITE_MESSAGE_LINK_C_SITE"]));
             while ($ar_msg = $db_msg->Fetch()) {
                 unset($ar_msg["TIMESTAMP_X"]);
                 $ar_msg["LID"] = $LID;
                 $em->Add($ar_msg);
             }
         } elseif ($_POST["SITE_MESSAGE_LINK"] == "E" && $_POST["SITE_MESSAGE_LINK_E_SITE"] <> '') {
-            $db_msg = CEventMessage::GetList($o = "", $b = "", array("SITE_ID" => $_POST["SITE_MESSAGE_LINK_E_SITE"]));
+            $db_msg = CEventMessage::GetList('', '', array("SITE_ID" => $_POST["SITE_MESSAGE_LINK_E_SITE"]));
             while ($ar_msg = $db_msg->Fetch()) {
                 $msg_id = $ar_msg["ID"];
                 $db_msg_sites = CEventMessage::GetSite($ar_msg["ID"]);
@@ -132,15 +146,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
                     "LID" => array($LID)
                 );
 
-                while ($ar_msg_sites = $db_msg_sites->Fetch())
+                while ($ar_msg_sites = $db_msg_sites->Fetch()) {
                     $ar_msg["LID"][] = $ar_msg_sites["SITE_ID"];
+                }
 
                 $em->Update($msg_id, $ar_msg);
             }
         }
 
         if ($bNew && $_POST["START_SITE_WIZARD"] == "Y") {
-            $rsSite = CSite::GetList($by = "sort", $order = "asc", array("ID" => $LID));
+            $rsSite = CSite::GetList("sort", "asc", array("ID" => $LID));
             $arSite = $rsSite->GetNext();
 
             $siteDir = "/" . ltrim(rtrim($arSite["DIR"], "/") . "/", "/");
@@ -162,17 +177,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 
             $u = "";
             $domains = explode("\n", str_replace("\r", "", $arSite["DOMAINS"]));
-            if (!empty($domains) && $domains[0] <> '')
+            if (!empty($domains) && $domains[0] <> '') {
                 $u .= "http://" . $domains[0];
+            }
             $u .= $siteDir;
 
             LocalRedirect($u);
         }
 
-        if ($_POST["save"] <> '')
+        if ($_POST["save"] <> '') {
             LocalRedirect(BX_ROOT . "/admin/site_admin.php?lang=" . LANGUAGE_ID);
-        else
-            LocalRedirect(BX_ROOT . "/admin/site_edit.php?lang=" . LANGUAGE_ID . "&LID=" . urlencode($LID) . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                BX_ROOT . "/admin/site_edit.php?lang=" . LANGUAGE_ID . "&LID=" . urlencode(
+                    $LID
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     }
 }
 
@@ -185,12 +206,14 @@ if ($bNew && $COPY_ID == '') {
 if ($COPY_ID <> '') {
     $LID = $COPY_ID;
     $lng = CSite::GetByID($COPY_ID);
-    if (!$lng->ExtractFields("str_"))
+    if (!$lng->ExtractFields("str_")) {
         $bNew = true;
+    }
 } elseif (!$bNew) {
     $lng = CSite::GetByID($LID);
-    if (!$lng->ExtractFields("str_"))
+    if (!$lng->ExtractFields("str_")) {
         $bNew = true;
+    }
 }
 
 if ($bVarsFromForm) {
@@ -199,15 +222,18 @@ if ($bVarsFromForm) {
     $str_SERVER_NAME = htmlspecialcharsbx($_POST["SERVER_NAME"]);
 }
 
-$APPLICATION->SetTitle(($bNew ? GetMessage("NEW_SITE_TITLE") : GetMessage("EDIT_SITE_TITLE", array("#ID#" => $str_LID))));
+$APPLICATION->SetTitle(
+    ($bNew ? GetMessage("NEW_SITE_TITLE") : GetMessage("EDIT_SITE_TITLE", array("#ID#" => $str_LID)))
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
 if ($bNew) {
     $sites_cnt = 0;
-    $r = CSite::GetList($o1, $b1, array("ACTIVE" => "Y"));
-    while ($r->Fetch())
+    $r = CSite::GetList('', '', array("ACTIVE" => "Y"));
+    while ($r->Fetch()) {
         $sites_cnt++;
+    }
 }
 
 $aMenu = array(
@@ -238,7 +264,11 @@ if (!$bNew) {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("MAIN_DELETE_RECORD"),
-        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(GetMessage("MAIN_DELETE_RECORD_CONF")) . "')) window.location='/bitrix/admin/site_admin.php?ID=" . urlencode(urlencode($str_LID)) . "&lang=" . LANGUAGE_ID . "&action=delete&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(
+                GetMessage("MAIN_DELETE_RECORD_CONF")
+            ) . "')) window.location='/bitrix/admin/site_admin.php?ID=" . urlencode(
+                urlencode($str_LID)
+            ) . "&lang=" . LANGUAGE_ID . "&action=delete&" . bitrix_sessid_get() . "';",
         "TITLE" => GetMessage("MAIN_DELETE_RECORD_TITLE"),
         "ICON" => "btn_delete"
     );
@@ -247,16 +277,20 @@ if (!$bNew) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($e = $APPLICATION->GetException())
+if ($e = $APPLICATION->GetException()) {
     $message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
+}
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100));
 ?>
 <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?"
-      name="bform" <? if ($bNew && $limitSitesCount > 0 && $limitSitesCount <= $sites_cnt) echo ' OnSubmit="alert(\'' . GetMessage("SITE_EDIT_WARNING_MAX") . '\')"'; ?>>
+      name="bform" <? if ($bNew && $limitSitesCount > 0 && $limitSitesCount <= $sites_cnt) {
+    echo ' OnSubmit="alert(\'' . GetMessage("SITE_EDIT_WARNING_MAX") . '\')"';
+} ?>>
     <?= bitrix_sessid_post() ?>
     <input type="hidden" name="lang" value="<? echo LANG ?>">
     <? if ($bNew): ?>
@@ -320,7 +354,9 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
         </td>
         <td><input type="text" name="DOC_ROOT" size="30" value="<? echo $str_DOC_ROOT ?>">
             <a title="<?= GetMessage('MAIN_DOC_ROOT_INS') ?>" href="javascript:void(0)"
-               onClick="document.bform.DOC_ROOT.value='<?= htmlspecialcharsbx(CUtil::addslashes($_SERVER["DOCUMENT_ROOT"])) ?>'; BX.fireEvent(document.bform.DOC_ROOT, 'change')"><? echo GetMessage("MAIN_DOC_ROOT_SET") ?></a>
+               onClick="document.bform.DOC_ROOT.value='<?= htmlspecialcharsbx(
+                   CUtil::addslashes($_SERVER["DOCUMENT_ROOT"])
+               ) ?>'; BX.fireEvent(document.bform.DOC_ROOT, 'change')"><? echo GetMessage("MAIN_DOC_ROOT_SET") ?></a>
         </td>
     </tr>
 
@@ -355,7 +391,9 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
             $cultures = array();
             while ($cult = $cultureRes->fetch()) {
                 $cult["WEEK_START"] = GetMessage('DAY_OF_WEEK_' . $cult["WEEK_START"]);
-                $cult["DIRECTION"] = ($cult["DIRECTION"] == "Y" ? GetMessage('DIRECTION_LTR') : GetMessage('DIRECTION_RTL'));
+                $cult["DIRECTION"] = ($cult["DIRECTION"] == "Y" ? GetMessage('DIRECTION_LTR') : GetMessage(
+                    'DIRECTION_RTL'
+                ));
                 $cultures[] = $cult;
             }
             ?>
@@ -386,7 +424,9 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                 <?
                 foreach ($cultures as $cult):
                     ?>
-                    <option value="<?= $cult["ID"] ?>"<? if ($cult["ID"] == $str_CULTURE_ID) echo " selected" ?>><?= htmlspecialcharsbx($cult["NAME"]) ?></option>
+                    <option value="<?= $cult["ID"] ?>"<? if ($cult["ID"] == $str_CULTURE_ID) echo " selected" ?>><?= htmlspecialcharsbx(
+                            $cult["NAME"]
+                        ) ?></option>
                 <?
                 endforeach;
                 ?>
@@ -395,8 +435,9 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
     </tr>
     <tr>
         <td>&nbsp;</td>
-        <td><a href="culture_edit.php?lang=<?= LANGUAGE_ID ?>"
-               id="bx_culture_link"><? echo GetMessage("site_edit_culture_edit") ?></a></td>
+        <td><a href="culture_edit.php?lang=<?= LANGUAGE_ID ?>" id="bx_culture_link"><? echo GetMessage(
+                    "site_edit_culture_edit"
+                ) ?></a></td>
     </tr>
     <tr>
         <td><? echo GetMessage('FORMAT_DATE') ?></td>
@@ -438,14 +479,24 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                        id="SITE_MESSAGE_LINK_e" value="E"
                        onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=false}"><label
                         for="SITE_MESSAGE_LINK_e"> <? echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL_LINK") ?></label><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?= CSite::SelectBox("SITE_MESSAGE_LINK_E_SITE", $SITE_MESSAGE_LINK_E_SITE, "", "", ($SITE_MESSAGE_LINK != "E" ? 'disabled' : '')); ?>
-                <br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?= CSite::SelectBox(
+                    "SITE_MESSAGE_LINK_E_SITE",
+                    $SITE_MESSAGE_LINK_E_SITE,
+                    "",
+                    "",
+                    ($SITE_MESSAGE_LINK != "E" ? 'disabled' : '')
+                ); ?><br>
                 <input type="radio"<? if ($SITE_MESSAGE_LINK == "C") echo " checked" ?> name="SITE_MESSAGE_LINK"
                        id="SITE_MESSAGE_LINK_c" value="C"
                        onClick="if(this.checked){document.bform.SITE_MESSAGE_LINK_E_SITE.disabled=true; document.bform.SITE_MESSAGE_LINK_C_SITE.disabled=false}"><label
                         for="SITE_MESSAGE_LINK_c"> <? echo GetMessage("MAIN_SITE_CREATE_MESS_TEPL_COPY") ?></label><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?= CSite::SelectBox("SITE_MESSAGE_LINK_C_SITE", $SITE_MESSAGE_LINK_C_SITE, "", "", ($SITE_MESSAGE_LINK != "C" ? 'disabled' : '')); ?>
-                <br/>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?= CSite::SelectBox(
+                    "SITE_MESSAGE_LINK_C_SITE",
+                    $SITE_MESSAGE_LINK_C_SITE,
+                    "",
+                    "",
+                    ($SITE_MESSAGE_LINK != "C" ? 'disabled' : '')
+                ); ?><br/>
 
             </td>
         </tr>
@@ -476,8 +527,9 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                     //-->
                 </script>
                 <input type="checkbox" name="START_SITE_WIZARD_REWRITE" value="Y"
-                       id="ID_START_SITE_WIZARD_REWRITE"><label
-                        for="ID_START_SITE_WIZARD_REWRITE"><?= GetMessage("M_START_SITE_WIZARD_REWRITE") ?></label>
+                       id="ID_START_SITE_WIZARD_REWRITE"><label for="ID_START_SITE_WIZARD_REWRITE"><?= GetMessage(
+                        "M_START_SITE_WIZARD_REWRITE"
+                    ) ?></label>
             </td>
         </tr>
     <? endif; ?>
@@ -497,21 +549,24 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                     $max_sort = 0;
                     while ($arSiteRes = $dbSiteRes->Fetch()) {
                         $SITE_TEMPLATE[$arSiteRes["ID"]] = $arSiteRes;
-                        if ($max_sort < $arSiteRes["SORT"])
+                        if ($max_sort < $arSiteRes["SORT"]) {
                             $max_sort = $arSiteRes["SORT"];
+                        }
                     }
-                    for ($i = 0; $i < 3; $i++)
+                    for ($i = 0; $i < 3; $i++) {
                         $SITE_TEMPLATE["N" . $i] = array("SORT" => $max_sort + 1 + $i);
+                    }
                 } else {
                     $SITE_TEMPLATE = array();
                     foreach ($_POST["SITE_TEMPLATE"] as $key => $val) {
                         if ($USER->CanDoOperation('edit_php') || $_POST['selected_type'][$key] != 'php') {
                             $cond = ConditionCompose($val, $key);
                         } else {
-                            if (isset($arTemplates[$key]))
+                            if (isset($arTemplates[$key])) {
                                 $cond = $arTemplates[$key];
-                            else
+                            } else {
                                 continue;
+                            }
                         }
 
                         $SITE_TEMPLATE[$key] = array(
@@ -520,7 +575,6 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                             "CONDITION" => $cond
                         );
                     }
-
                 }
 
                 $signer = new Bitrix\Main\Security\Sign\Signer();
@@ -528,7 +582,11 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                 //templates
                 $arSiteTemplates = array();
                 $templateSigns = array();
-                $db_res = CSiteTemplate::GetList(array("sort" => "asc", "name" => "asc"), array("TYPE" => ""), array("ID", "NAME"));
+                $db_res = CSiteTemplate::GetList(
+                    array("sort" => "asc", "name" => "asc"),
+                    array("TYPE" => ""),
+                    array("ID", "NAME")
+                );
                 while ($arRes = $db_res->GetNext()) {
                     $arSiteTemplates[] = $arRes;
                     $templateSigns[$arRes["ID"]] = $signer->sign($arRes["ID"], "template_preview" . bitrix_sessid());
@@ -573,11 +631,13 @@ $limitSitesCount = intval(COption::GetOptionInt("main", "PARAM_MAX_SITES", 100))
                                    value="<?= htmlspecialcharsex($val["SORT"]) ?>"></td>
                         <td><? ConditionSelect($i); ?></td>
                         <td align="left"><?
-                            ConditionShow(array(
-                                "i" => $i,
-                                "field_name" => "SITE_TEMPLATE[$i]",
-                                "form" => "bform"
-                            ));
+                            ConditionShow(
+                                array(
+                                    "i" => $i,
+                                    "field_name" => "SITE_TEMPLATE[$i]",
+                                    "form" => "bform"
+                                )
+                            );
                             ?></td>
                     </tr>
                 <? endforeach; ?>

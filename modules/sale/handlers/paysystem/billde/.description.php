@@ -1,6 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -352,7 +354,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_NUMBER_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_NUMBER_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_NUMBER_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 3800,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -382,7 +388,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_NAME_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_NAME_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_NAME_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 4000,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -412,7 +422,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_QUANTITY_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_QUANTITY_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_QUANTITY_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 4200,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -442,7 +456,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_MEASURE_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_MEASURE_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_MEASURE_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 4300,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -472,7 +490,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_PRICE_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_PRICE_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_PRICE_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 4600,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -502,7 +524,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_VAT_RATE_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_VAT_RATE_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_VAT_RATE_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 4800,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(
@@ -532,7 +558,11 @@ $data = array(
             )
         ),
         "BILLDE_COLUMN_SUM_TITLE" => array(
-            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_SUM_VALUE", null, 'de') . '"',
+            "NAME" => Loc::getMessage("SALE_HPS_BILL_DE_COLUMN_TITLE") . '"' . Loc::getMessage(
+                    "SALE_HPS_BILL_DE_COLUMN_SUM_VALUE",
+                    null,
+                    'de'
+                ) . '"',
             'SORT' => 5100,
             'GROUP' => 'COLUMN_SETTINGS',
             'DEFAULT' => array(

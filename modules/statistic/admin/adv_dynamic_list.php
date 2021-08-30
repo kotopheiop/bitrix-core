@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -54,6 +57,8 @@ if (!$ar = $a->Fetch()) {
 } else {
     $EVENTS_VIEW = $ar["EVENTS_VIEW"];
 
+    global $by, $order;
+
     $rsData = CAdv::GetDynamicList($find_adv_id, $by, $order, $arMaxMin, $arFilter);
     $rsData = new CAdminResult($rsData, $sTableID);
     $rsData->NavStart();
@@ -61,16 +66,67 @@ if (!$ar = $a->Fetch()) {
     $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_ADV_DYN_PAGES")));
 
     $arHeaders = Array(
-        array("id" => "DATE_STAT", "content" => GetMessage("STAT_DATE"), "sort" => "s_date", "default" => true, "align" => "right"),
-        array("id" => "SESSIONS", "content" => GetMessage("STAT_SESSIONS") . " " . GetMessage("STAT_STRAIGHT"), "default" => true, "align" => "right"),
-        array("id" => "SESSIONS_BACK", "content" => GetMessage("STAT_SESSIONS") . " " . GetMessage("STAT_BACK") . "*", "default" => true, "align" => "right"),
-        array("id" => "GUESTS", "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_STRAIGHT"), "default" => true, "align" => "right"),
-        array("id" => "GUESTS_BACK", "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_BACK") . "*", "default" => true, "align" => "right"),
-        array("id" => "NEW_GUESTS", "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_NEW"), "default" => true, "align" => "right"),
-        array("id" => "C_HOSTS", "content" => GetMessage("STAT_HOSTS") . " " . GetMessage("STAT_STRAIGHT"), "default" => true, "align" => "right"),
-        array("id" => "HOSTS_BACK", "content" => GetMessage("STAT_HOSTS") . " " . GetMessage("STAT_BACK") . "*", "default" => true, "align" => "right"),
-        array("id" => "HITS", "content" => GetMessage("STAT_HITS") . " " . GetMessage("STAT_STRAIGHT"), "default" => true, "align" => "right"),
-        array("id" => "HITS_BACK", "content" => GetMessage("STAT_HITS") . " " . GetMessage("STAT_BACK") . "*", "default" => true, "align" => "right"),
+        array(
+            "id" => "DATE_STAT",
+            "content" => GetMessage("STAT_DATE"),
+            "sort" => "s_date",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "SESSIONS",
+            "content" => GetMessage("STAT_SESSIONS") . " " . GetMessage("STAT_STRAIGHT"),
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "SESSIONS_BACK",
+            "content" => GetMessage("STAT_SESSIONS") . " " . GetMessage("STAT_BACK") . "*",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "GUESTS",
+            "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_STRAIGHT"),
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "GUESTS_BACK",
+            "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_BACK") . "*",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "NEW_GUESTS",
+            "content" => GetMessage("STAT_GUESTS") . " " . GetMessage("STAT_NEW"),
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "C_HOSTS",
+            "content" => GetMessage("STAT_HOSTS") . " " . GetMessage("STAT_STRAIGHT"),
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "HOSTS_BACK",
+            "content" => GetMessage("STAT_HOSTS") . " " . GetMessage("STAT_BACK") . "*",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "HITS",
+            "content" => GetMessage("STAT_HITS") . " " . GetMessage("STAT_STRAIGHT"),
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "HITS_BACK",
+            "content" => GetMessage("STAT_HITS") . " " . GetMessage("STAT_BACK") . "*",
+            "default" => true,
+            "align" => "right"
+        ),
         array("id" => "EVENTS", "content" => GetMessage("STAT_EVENTS"), "default" => true),
     );
 
@@ -81,7 +137,11 @@ if (!$ar = $a->Fetch()) {
 
 
         if (intval($f_SESSIONS) > 0) {
-            $str = "<a href=\"session_list.php?lang=" . LANG . "&amp;find_adv_id=" . urlencode($find_adv_id) . "&amp;find_adv_id_exact_match=Y&amp;find_date1=" . $f_DATE_STAT . "&amp;find_date2=" . $f_DATE_STAT . "&amp;set_filter=Y\">" . intval($f_SESSIONS) . "</a>";
+            $str = "<a href=\"session_list.php?lang=" . LANG . "&amp;find_adv_id=" . urlencode(
+                    $find_adv_id
+                ) . "&amp;find_adv_id_exact_match=Y&amp;find_date1=" . $f_DATE_STAT . "&amp;find_date2=" . $f_DATE_STAT . "&amp;set_filter=Y\">" . intval(
+                    $f_SESSIONS
+                ) . "</a>";
 
             $row->AddViewField("SESSIONS", $str);
         }
@@ -89,7 +149,7 @@ if (!$ar = $a->Fetch()) {
         $arF["DATE1_PERIOD"] = $f_DATE_STAT;
         $arF["DATE2_PERIOD"] = $f_DATE_STAT;
         $arF["COUNTER_ADV_DYNAMIC_LIST"] = "1";
-        $events = CAdv::GetEventList($find_adv_id, ($by2 = "s_def"), ($order2 = "desc"), $arF, $is_filtered);
+        $events = CAdv::GetEventList($find_adv_id, "s_def", "desc", $arF);
 
         $sum = 0;
         $sum_back = 0;
@@ -98,7 +158,15 @@ if (!$ar = $a->Fetch()) {
             $sum_back += intval($ar["COUNTER_BACK"]);
         }
 
-        $str = '<a title="' . GetMessage("STAT_VIEW_EVENT_LIST") . '" href="event_list.php?lang=' . LANG . '&find_adv_id=' . urlencode($find_adv_id) . '&find_adv_id_exact_match=Y&find_adv_back=N&find_date1=' . $f_DATE_STAT . '&find_date2=' . $f_DATE_STAT . '&set_filter=Y">' . $sum . '</a>&nbsp;(<a title="' . GetMessage("STAT_VIEW_EVENT_LIST_BACK") . '" href="event_list.php?lang=' . LANG . '&find_adv_id=' . urlencode($find_adv_id) . '&find_adv_back=Y&find_date1=' . $f_DATE_STAT . '&find_date2=' . $f_DATE_STAT . '&set_filter=Y">' . $sum_back . '</a>*)';
+        $str = '<a title="' . GetMessage(
+                "STAT_VIEW_EVENT_LIST"
+            ) . '" href="event_list.php?lang=' . LANG . '&find_adv_id=' . urlencode(
+                $find_adv_id
+            ) . '&find_adv_id_exact_match=Y&find_adv_back=N&find_date1=' . $f_DATE_STAT . '&find_date2=' . $f_DATE_STAT . '&set_filter=Y">' . $sum . '</a>&nbsp;(<a title="' . GetMessage(
+                "STAT_VIEW_EVENT_LIST_BACK"
+            ) . '" href="event_list.php?lang=' . LANG . '&find_adv_id=' . urlencode(
+                $find_adv_id
+            ) . '&find_adv_back=Y&find_date1=' . $f_DATE_STAT . '&find_date2=' . $f_DATE_STAT . '&set_filter=Y">' . $sum_back . '</a>*)';
         $row->AddViewField("EVENTS", $str);
 
 
@@ -112,7 +180,6 @@ if (!$ar = $a->Fetch()) {
         );
 
         $row->AddActions($arActions);
-
     }
 
 
@@ -123,7 +190,7 @@ if (!$ar = $a->Fetch()) {
         "DATE1_PERIOD" => $arFilter["DATE1"],
         "DATE2_PERIOD" => $arFilter["DATE2"]
     );
-    $a = CAdv::GetList($by3, $order3, $arF, $is_filtered, "", $arrGROUP_DAYS, $v);
+    $a = CAdv::GetList('', '', $arF, $is_filtered, "", $arrGROUP_DAYS);
     $ar = $a->GetNext();
 
 
@@ -161,8 +228,9 @@ if ($dynamic_days >= 2 && function_exists("ImageCreate")) {
     );
 }
 
-if ($context != "tab")
+if ($context != "tab") {
     $lAdmin->AddAdminContextMenu($aContext);
+}
 
 $lAdmin->CheckListMode();
 
@@ -175,17 +243,30 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?>
             </td>
         </tr>
     </form>
-<? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . "?find_adv_id=" . intval($find_adv_id), "form" => "form1"));
+<? $filter->Buttons(
+    array(
+        "table_id" => $sTableID,
+        "url" => $APPLICATION->GetCurPage() . "?find_adv_id=" . intval($find_adv_id),
+        "form" => "form1"
+    )
+);
 $filter->End(); ?>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

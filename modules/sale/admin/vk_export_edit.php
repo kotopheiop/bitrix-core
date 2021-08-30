@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -20,11 +21,13 @@ $request = $context->getRequest();
 $server = $context->getServer();
 
 //CHECK errors
-if ($APPLICATION->GetGroupRight("sale") < "W")
+if ($APPLICATION->GetGroupRight("sale") < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_VK_ACCESS_DENIED"));
+}
 
-if (!Loader::includeModule('sale'))
+if (!Loader::includeModule('sale')) {
     $arResult["ERROR"] = Loc::getMessage("SALE_VK_MODULE_NOT_INSTALLED");
+}
 
 //get or create export ID
 if (isset($request['ID']) && $request['ID']) {
@@ -55,15 +58,15 @@ require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_afte
 //	check REQUIRED fields
 $errorRequiredFields = array();
 if (isset($request["VK"])) {
-    if (!isset($request["VK"]["DESCRIPTION"]) || strlen($request["VK"]["DESCRIPTION"]) <= 0) {
+    if (!isset($request["VK"]["DESCRIPTION"]) || $request["VK"]["DESCRIPTION"] == '') {
         $errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_NAME");
     }
 
-    if (!isset($request["VK"]["VK_SETTINGS"]["APP_ID"]) || strlen($request["VK"]["VK_SETTINGS"]["APP_ID"]) <= 0) {
+    if (!isset($request["VK"]["VK_SETTINGS"]["APP_ID"]) || $request["VK"]["VK_SETTINGS"]["APP_ID"] == '') {
         $errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_APP_ID");
     }
 
-    if (!isset($request["VK"]["VK_SETTINGS"]["SECRET"]) || strlen($request["VK"]["VK_SETTINGS"]["SECRET"]) <= 0) {
+    if (!isset($request["VK"]["VK_SETTINGS"]["SECRET"]) || $request["VK"]["VK_SETTINGS"]["SECRET"] == '') {
         $errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_SECRET");
     }
 
@@ -96,10 +99,11 @@ if ($exportId) {
     $currPageSettingsTabUrl .= '&ID=' . $exportId;
 }
 
-if ($exportId)
+if ($exportId) {
     $APPLICATION->SetTitle(Loc::getMessage('SALE_VK_TITLE', array('#E1#' => $vkSettings["DESCRIPTION"])));
-else
+} else {
     $APPLICATION->SetTitle(Loc::getMessage('SALE_VK_TITLE_NEW'));
+}
 
 
 //ONLY RUSSIAN!!!
@@ -125,7 +129,7 @@ if (isset($request["code"]) && !empty($request["code"]) && $exportId) {
     $responseStr = $http->get($tokenUrl);
 
 //	check answer from VK
-    if (strlen($responseStr) <= 0) {
+    if ($responseStr == '') {
 //		logger my throw exception
         try {
             $logger = new Vk\Logger($exportId);
@@ -168,45 +172,59 @@ if (isset($request["code"]) && !empty($request["code"]) && $exportId) {
 if (isset($request["VK"]) && is_array($request["VK"]) && ($_POST['save'] || $_POST['apply'])) {
     if (empty($errorRequiredFields)) {
 // 		install platform in first run
-        if (!$vk->isInstalled())
+        if (!$vk->isInstalled()) {
             $vk->install();
+        }
 
 //		VALIDATE settings
-        if (isset($request["VK"]["DESCRIPTION"]))
+        if (isset($request["VK"]["DESCRIPTION"])) {
             $vkSettings["DESCRIPTION"] = $request["VK"]["DESCRIPTION"];
+        }
 
 //		adding "-"
-        if (strlen($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) > 1) {
+        if (mb_strlen($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) > 1) {
             $vkSettings["VK_SETTINGS"]["GROUP_ID"] =
-                substr($request["VK"]["VK_SETTINGS"]["GROUP_ID"], 0, 1) != "-" ?
+                mb_substr($request["VK"]["VK_SETTINGS"]["GROUP_ID"], 0, 1) != "-" ?
                     "-" . intval($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) :
                     intval($request["VK"]["VK_SETTINGS"]["GROUP_ID"]);
         }
-        if ($request["VK"]["VK_SETTINGS"]["APP_ID"])
+        if ($request["VK"]["VK_SETTINGS"]["APP_ID"]) {
             $vkSettings["VK_SETTINGS"]["APP_ID"] = intval($request["VK"]["VK_SETTINGS"]["APP_ID"]);
-        if ($request["VK"]["VK_SETTINGS"]["SECRET"])
+        }
+        if ($request["VK"]["VK_SETTINGS"]["SECRET"]) {
             $vkSettings["VK_SETTINGS"]["SECRET"] = htmlspecialcharsbx($request["VK"]["VK_SETTINGS"]["SECRET"]);
+        }
 
 //		validate EXPORT SETTINGS
-        if (!isset($request["VK"]["EXPORT_SETTINGS"]["TIMELIMIT"]) || !$request["VK"]["EXPORT_SETTINGS"]["TIMELIMIT"])
+        if (!isset($request["VK"]["EXPORT_SETTINGS"]["TIMELIMIT"]) || !$request["VK"]["EXPORT_SETTINGS"]["TIMELIMIT"]) {
             $vkSettings["EXPORT_SETTINGS"]["TIMELIMIT"] = Vk\Vk::DEFAULT_TIMELIMIT;
-        else
+        } else {
             $vkSettings["EXPORT_SETTINGS"]["TIMELIMIT"] = intval($request["VK"]["EXPORT_SETTINGS"]["TIMELIMIT"]);
+        }
 
-        if ($request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"])
+        if ($request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"]) {
             $vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"] =
-                $request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"] >= Vk\Vk::MAX_EXECUTION_ITEMS ? Vk\Vk::MAX_EXECUTION_ITEMS : intval($request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"]);
-        else
+                $request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"] >= Vk\Vk::MAX_EXECUTION_ITEMS ? Vk\Vk::MAX_EXECUTION_ITEMS : intval(
+                    $request["VK"]["EXPORT_SETTINGS"]["COUNT_ITEMS"]
+                );
+        } else {
             $vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"] = Vk\Vk::DEFAULT_EXECUTION_ITEMS;
+        }
 
-        if ($request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"])
-            $vkSettings["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"] = intval($request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"]);
-        if (isset($request["VK"]["EXPORT_SETTINGS"]["AGRESSIVE"]))
+        if ($request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"]) {
+            $vkSettings["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"] = intval(
+                $request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"]
+            );
+        }
+        if (isset($request["VK"]["EXPORT_SETTINGS"]["AGRESSIVE"])) {
             $vkSettings["EXPORT_SETTINGS"]["AGRESSIVE"] = $request["VK"]["EXPORT_SETTINGS"]["AGRESSIVE"];
-        if (isset($request["VK"]["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"]))
+        }
+        if (isset($request["VK"]["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"])) {
             $vkSettings["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"] = $request["VK"]["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"];
-        if (isset($request["VK"]["EXPORT_SETTINGS"]["RICH_LOG"]))
+        }
+        if (isset($request["VK"]["EXPORT_SETTINGS"]["RICH_LOG"])) {
             $vkSettings["EXPORT_SETTINGS"]["RICH_LOG"] = $request["VK"]["EXPORT_SETTINGS"]["RICH_LOG"];
+        }
 
 //		validate settings for AGENTS
         if (isset($request["VK"]["AGENT"]["INTERVAL"])) {
@@ -263,7 +281,10 @@ if ($runningProcess) {
 
 //	prepare ACCESS TOKEN to print
 if (isset($vkSettings["OAUTH"]["ACCESS_TOKEN"]) && !empty($vkSettings["OAUTH"]["ACCESS_TOKEN"])) {
-    $authText = Loc::getMessage("SALE_VK_SETTINGS_ACCESS_TOKEN_REGET") . ' (' . date('j.m.Y - H:i', $vkSettings["OAUTH"]["ACCESS_TOKEN_TIME"]) . ')';
+    $authText = Loc::getMessage("SALE_VK_SETTINGS_ACCESS_TOKEN_REGET") . ' (' . date(
+            'j.m.Y - H:i',
+            $vkSettings["OAUTH"]["ACCESS_TOKEN_TIME"]
+        ) . ')';
     $authButtonText = "SALE_VK_SETTINGS_ACCESS_TOKEN_REGET_BUTTON";
 } else {
     $authButtonText = "SALE_VK_SETTINGS_ACCESS_TOKEN_GET_BUTTON";
@@ -283,7 +304,10 @@ try {
         $vkCategorySelector = $categoriesVk->getVkCategorySelector($vkCategorySelected);
 
         $apiHelper = new Vk\Api\ApiHelper($exportId);
-        $vkGroupsSelector = $apiHelper->getUserGroupsSelector($vkSettings["VK_SETTINGS"]["GROUP_ID"], 'VK[VK_SETTINGS][GROUP_ID]');
+        $vkGroupsSelector = $apiHelper->getUserGroupsSelector(
+            $vkSettings["VK_SETTINGS"]["GROUP_ID"],
+            'VK[VK_SETTINGS][GROUP_ID]'
+        );
     }
 } catch (Vk\ExecuteException $e) {
     $vkCategorySelector = '';
@@ -323,11 +347,14 @@ $arrTabs = array(
 );
 //	exchange and map active tab only if active
 if ($vk->isActive() && $vk->isActiveById($exportId)) {
-    array_unshift($arrTabs, array(
-        "DIV" => "vk_export",
-        "TAB" => Loc::getMessage("SALE_VK_TAB_EXPORT"),
-        "TITLE" => Loc::getMessage("SALE_VK_TAB_EXPORT_DESC"),
-    ));
+    array_unshift(
+        $arrTabs,
+        array(
+            "DIV" => "vk_export",
+            "TAB" => Loc::getMessage("SALE_VK_TAB_EXPORT"),
+            "TITLE" => Loc::getMessage("SALE_VK_TAB_EXPORT_DESC"),
+        )
+    );
     $arrTabs[] = array(
         "DIV" => "vk_export_map",
         "TAB" => Loc::getMessage("SALE_VK_TAB_MAP"),
@@ -346,8 +373,9 @@ $tabControl = new CAdminTabControl("tabControl", $arrTabs);
 ?>
     <div id="vk_export_notify__progress">
         <?
-        if ($runningProcess)
+        if ($runningProcess) {
             echo Vk\Journal::getProgressMessage($exportId, $runningProcess['TYPE']);
+        }
         ?>
     </div>
 
@@ -356,9 +384,9 @@ $tabControl = new CAdminTabControl("tabControl", $arrTabs);
         //	check error log - show if not empty
         $logger = new Vk\Logger($exportId);
         $errorsCritical = $logger->getErrorsList(true);
-        if (strlen($errorsCritical) > 0) {
+        if ($errorsCritical <> '') {
             $errorsCriticalString = Vk\Journal::getCriticalErrorsMessage($exportId, $errorsCritical);
-            echo strlen($errorsCriticalString) > 0 ? $errorsCriticalString : '';
+            echo $errorsCriticalString <> '' ? $errorsCriticalString : '';
         }
         ?>
     </div>
@@ -397,7 +425,9 @@ $tabControl = new CAdminTabControl("tabControl", $arrTabs);
 
 //	DEL
         foreach (array('_DELETE', '_DELETE_ALL') as $type2) {
-            $msg = Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1 . $type2 . "_ALERT") . '\n' . Loc::getMessage("SALE_VK_SETTINGS_BUTTON_CONFIRM");
+            $msg = Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1 . $type2 . "_ALERT") . '\n' . Loc::getMessage(
+                    "SALE_VK_SETTINGS_BUTTON_CONFIRM"
+                );
             $additionalMenuDel[] = array(
                 "TEXT" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1 . $type2),
                 "TITLE" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1 . $type2),
@@ -439,7 +469,7 @@ $tabControl = new CAdminTabControl("tabControl", $arrTabs);
         <td colspan="2">
             <?php $errorsNormal = $logger->getErrorsList(false); ?>
             <div id="vk_export_notify__error_normal"
-                 style="display:<?= (strlen($errorsNormal) > 0) ? 'block' : 'none' ?>">
+                 style="display:<?= ($errorsNormal <> '') ? 'block' : 'none' ?>">
                 <? echo BeginNote(); ?>
                 <span id="vk_export_notify__error_normal__msg"><?= $errorsNormal ?></span>
                 <span id="vk_export_notify__error_normal__button">
@@ -488,7 +518,9 @@ $tabControl->BeginNextTab();
             <td width="40%"><span><?= Loc::getMessage("SALE_VK_SETTINGS_NAME") ?>:</span></td>
             <td width="60%">
                 <input type="text" name="VK[DESCRIPTION]" size="50" maxlength="255"
-                       value="<?= isset($vkSettings["DESCRIPTION"]) ? HtmlFilter::encode($vkSettings["DESCRIPTION"]) : "" ?>">
+                       value="<?= isset($vkSettings["DESCRIPTION"]) ? HtmlFilter::encode(
+                           $vkSettings["DESCRIPTION"]
+                       ) : "" ?>">
             </td>
         </tr>
 
@@ -500,10 +532,15 @@ $tabControl->BeginNextTab();
         <!--		App ID-->
         <tr class="adm-detail-required-field">
             <td>
-                <?= ShowJSHint(Loc::getMessage("SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL", array(
-                    "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
-                    "#A2" => '</a>',
-                ))); ?>
+                <?= ShowJSHint(
+                    Loc::getMessage(
+                        "SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL",
+                        array(
+                            "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
+                            "#A2" => '</a>',
+                        )
+                    )
+                ); ?>
                 <span><?= Loc::getMessage("SALE_VK_SETTINGS_APP_ID") ?>:</span>
             </td>
             <td>
@@ -515,10 +552,15 @@ $tabControl->BeginNextTab();
         <!--		Secret key-->
         <tr class="adm-detail-required-field">
             <td>
-                <?= ShowJSHint(Loc::getMessage("SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL", array(
-                    "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
-                    "#A2" => '</a>',
-                ))); ?>
+                <?= ShowJSHint(
+                    Loc::getMessage(
+                        "SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL",
+                        array(
+                            "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
+                            "#A2" => '</a>',
+                        )
+                    )
+                ); ?>
                 <span><?= Loc::getMessage("SALE_VK_SETTINGS_SECRET") ?>:</span>
             </td>
             <td>
@@ -542,17 +584,22 @@ $tabControl->BeginNextTab();
         <? endif; ?>
 
 
-        <? if ($exportId && strlen($vkGroupsSelector) > 0): ?>
+        <? if ($exportId && $vkGroupsSelector <> ''): ?>
             <tr class="heading">
                 <td colspan="2"><?= Loc::getMessage("SALE_VK_SETTINGS_VK_SETTINGS") ?></td>
             </tr>
             <!--		Groud ID-->
             <tr class="adm-detail-required-field">
                 <td>
-                    <?= ShowJSHint(Loc::getMessage("SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL", array(
-                        "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
-                        "#A2" => '</a>',
-                    )))
+                    <?= ShowJSHint(
+                        Loc::getMessage(
+                            "SALE_VK_SETTINGS_EXPORT_SETTING_MANUAL",
+                            array(
+                                "#A1" => "<a href=/bitrix/admin/sale_vk_manual.php?lang=" . LANGUAGE_ID . ">",
+                                "#A2" => '</a>',
+                            )
+                        )
+                    )
                     ?>
                     <span><?= Loc::getMessage("SALE_VK_SETTINGS_GROUP_ID") ?>:</span>
                 </td>
@@ -561,7 +608,7 @@ $tabControl->BeginNextTab();
         <? endif; //group selector?>
 
 
-        <?php if ($exportId && strlen($vkCategorySelector) > 0): ?>
+        <?php if ($exportId && $vkCategorySelector <> ''): ?>
             <!--		CATEGORIES mapping-->
             <tr class="heading">
                 <td colspan="2"><?= Loc::getMessage("SALE_VK_SETTINGS_CATEGORIES") ?></td>
@@ -639,7 +686,9 @@ $tabControl->BeginNextTab();
                 </td>
                 <td>
                     <input type="text" size="3" name="VK[EXPORT_SETTINGS][COUNT_ITEMS]"
-                           value="<?= isset($vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"]) ? $vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"] : ceil(intval(Vk\Vk::MAX_EXECUTION_ITEMS) / 2); ?>">
+                           value="<?= isset($vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"]) ? $vkSettings["EXPORT_SETTINGS"]["COUNT_ITEMS"] : ceil(
+                               intval(Vk\Vk::MAX_EXECUTION_ITEMS) / 2
+                           ); ?>">
                 </td>
             </tr>
 

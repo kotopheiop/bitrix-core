@@ -2,8 +2,8 @@
 
 namespace Bitrix\Landing\Site;
 
+use \Bitrix\Landing\Role;
 use \Bitrix\Landing\Site;
-use \Bitrix\Landing\Manager;
 
 class Type
 {
@@ -16,6 +16,11 @@ class Type
      * Scope knowledge.
      */
     const SCOPE_CODE_KNOWLEDGE = 'KNOWLEDGE';
+
+    /**
+     * Pseudo scope for crm forms.
+     */
+    const PSEUDO_SCOPE_CODE_FORMS = 'crm_forms';
 
     /**
      * Current scope class name.
@@ -54,12 +59,13 @@ class Type
     public static function setScope($scope, array $params = [])
     {
         //self::$scopeInit ||
-        if (!is_string($scope)) {
+        if (!is_string($scope) || !$scope) {
             return;
         }
         //if (self::$currentScopeClass === null)
         // always clear previous scope
         if (true) {
+            Role::setExpectedType(null);
             self::$currentScopeClass = self::getScopeClass($scope);
             if (self::$currentScopeClass) {
                 self::$scopeInit = true;
@@ -70,6 +76,7 @@ class Type
 
     /**
      * Clear selected scope.
+     * @return void
      */
     public static function clearScope()
     {
@@ -139,7 +146,7 @@ class Type
         }
 
         // compatibility, huh
-        return $strict ? null : ['PAGE', 'STORE', 'SMN', 'PREVIEW'];
+        return $strict ? null : ['PAGE', 'STORE', 'SMN'];
     }
 
     /**
@@ -163,7 +170,7 @@ class Type
     public static function isEnabled($code)
     {
         if (is_string($code)) {
-            $code = strtoupper(trim($code));
+            $code = mb_strtoupper(trim($code));
             $types = Site::getTypes();
             if (array_key_exists($code, $types)) {
                 return true;

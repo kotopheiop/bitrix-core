@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocNetGroupAuthProvider extends CAuthProvider implements IProviderInterface
@@ -13,20 +14,35 @@ class CSocNetGroupAuthProvider extends CAuthProvider implements IProviderInterfa
         global $DB;
         $USER_ID = intval($USER_ID);
 
-        $DB->Query("
+        $DB->Query(
+            "
 			INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE)
-			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat("'SG'", ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"), "'_'", "U2G.ROLE") . "
+			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat(
+                "'SG'",
+                ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"),
+                "'_'",
+                "U2G.ROLE"
+            ) . "
 			FROM b_sonet_user2group U2G
 			WHERE U2G.USER_ID=" . $USER_ID . " AND U2G.ROLE IN ('A','E','K')
 			UNION
-			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat("'SG'", ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"), "'_K'") . "
+			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat(
+                "'SG'",
+                ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"),
+                "'_K'"
+            ) . "
 			FROM b_sonet_user2group U2G
 			WHERE U2G.USER_ID=" . $USER_ID . " AND U2G.ROLE IN ('A','E')
 			UNION
-			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat("'SG'", ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"), "'_E'") . "
+			SELECT " . $USER_ID . ", '" . $DB->ForSQL($this->id) . "', " . $DB->Concat(
+                "'SG'",
+                ($DB->type == "MSSQL" ? "CAST(U2G.GROUP_ID as varchar(17))" : "U2G.GROUP_ID"),
+                "'_E'"
+            ) . "
 			FROM b_sonet_user2group U2G
 			WHERE U2G.USER_ID=" . $USER_ID . " AND U2G.ROLE IN ('A')
-		");
+		"
+        );
     }
 
     public function AjaxRequest($arParams = false)
@@ -202,12 +218,20 @@ class CSocNetGroupAuthProvider extends CAuthProvider implements IProviderInterfa
                             if ($match[2] == 'K') {
                                 $arItem['ID'] = 'SG' . $arElements[$match[1]]['ID'] . '_K';
                                 $arItem['NAME'] = $arElements[$match[1]]['NAME'] . ': ' . GetMessage("authprov_sg_k");
-                            } else if ($match[2] == 'E') {
-                                $arItem['ID'] = 'SG' . $arElements[$match[1]]['ID'] . '_E';
-                                $arItem['NAME'] = $arElements[$match[1]]['NAME'] . ': ' . GetMessage("authprov_sg_e");
-                            } else if ($match[2] == 'A') {
-                                $arItem['ID'] = 'SG' . $arElements[$match[1]]['ID'] . '_A';
-                                $arItem['NAME'] = $arElements[$match[1]]['NAME'] . ': ' . GetMessage("authprov_sg_a");
+                            } else {
+                                if ($match[2] == 'E') {
+                                    $arItem['ID'] = 'SG' . $arElements[$match[1]]['ID'] . '_E';
+                                    $arItem['NAME'] = $arElements[$match[1]]['NAME'] . ': ' . GetMessage(
+                                            "authprov_sg_e"
+                                        );
+                                } else {
+                                    if ($match[2] == 'A') {
+                                        $arItem['ID'] = 'SG' . $arElements[$match[1]]['ID'] . '_A';
+                                        $arItem['NAME'] = $arElements[$match[1]]['NAME'] . ': ' . GetMessage(
+                                                "authprov_sg_a"
+                                            );
+                                    }
+                                }
                             }
                             $elements .= CFinder::GetFinderItem($arFinderParams, $arItem);
                         }
@@ -283,7 +307,10 @@ class CSocNetGroupAuthProvider extends CAuthProvider implements IProviderInterfa
         );
         $arPanels[] = array(
             "NAME" => GetMessage("authprov_sg_panel_search"),
-            "ELEMENTS" => CFinder::GetFinderItem(Array("TYPE" => "text"), Array("TEXT" => GetMessage("authprov_sg_panel_search_text"))),
+            "ELEMENTS" => CFinder::GetFinderItem(
+                Array("TYPE" => "text"),
+                Array("TEXT" => GetMessage("authprov_sg_panel_search_text"))
+            ),
             "SEARCH" => "Y",
         );
         $html = CFinder::GetFinderAppearance($arFinderParams, $arPanels);
@@ -304,9 +331,18 @@ class CSocNetGroupAuthProvider extends CAuthProvider implements IProviderInterfa
             $arResult = array();
             $rsGroups = CSocNetGroup::GetList(array(), array("ID" => $arID));
             while ($arGroup = $rsGroups->Fetch()) {
-                $arResult["SG" . $arGroup["ID"] . "_A"] = array("provider" => GetMessage("authprov_sg_socnet_group"), "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_a"));
-                $arResult["SG" . $arGroup["ID"] . "_E"] = array("provider" => GetMessage("authprov_sg_socnet_group"), "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_e"));
-                $arResult["SG" . $arGroup["ID"] . "_K"] = array("provider" => GetMessage("authprov_sg_socnet_group"), "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_k"));
+                $arResult["SG" . $arGroup["ID"] . "_A"] = array(
+                    "provider" => GetMessage("authprov_sg_socnet_group"),
+                    "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_a")
+                );
+                $arResult["SG" . $arGroup["ID"] . "_E"] = array(
+                    "provider" => GetMessage("authprov_sg_socnet_group"),
+                    "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_e")
+                );
+                $arResult["SG" . $arGroup["ID"] . "_K"] = array(
+                    "provider" => GetMessage("authprov_sg_socnet_group"),
+                    "name" => $arGroup["NAME"] . ": " . GetMessage("authprov_sg_k")
+                );
             }
             return $arResult;
         }
@@ -347,8 +383,12 @@ class CSocNetUserAuthProvider extends CAuthProvider
             $dbFriends = CSocNetUserRelations::GetRelatedUsers($USER_ID, SONET_RELATIONS_FRIEND);
             while ($arFriends = $dbFriends->Fetch()) {
                 $friendID = (($USER_ID == $arFriends["FIRST_USER_ID"]) ? $arFriends["SECOND_USER_ID"] : $arFriends["FIRST_USER_ID"]);
-                $DB->Query("INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE) VALUES 
-					(" . $friendID . ", '" . $DB->ForSQL($this->id) . "', 'SU" . $USER_ID . "_" . SONET_RELATIONS_TYPE_FRIENDS . "')");
+                $DB->Query(
+                    "INSERT INTO b_user_access (USER_ID, PROVIDER_ID, ACCESS_CODE) VALUES 
+					(" . $friendID . ", '" . $DB->ForSQL(
+                        $this->id
+                    ) . "', 'SU" . $USER_ID . "_" . SONET_RELATIONS_TYPE_FRIENDS . "')"
+                );
             }
         }
     }

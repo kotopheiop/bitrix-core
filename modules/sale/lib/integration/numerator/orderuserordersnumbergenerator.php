@@ -33,7 +33,9 @@ class OrderUserOrdersNumberGenerator extends NumberGenerator implements DynamicC
     {
         return [
             static::getPatternFor(static::TEMPLATE_WORD_USER_ID_ORDERS_COUNT)
-            => Loc::getMessage('BITRIX_SALE_INTEGRATION_NUMERATOR_ORDERUSERORDERSNUMBERGENERATOR_WORD_USER_ID_ORDERS_COUNT'),
+            => Loc::getMessage(
+                'BITRIX_SALE_INTEGRATION_NUMERATOR_ORDERUSERORDERSNUMBERGENERATOR_WORD_USER_ID_ORDERS_COUNT'
+            ),
         ];
     }
 

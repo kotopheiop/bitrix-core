@@ -87,7 +87,6 @@ class OrderStatus extends StatusBase
                 if ($allowStatusId == $statusId) {
                     return true;
                 }
-
             }
         }
 

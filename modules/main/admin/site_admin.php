@@ -10,8 +10,11 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/sites/site_admin.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('lpa_template_edit'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation(
+        'view_other_settings'
+    ) && !$USER->CanDoOperation('lpa_template_edit')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -26,8 +29,9 @@ if ($lAdmin->EditAction() && $isAdmin) {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $ob = new CLang;
         if (!$ob->Update($ID, $arFields)) {
@@ -41,14 +45,16 @@ if ($lAdmin->EditAction() && $isAdmin) {
 if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
-        $rsData = CLang::GetList($by, $order, Array());
-        while ($arRes = $rsData->Fetch())
+        $rsData = CLang::GetList('', '', Array());
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -57,10 +63,11 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
                 $DB->StartTransaction();
                 if (!$ob->Delete($ID)) {
                     $DB->Rollback();
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $er = $ex->GetString();
-                    else
+                    } else {
                         $er = GetMessage("DELETE_ERROR");
+                    }
 
                     $lAdmin->AddGroupError($er, $ID);
                 }
@@ -70,8 +77,9 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
             case "deactivate":
                 $ob = new CLang;
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!$ob->Update($ID, $arFields))
+                if (!$ob->Update($ID, $arFields)) {
                     $lAdmin->AddGroupError(GetMessage("EDIT_ERROR") . $ob->LAST_ERROR, $ID);
+                }
                 break;
         }
     }
@@ -79,23 +87,37 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 
+global $by, $order;
+
 $langs = CLang::GetList($by, $order, Array());
 $rsData = new CAdminResult($langs, $sTableID);
 $rsData->NavStart();
 
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("PAGES"), false));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('ACTIVE'), "sort" => "active", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('SORT'), "sort" => "sort", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "name", "default" => true),
-    array("id" => "DIR", "content" => GetMessage("DIR"), "sort" => "dir", "default" => true),
-    array("id" => "DEF", "content" => GetMessage("DEF"), "sort" => "def", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage('ACTIVE'), "sort" => "active", "default" => true),
+        array("id" => "SORT", "content" => GetMessage('SORT'), "sort" => "sort", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "name", "default" => true),
+        array("id" => "DIR", "content" => GetMessage("DIR"), "sort" => "dir", "default" => true),
+        array("id" => "DEF", "content" => GetMessage("DEF"), "sort" => "def", "default" => true),
+    )
+);
 while ($arRes = $rsData->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arRes, "site_edit.php?LID=" . urlencode($arRes['ID']) . "&lang=" . LANGUAGE_ID, GetMessage("SITE_EDIT"));
-    $row->AddViewField("ID", '<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . urlencode($arRes['ID']) . '" title="' . GetMessage("SITE_EDIT_TITLE") . '">' . $f_ID . '</a>');
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arRes,
+        "site_edit.php?LID=" . urlencode($arRes['ID']) . "&lang=" . LANGUAGE_ID,
+        GetMessage("SITE_EDIT")
+    );
+    $row->AddViewField(
+        "ID",
+        '<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . urlencode(
+            $arRes['ID']
+        ) . '" title="' . GetMessage("SITE_EDIT_TITLE") . '">' . $f_ID . '</a>'
+    );
     $row->AddCheckField("ACTIVE");
     $row->AddInputField("SORT");
     $row->AddInputField("NAME");
@@ -103,22 +125,40 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddCheckField("DEF");
     $arActions = Array();
 
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("CHANGE"), "ACTION" => $lAdmin->ActionRedirect("site_edit.php?LID=" . urlencode($arRes['ID'])), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("CHANGE"),
+        "ACTION" => $lAdmin->ActionRedirect("site_edit.php?LID=" . urlencode($arRes['ID'])),
+        "DEFAULT" => true
+    );
 
     if ($isAdmin) {
-        $arActions[] = array("ICON" => "copy", "TEXT" => GetMessage("COPY"), "ACTION" => $lAdmin->ActionRedirect("site_edit.php?COPY_ID=" . urlencode($arRes['ID'])));
+        $arActions[] = array(
+            "ICON" => "copy",
+            "TEXT" => GetMessage("COPY"),
+            "ACTION" => $lAdmin->ActionRedirect("site_edit.php?COPY_ID=" . urlencode($arRes['ID']))
+        );
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("DELETE"), "ACTION" => "if(confirm('" . CUtil::JSEscape(GetMessage('CONFIRM_DEL')) . "')) " . $lAdmin->ActionDoGroup(urlencode($arRes['ID']), "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("DELETE"),
+            "ACTION" => "if(confirm('" . CUtil::JSEscape(GetMessage('CONFIRM_DEL')) . "')) " . $lAdmin->ActionDoGroup(
+                    urlencode($arRes['ID']),
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-    "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-    "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+    )
+);
 
 $aContext = array(
     array(

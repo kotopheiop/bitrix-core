@@ -16,7 +16,7 @@ class Utils
         $namespace = $defaultNamespace;
         $name = $entityIdentifier;
 
-        if (strpos($entityIdentifier, ":")) {
+        if (mb_strpos($entityIdentifier, ":")) {
             list($namespace, $name) = explode(":", $entityIdentifier);
         }
 
@@ -35,8 +35,10 @@ class Utils
      * @return mixed
      * @throws \Bitrix\Main\ArgumentException
      */
-    public static function jsonEncode($string, $options = JSON_HEX_TAG | JSON_HEX_AMP | JSON_PRETTY_PRINT | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE)
-    {
+    public static function jsonEncode(
+        $string,
+        $options = JSON_HEX_TAG | JSON_HEX_AMP | JSON_PRETTY_PRINT | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+    ) {
         return Json::encode($string, $options);
     }
 }

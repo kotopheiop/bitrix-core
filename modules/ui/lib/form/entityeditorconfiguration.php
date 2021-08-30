@@ -3,37 +3,53 @@
 namespace Bitrix\UI\Form;
 
 use Bitrix\Main;
-use Bitrix\UI;
+use Bitrix\Ui\EntityForm\Scope;
 
 class EntityEditorConfiguration
 {
-    public static function canEditOtherSettings()
+    protected $categoryName;
+
+    public static function canEditOtherSettings(): bool
     {
         return Main\Engine\CurrentUser::get()->canDoOperation('edit_other_settings');
     }
 
-    protected function getCategoryName()
+    public function __construct(string $categoryName = null)
     {
-        return 'ui.form.editor';
+        $this->categoryName = $categoryName;
     }
 
-    protected function prepareName($configID, $scope)
+    protected function getCategoryName(): string
+    {
+        if (empty($this->categoryName)) {
+            return 'ui.form.editor';
+        }
+
+        return $this->categoryName;
+    }
+
+    protected function prepareName(string $configID, string $scope): string
     {
         if ($scope === EntityEditorConfigScope::COMMON) {
             return "{$configID}_common";
         }
+
         return $configID;
     }
 
-    protected function prepareScopeName($configID)
+    protected function prepareScopeName(string $configID): string
     {
         return "{$configID}_scope";
     }
 
-    protected function prepareOptionsName($configID, $scope)
+    public static function prepareOptionsName(string $configID, string $scope, int $userScopeId = 0): string
     {
+        $configID = mb_strtolower($configID);
         if ($scope === EntityEditorConfigScope::COMMON) {
             return "{$configID}_common_opts";
+        }
+        if ($scope === EntityEditorConfigScope::CUSTOM) {
+            return "{$configID}_custom_opts_" . $userScopeId;
         }
         return "{$configID}_opts";
     }
@@ -65,10 +81,12 @@ class EntityEditorConfiguration
     {
         $categoryName = $this->getCategoryName();
 
-        $scope = isset($params['scope']) ? strtoupper($params['scope']) : EntityEditorConfigScope::UNDEFINED;
+        $scope = isset($params['scope']) ? mb_strtoupper($params['scope']) : EntityEditorConfigScope::UNDEFINED;
         if (!EntityEditorConfigScope::isDefined($scope)) {
             $scope = EntityEditorConfigScope::PERSONAL;
         }
+
+        $userScopeId = $params['userScopeId'] ?? 0;
 
         $forAllUsers = self::canEditOtherSettings()
             && isset($params['forAllUsers'])
@@ -88,21 +106,26 @@ class EntityEditorConfiguration
                 $config,
                 true
             );
-        } else {
+        } elseif ($scope === EntityEditorConfigScope::PERSONAL) {
             \CUserOptions::SetOption($categoryName, $configID, $config);
+        } elseif ($userScopeId > 0) {
+            Scope::getInstance()->updateScopeConfig(
+                $userScopeId,
+                $config
+            );
         }
 
         $options = isset($params['options']) && is_array($params['options']) ? $params['options'] : array();
         if (!empty($options)) {
+            $optionName = static::prepareOptionsName($configID, $scope, $userScopeId);
             if ($scope === EntityEditorConfigScope::COMMON) {
                 \CUserOptions::SetOption(
                     $categoryName,
-                    $this->prepareOptionsName($configID, $scope),
+                    $optionName,
                     $options,
                     true
                 );
             } else {
-                $optionName = $this->prepareOptionsName($configID, $scope);
                 if ($forAllUsers) {
                     if (isset($params['delete']) && $params['delete'] === 'Y') {
                         \CUserOptions::DeleteOptionsByName($categoryName, $optionName);
@@ -111,6 +134,7 @@ class EntityEditorConfiguration
                 }
                 \CUserOptions::SetOption($categoryName, $optionName, $options);
             }
+            //todo check what to do with options for custom scopes
         }
     }
 
@@ -118,7 +142,7 @@ class EntityEditorConfiguration
     {
         $categoryName = $this->getCategoryName();
 
-        $scope = isset($params['scope']) ? strtoupper($params['scope']) : EntityEditorConfigScope::UNDEFINED;
+        $scope = isset($params['scope']) ? mb_strtoupper($params['scope']) : EntityEditorConfigScope::UNDEFINED;
         if (!EntityEditorConfigScope::isDefined($scope)) {
             $scope = EntityEditorConfigScope::PERSONAL;
         }
@@ -136,18 +160,18 @@ class EntityEditorConfiguration
             );
             \CUserOptions::DeleteOption(
                 $categoryName,
-                $this->prepareOptionsName($configID, $scope),
+                static::prepareOptionsName($configID, $scope),
                 true,
                 0
             );
         } else {
             if ($forAllUsers) {
                 \CUserOptions::DeleteOptionsByName($categoryName, $this->prepareName($configID, $scope));
-                \CUserOptions::DeleteOptionsByName($categoryName, $this->prepareOptionsName($configID, $scope));
+                \CUserOptions::DeleteOptionsByName($categoryName, static::prepareOptionsName($configID, $scope));
                 \CUserOptions::DeleteOptionsByName($categoryName, $this->prepareScopeName($configID));
             } else {
                 \CUserOptions::DeleteOption($categoryName, $this->prepareName($configID, $scope));
-                \CUserOptions::DeleteOption($categoryName, $this->prepareOptionsName($configID, $scope));
+                \CUserOptions::DeleteOption($categoryName, static::prepareOptionsName($configID, $scope));
 
                 \CUserOptions::SetOption(
                     $categoryName,
@@ -156,7 +180,6 @@ class EntityEditorConfiguration
                 );
             }
         }
-
     }
 
     public function setScope($configID, $scope)

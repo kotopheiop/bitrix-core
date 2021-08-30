@@ -20,7 +20,7 @@ final class UserSelectorStepper extends Stepper
         $return = false;
 
         $params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
         $params = (is_array($params) ? $params : array());
         if (empty($params)) {
             $params = array(
@@ -36,15 +36,17 @@ final class UserSelectorStepper extends Stepper
             $result["steps"] = "";
             $result["count"] = $params["count"];
 
-            $cursor = \Bitrix\Main\UserTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    '>ID' => $params["lastId"],
-                ),
-                'select' => array('ID'),
-                'offset' => 0,
-                'limit' => 100
-            ));
+            $cursor = \Bitrix\Main\UserTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        '>ID' => $params["lastId"],
+                    ),
+                    'select' => array('ID'),
+                    'offset' => 0,
+                    'limit' => 100
+                )
+            );
 
             $found = false;
             while ($row = $cursor->fetch()) {

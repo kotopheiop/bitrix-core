@@ -8,8 +8,6 @@
 
 namespace Bitrix\Main\Security;
 
-use Bitrix\Main\Text\BinaryString;
-
 class Cipher
 {
     protected $cipherAlgorithm;
@@ -88,8 +86,8 @@ class Cipher
     public function decrypt($data, $key)
     {
         // Extract the initialisation vector and encrypted data
-        $iv = BinaryString::getSubstring($data, 0, $this->ivLength);
-        $raw = BinaryString::getSubstring($data, $this->ivLength);
+        $iv = substr($data, 0, $this->ivLength);
+        $raw = substr($data, $this->ivLength);
 
         // Hash the key
         $keyHash = openssl_digest($iv . $key, $this->hashAlgorithm, true);
@@ -102,14 +100,16 @@ class Cipher
 
         if ($this->calculateHash) {
             //extract the hash and decrypted data
-            $length = BinaryString::getLength($keyHash);
-            $hash = BinaryString::getSubstring($result, 0, $length);
-            $result = BinaryString::getSubstring($result, $length);
+            $length = strlen($keyHash);
+            $hash = substr($result, 0, $length);
+            $result = substr($result, $length);
 
             //check the hash: may be the crypto key has changed? It shouldn't.
             $dataHash = openssl_digest($result, $this->hashAlgorithm, true);
             if ($dataHash !== $hash) {
-                throw new SecurityException("The hash is incorrect: the data was corrupted or a wrong key was supplied.");
+                throw new SecurityException(
+                    "The hash is incorrect: the data was corrupted or a wrong key was supplied."
+                );
             }
         }
         return $result;

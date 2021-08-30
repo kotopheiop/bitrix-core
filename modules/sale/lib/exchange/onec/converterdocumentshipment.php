@@ -35,8 +35,9 @@ class ConverterDocumentShipment extends Converter
      */
     public function resolveParams($documentImport)
     {
-        if (!($documentImport instanceof DocumentBase))
+        if (!($documentImport instanceof DocumentBase)) {
             throw new ArgumentException("Document must be instanceof DocumentBase");
+        }
 
         $result = array();
 
@@ -48,46 +49,56 @@ class ConverterDocumentShipment extends Converter
             switch ($k) {
                 case 'ID_1C':
                 case 'VERSION_1C':
-                    if (isset($params[$k]))
+                    if (isset($params[$k])) {
                         $fields[$k] = $params[$k];
+                    }
                     break;
                 case 'COMMENTS':
-                    if (isset($params['COMMENT']))
+                    if (isset($params['COMMENT'])) {
                         $fields[$k] = $params['COMMENT'];
+                    }
                     break;
                 case 'DELIVERY_DOC_DATE':
-                    if (isset($params['1C_DATE']))
+                    if (isset($params['1C_DATE'])) {
                         $fields[$k] = $params['1C_DATE'];
+                    }
                     break;
                 case 'DELIVERY_DOC_NUM':
-                    if (isset($params['REK_VALUES']['1C_DELIVERY_NUM']))
+                    if (isset($params['REK_VALUES']['1C_DELIVERY_NUM'])) {
                         $fields[$k] = $params['REK_VALUES']['1C_DELIVERY_NUM'];
+                    }
                     break;
                 case 'DEDUCTED':
                     $deducted = '';
                     $cancel = '';
 
-                    if (isset($params['REK_VALUES']['DEDUCTED']))
+                    if (isset($params['REK_VALUES']['DEDUCTED'])) {
                         $deducted = $params['REK_VALUES']['DEDUCTED'];
-                    if (isset($params['REK_VALUES']['CANCEL']))
+                    }
+                    if (isset($params['REK_VALUES']['CANCEL'])) {
                         $cancel = $params['REK_VALUES']['CANCEL'];
+                    }
 
-                    if ($deducted == 'Y')
+                    if ($deducted == 'Y') {
                         $fields[$k] = 'Y';
-                    elseif ($cancel == 'Y')
+                    } elseif ($cancel == 'Y') {
                         $fields[$k] = 'N';
+                    }
                     break;
                 case 'ALLOW_DELIVERY':
                     $value = '';
-                    if (isset($params['REK_VALUES']['DEDUCTED']))
+                    if (isset($params['REK_VALUES']['DEDUCTED'])) {
                         $value = $params['REK_VALUES']['DEDUCTED'];
+                    }
 
-                    if ($value == 'Y')
+                    if ($value == 'Y') {
                         $fields[$k] = 'Y';
+                    }
                     break;
                 case 'TRACKING_NUMBER':
-                    if (isset($params['REK_VALUES']['1C_TRACKING_NUMBER']))
+                    if (isset($params['REK_VALUES']['1C_TRACKING_NUMBER'])) {
                         $fields[$k] = $params['REK_VALUES']['1C_TRACKING_NUMBER'];
+                    }
                     break;
                 case 'BASE_PRICE_DELIVERY':
                     $fields["BASE_PRICE_DELIVERY"] = $this->getBasePriceDelivery($params['ITEMS']);
@@ -134,8 +145,9 @@ class ConverterDocumentShipment extends Converter
      */
     static public function sanitizeFields($shipment = null, array &$fields, ISettings $settings)
     {
-        if (!empty($shipment) && !($shipment instanceof Shipment))
+        if (!empty($shipment) && !($shipment instanceof Shipment)) {
             throw new ArgumentException("Entity must be instanceof Shipment");
+        }
 
         foreach ($fields as $k => $v) {
             switch ($k) {
@@ -193,7 +205,7 @@ class ConverterDocumentShipment extends Converter
                     break;
                 case 'CURRENCY':
                     $replaceCurrency = $settings->getReplaceCurrency();
-                    $value = substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
+                    $value = mb_substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
                     break;
                 case 'CURRENCY_RATE':
                     $value = self::CURRENCY_RATE_DEFAULT;;
@@ -201,8 +213,9 @@ class ConverterDocumentShipment extends Converter
                 case 'AMOUNT':
                     $price = 0;
                     foreach ($items as $item) {
-                        if ($item['PRODUCT_XML_ID'] !== ImportOneCBase::DELIVERY_SERVICE_XMLID)
+                        if ($item['PRODUCT_XML_ID'] !== ImportOneCBase::DELIVERY_SERVICE_XMLID) {
                             $price = $price + $item['PRICE'] * $item['QUANTITY'];
+                        }
                     }
 
                     $value = $price + $traits['PRICE_DELIVERY'];
@@ -215,12 +228,14 @@ class ConverterDocumentShipment extends Converter
                     $value = $traits['ORDER_ID'];
                     break;
                 case 'TAXES':
-                    if (count($taxes) > 0)
+                    if (count($taxes) > 0) {
                         $value = $this->externalizeTaxes($taxes, $v);
+                    }
                     break;
                 case 'STORIES':
-                    if (count($stories) > 0)
+                    if (count($stories) > 0) {
                         $value = $this->externalizeStories($stories, $v);
+                    }
                     break;
                 case 'TIME':
                     $value = $traits['DATE_INSERT'];
@@ -229,8 +244,9 @@ class ConverterDocumentShipment extends Converter
                     $value = $traits['COMMENTS'];
                     break;
                 case 'ITEMS':
-                    if (count($items) > 0)
+                    if (count($items) > 0) {
                         $value = $this->externalizeItems($items, $v);
+                    }
                     break;
                 case 'REK_VALUES':
                     $value = array();
@@ -238,7 +254,7 @@ class ConverterDocumentShipment extends Converter
                         $valueRV = '';
                         switch ($name) {
                             case 'PRICE_DELIVERY':
-                                $valueRV = (strlen($traits['PRICE_DELIVERY']) > 0 ? $traits['PRICE_DELIVERY'] : "0.0000");
+                                $valueRV = ($traits['PRICE_DELIVERY'] <> '' ? $traits['PRICE_DELIVERY'] : "0.0000");
                                 break;
                             case 'DATE_ALLOW_DELIVERY':
                             case 'DELIVERY_LOCATION':

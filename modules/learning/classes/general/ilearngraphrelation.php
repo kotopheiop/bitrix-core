@@ -168,26 +168,30 @@ final class CLearnGraphRelation implements ILearnGraphRelation
         return (self::_ListImmediateNeighbours($nodeId, self::NBRS_IMDT_PARENTS | self::NBRS_IMDT_CHILDS));
     }
 
-    protected function _ListImmediateNeighbours($nodeId, $bitmaskSearchMode)
+    protected static function _ListImmediateNeighbours($nodeId, $bitmaskSearchMode)
     {
         global $DB;
 
         $arWhere = array();
 
         // List parents?
-        if ($bitmaskSearchMode & self::NBRS_IMDT_PARENTS)
+        if ($bitmaskSearchMode & self::NBRS_IMDT_PARENTS) {
             $arWhere[] = "TARGET_NODE='" . (int)($nodeId + 0) . "'";
+        }
 
         // List childs?
-        if ($bitmaskSearchMode & self::NBRS_IMDT_CHILDS)
+        if ($bitmaskSearchMode & self::NBRS_IMDT_CHILDS) {
             $arWhere[] = "SOURCE_NODE='" . (int)($nodeId + 0) . "'";
+        }
 
         // Prepare string for query
         $sqlWhere = implode(' OR ', $arWhere);
 
-        if (strlen($sqlWhere) == 0) {
-            throw new LearnException ('EA_PARAMS: nothing to search (check search mode bitmask);',
-                LearnException::EXC_ERR_GR_GET_NEIGHBOURS | LearnException::EXC_ERR_ALL_LOGIC);
+        if ($sqlWhere == '') {
+            throw new LearnException (
+                'EA_PARAMS: nothing to search (check search mode bitmask);',
+                LearnException::EXC_ERR_GR_GET_NEIGHBOURS | LearnException::EXC_ERR_ALL_LOGIC
+            );
         }
 
         if (!array_key_exists($sqlWhere, self::$arNodesCache)) {
@@ -196,10 +200,12 @@ final class CLearnGraphRelation implements ILearnGraphRelation
                 "SELECT SOURCE_NODE, TARGET_NODE, SORT
 				FROM b_learn_lesson_edges
 				WHERE " . $sqlWhere,
-                $ignore_errors = true);
+                $ignore_errors = true
+            );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GR_GET_NEIGHBOURS);
+            }
 
             $result = array();
 
@@ -219,8 +225,9 @@ final class CLearnGraphRelation implements ILearnGraphRelation
                 ++self::$nodesCached;
                 self::$arNodesCache[$sqlWhere] = $result;
             }
-        } else
+        } else {
             $result = self::$arNodesCache[$sqlWhere];
+        }
 
 
         return ($result);
@@ -243,15 +250,17 @@ final class CLearnGraphRelation implements ILearnGraphRelation
         $args_check = $args_check && isset ($arProperties['SORT']);
 
         // check SORT admitted range: number
-        if (isset($arProperties['SORT']))
+        if (isset($arProperties['SORT'])) {
             $args_check = $args_check && is_numeric($arProperties['SORT']) && is_int($arProperties['SORT'] + 0);
-        else
+        } else {
             $args_check = false;
+        }
 
         if (!$args_check) {
             throw new LearnException (
                 'EA_PARAMS: ' . $parentNodeId . ' / ' . $childNodeId . ' / ' . var_export($arProperties, true),
-                LearnException::EXC_ERR_GR_LINK);
+                LearnException::EXC_ERR_GR_LINK
+            );
         }
 
         // normalize & sanitize
@@ -266,10 +275,12 @@ final class CLearnGraphRelation implements ILearnGraphRelation
         $rc = $DB->Query(
             "INSERT INTO b_learn_lesson_edges (SOURCE_NODE, TARGET_NODE, SORT)
 			VALUES ('" . $parentNodeId . "', '" . $childNodeId . "', '" . $sort . "')",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GR_LINK);
+        }
     }
 
     public static function Unlink($parentNodeId, $childNodeId)
@@ -282,8 +293,9 @@ final class CLearnGraphRelation implements ILearnGraphRelation
 
         $args_check = ($parentNodeId > 0) && ($childNodeId > 0);
 
-        if (!$args_check)
+        if (!$args_check) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_GR_UNLINK);
+        }
 
         $parentNodeId += 0;
         $childNodeId += 0;
@@ -293,13 +305,16 @@ final class CLearnGraphRelation implements ILearnGraphRelation
             "DELETE FROM b_learn_lesson_edges
 			WHERE SOURCE_NODE = '" . $parentNodeId . "'
 				AND TARGET_NODE = '" . $childNodeId . "'",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GR_UNLINK);
+        }
 
-        if ($rc->AffectedRowsCount() == 0)
+        if ($rc->AffectedRowsCount() == 0) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_GR_UNLINK);
+        }
     }
 
     public static function SetProperty($parentNodeId, $childNodeId, $propertyName, $value)
@@ -318,8 +333,9 @@ final class CLearnGraphRelation implements ILearnGraphRelation
             $args_check = $args_check && is_numeric($value) && is_int($value + 0);
         }
 
-        if (!$args_check)
+        if (!$args_check) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_GR_SET_PROPERTY);
+        }
 
         $parentNodeId += 0;
         $childNodeId += 0;
@@ -332,24 +348,31 @@ final class CLearnGraphRelation implements ILearnGraphRelation
                 break;
 
             default:
-                throw new LearnException ('EA_PARAMS: unknown property name: '
-                    . $propertyName, LearnException::EXC_ERR_GR_SET_PROPERTY);
+                throw new LearnException (
+                    'EA_PARAMS: unknown property name: '
+                    . $propertyName, LearnException::EXC_ERR_GR_SET_PROPERTY
+                );
                 break;
         }
 
         // Update graph edge
-        $rc = $DB->Update('b_learn_lesson_edges', $arFields,
+        $rc = $DB->Update(
+            'b_learn_lesson_edges',
+            $arFields,
             "WHERE SOURCE_NODE='" . $parentNodeId . "'
-				AND TARGET_NODE='" . $childNodeId . "'", __LINE__, false,
-            false);    // we must halt on errors due to bug in CDatabase::Update();
+				AND TARGET_NODE='" . $childNodeId . "'",
+            __LINE__,
+            false,
+            false
+        );    // we must halt on errors due to bug in CDatabase::Update();
 
         /**
          * This code will be useful after bug in CDatabase::Update() will be solved
          * and $ignore_errors setted to true in Update() call above.
          */
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GR_SET_PROPERTY);
-
+        }
         /*
         This is not correctly, because there is can be update to value, which already set in db. And not affected rows will be.
         Consistent check of existence of relation needs transaction with one more sql-prerequest,
@@ -366,8 +389,9 @@ final class CLearnGraphRelation implements ILearnGraphRelation
         $args_check = ($parentNodeId > 0) && ($childNodeId > 0)
             && (in_array($propertyName, array('SORT'), true));
 
-        if (!$args_check)
+        if (!$args_check) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_GR_GET_PROPERTY);
+        }
 
         $parentNodeId += 0;
         $childNodeId += 0;
@@ -379,8 +403,10 @@ final class CLearnGraphRelation implements ILearnGraphRelation
                 break;
 
             default:
-                throw new LearnException ('EA_PARAMS: unknown property name: '
-                    . $propertyName, LearnException::EXC_ERR_GR_GET_PROPERTY);
+                throw new LearnException (
+                    'EA_PARAMS: unknown property name: '
+                    . $propertyName, LearnException::EXC_ERR_GR_GET_PROPERTY
+                );
                 break;
         }
 
@@ -390,13 +416,16 @@ final class CLearnGraphRelation implements ILearnGraphRelation
 			FROM b_learn_lesson_edges
 			WHERE SOURCE_NODE='" . $parentNodeId . "'
 				AND TARGET_NODE='" . $childNodeId . "'",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GR_GET_PROPERTY);
+        }
 
-        if (!(($arData = $rc->Fetch()) && isset($arData[$field])))
+        if (!(($arData = $rc->Fetch()) && isset($arData[$field]))) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_GR_GET_PROPERTY);
+        }
 
         // Postprocessing of result
         switch ($propertyName) {
@@ -405,8 +434,10 @@ final class CLearnGraphRelation implements ILearnGraphRelation
                 break;
 
             default:
-                throw new LearnException ('EA_PARAMS: unknown property name: '
-                    . $propertyName, LearnException::EXC_ERR_GR_GET_PROPERTY);
+                throw new LearnException (
+                    'EA_PARAMS: unknown property name: '
+                    . $propertyName, LearnException::EXC_ERR_GR_GET_PROPERTY
+                );
                 break;
         }
 
